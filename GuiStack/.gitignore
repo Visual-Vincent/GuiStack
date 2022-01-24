@@ -1,3 +1,6 @@
+# Custom
+/wwwroot/js/build/
+
 # Logs
 logs
 *.log

@@ -7,8 +7,8 @@ export default {
     input: 'wwwroot/js/site.js',
     output: {
         file: 'wwwroot/js/build/site.bundle.js',
-        format: 'iife', // Immediately-Invoked Function Expression
-        name: 'app', // The IIFE return value will be assigned to a variable called "app"
+        format: 'cjs', // CommonJS module
+        name: 'app',
     },
     plugins: [
         svelte({

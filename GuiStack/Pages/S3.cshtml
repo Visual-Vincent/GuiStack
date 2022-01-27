@@ -4,3 +4,26 @@
     ViewData["Title"] = "S3";
     ViewData["NavSelectedItem"] = "S3";
 }
+
+<div id="list-container"></div>
+
+@section Scripts
+{
+<script>
+    const columns = ["Bucket name", "Creation date"];
+
+    fetch("@Url.Action("Get", "Buckets", null, Request.Scheme)")
+        .then(response => response.json())
+        .then(buckets => {
+            new List({
+                target: document.getElementById("list-container"),
+                props: {
+                    columns: columns,
+                    items: buckets.map(function(bucket) {
+                        return [bucket.name, bucket.creationDate];
+                    })
+                }
+            })
+        });
+</script>
+}

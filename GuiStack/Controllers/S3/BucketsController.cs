@@ -17,16 +17,24 @@ namespace GuiStack.Controllers.S3
         [HttpGet]
         public async Task<ActionResult> Get()
         {
-            using var s3 = authenticator.Authenticate();
-            var response = await s3.ListBucketsAsync();
+            try
+            {
+                using var s3 = authenticator.Authenticate();
+                var response = await s3.ListBucketsAsync();
 
-            if(response.HttpStatusCode != HttpStatusCode.OK)
-                return StatusCode((int)response.HttpStatusCode);
+                if(response.HttpStatusCode != HttpStatusCode.OK)
+                    return StatusCode((int)response.HttpStatusCode);
 
-            return Json(response.Buckets.Select(b => new {
-                CreationDate = b.CreationDate,
-                Name = b.BucketName
-            }));
+                return Json(response.Buckets.Select(b => new {
+                    CreationDate = b.CreationDate,
+                    Name = b.BucketName
+                }));
+            }
+            catch(Exception ex)
+            {
+                Console.Error.WriteLine(ex);
+                return StatusCode((int)HttpStatusCode.InternalServerError);
+            }
         }
 
         [HttpDelete]

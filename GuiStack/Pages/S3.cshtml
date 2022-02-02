@@ -13,7 +13,12 @@
     const columns = ["Bucket name", "Creation date"];
 
     fetch("@Url.Action("Get", "Buckets", null, Request.Scheme)")
-        .then(response => response.json())
+        .then(response => {
+            if(!response.ok)
+                throw new Error("Server returned status: " + response.status);
+
+            return response.json();
+        })
         .then(buckets => {
             new List({
                 target: document.getElementById("list-container"),
@@ -24,6 +29,9 @@
                     })
                 }
             })
+        })
+        .catch(err => {
+            document.getElementById("list-container").innerHTML = '<h2 style="color: #FF0000">' + err + '</h2>';
         });
 </script>
 }

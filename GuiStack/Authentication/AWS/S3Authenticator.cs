@@ -8,7 +8,10 @@ namespace GuiStack.Authentication.AWS
     {
         public override AmazonS3Client Authenticate(AWSCredentials credentials)
         {
-            var config = new AmazonS3Config();
+            var config = new AmazonS3Config() {
+                MaxErrorRetry = 1
+            };
+
             string endpointUrl = Environment.GetEnvironmentVariable("AWS_S3_ENDPOINT_URL");
 
             if(!string.IsNullOrWhiteSpace(endpointUrl))

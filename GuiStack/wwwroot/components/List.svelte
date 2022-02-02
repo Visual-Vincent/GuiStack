@@ -17,7 +17,7 @@
         {#each items as item, i}
             <tr>
             {#each item as value, j}
-                <td>{value}</td>
+                <td>{@html value}</td>
             {/each}
             </tr>
         {/each}

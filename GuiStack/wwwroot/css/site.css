@@ -10,6 +10,11 @@ html
     padding: 0;
 }
 
+.error-text
+{
+    color: #FF0000;
+}
+
 .gs-main-container
 {
     display: flex;

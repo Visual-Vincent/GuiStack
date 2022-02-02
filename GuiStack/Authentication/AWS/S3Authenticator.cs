@@ -9,7 +9,8 @@ namespace GuiStack.Authentication.AWS
         public override AmazonS3Client Authenticate(AWSCredentials credentials)
         {
             var config = new AmazonS3Config() {
-                MaxErrorRetry = 1
+                MaxErrorRetry = 1,
+                ForcePathStyle = true, // LocalStack support
             };
 
             string endpointUrl = Environment.GetEnvironmentVariable("AWS_S3_ENDPOINT_URL");

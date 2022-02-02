@@ -1,0 +1,81 @@
+﻿@page "{bucket?}"
+@model GuiStack.Pages.S3.IndexModel
+@using System.Net;
+@{
+    ViewData["Title"] = "S3 Buckets";
+    ViewData["NavSelectedItem"] = "S3";
+}
+
+@if(!string.IsNullOrWhiteSpace(Model.Bucket))
+{
+    <h1>@Model.Bucket</h1>
+}
+
+<div id="list-container"></div>
+
+@section Scripts
+{
+    @if(string.IsNullOrWhiteSpace(Model.Bucket))
+    {
+        <script>
+            const columns = ["Bucket name", "Creation date"];
+            
+            fetch("@Url.Action("Get", "Buckets", null, Request.Scheme)")
+                .then(response => {
+                    if(!response.ok)
+                        throw new Error("Server returned status: " + response.status);
+                    
+                    return response.json();
+                })
+                .then(buckets => {
+                    new List({
+                        target: document.getElementById("list-container"),
+                        props: {
+                            columns: columns,
+                            items: buckets.map(function(bucket) {
+                                return [
+                                    `<a href="@Url.RouteUrl(ViewContext.RouteData.Values)/${bucket.name}">${bucket.name}</a>`,
+                                    new Date(bucket.creationDate).toLocaleString()
+                                ];
+                            })
+                        }
+                    })
+                })
+                .catch(err => {
+                    document.getElementById("list-container").innerHTML = `<h2 class="error-text">${err}</h2>`;
+                });
+        </script>
+    }
+    else
+    {
+        <script>
+            const columns = ["Filename", "File size", "Last modified"];
+            
+            fetch("@Url.Action("Get", "BucketContents", new { bucket = Model.Bucket }, Request.Scheme)")
+                .then(response => {
+                    if(!response.ok)
+                        throw new Error("Server returned status: " + response.status);
+                    
+                    return response.json();
+                })
+                .then(objects => {
+                    new List({
+                        target: document.getElementById("list-container"),
+                        props: {
+                            columns: columns,
+                            items: objects.map(function(object) {
+                                return [
+                                    object.name,
+                                    object.size,
+                                    new Date(object.lastModified).toLocaleString()
+                                ];
+                            })
+                        }
+                    })
+                })
+                .catch(err => {
+                    document.getElementById("list-container").innerHTML = `<h2 style="color: #FF0000">${err}</h2>`;
+                });
+        </script>
+    }
+}

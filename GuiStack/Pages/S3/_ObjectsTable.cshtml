@@ -1,0 +1,23 @@
+﻿@using GuiStack.Models; 
+@using GuiStack.Extensions;
+@model IEnumerable<S3Object>
+
+<table class="gs-list">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Size</th>
+            <th>Last Modified</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach(var obj in Model ?? Enumerable.Empty<S3Object>())
+        {
+            <tr>
+                <td>@obj.Name</td>
+                <td>@obj.Size.ToFormattedFileSize()</td>
+                <td>@obj.LastModified</td>
+            </tr>
+        }
+    </tbody>
+</table>

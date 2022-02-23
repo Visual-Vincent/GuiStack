@@ -1,4 +1,7 @@
-﻿<table class="gs-list">
+﻿@using GuiStack.Models; 
+@model IEnumerable<S3Bucket>
+
+<table class="gs-list">
     <thead>
         <tr>
             <th>Name</th>
@@ -6,6 +9,12 @@
         </tr>
     </thead>
     <tbody>
-
+        @foreach(var bucket in Model ?? Enumerable.Empty<S3Bucket>())
+        {
+            <tr>
+                <td><a href="/S3/@bucket.Name">@bucket.Name</a></td>
+                <td>@bucket.CreationDate</td>
+            </tr>
+        }
     </tbody>
 </table>

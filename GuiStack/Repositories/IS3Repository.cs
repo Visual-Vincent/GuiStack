@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
@@ -12,6 +13,7 @@ namespace GuiStack.Repositories
     {
         Task<IEnumerable<S3Bucket>> GetBucketsAsync();
         Task<IEnumerable<S3Object>> GetObjectsAsync(string bucketName);
+        Task<Amazon.S3.Model.GetObjectResponse> GetObjectAsync(string bucketName, string objectName);
     }
 
     public class S3Repository : IS3Repository
@@ -47,6 +49,13 @@ namespace GuiStack.Repositories
                 Size = obj.Size,
                 LastModified = obj.LastModified
             });
+        }
+
+        public async Task<Amazon.S3.Model.GetObjectResponse> GetObjectAsync(string bucketName, string objectName)
+        {
+            using var s3 = authenticator.Authenticate();
+            var response = await s3.GetObjectAsync(bucketName, objectName);
+            return response;
         }
     }
 }

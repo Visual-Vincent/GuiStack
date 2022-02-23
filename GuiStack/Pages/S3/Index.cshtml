@@ -2,6 +2,7 @@
 
 @using System.Net
 @using Amazon.S3
+@using GuiStack.Extensions;
 @model GuiStack.Pages.S3.IndexModel
 
 @{
@@ -27,7 +28,7 @@ else
         }
         else
         {
-            await Html.RenderPartialAsync("~/Pages/S3/_ObjectsTable.cshtml", await Model.S3Repository.GetObjectsAsync(Model.Bucket));
+            await Html.RenderPartialAsync("~/Pages/S3/_ObjectsTable.cshtml", (await Model.S3Repository.GetObjectsAsync(Model.Bucket)).ToObjectModel(Model.Bucket));
         }
     }
     catch(AmazonS3Exception ex)

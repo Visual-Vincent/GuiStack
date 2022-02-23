@@ -1,6 +1,6 @@
 ﻿@using GuiStack.Models; 
 @using GuiStack.Extensions;
-@model IEnumerable<S3Object>
+@model IEnumerable<S3ObjectModel>
 
 <table class="gs-list">
     <thead>
@@ -11,10 +11,11 @@
         </tr>
     </thead>
     <tbody>
-        @foreach(var obj in Model ?? Enumerable.Empty<S3Object>())
+        @foreach(var s3obj in Model ?? Enumerable.Empty<S3ObjectModel>())
         {
+            var obj = s3obj.Object;
             <tr>
-                <td>@obj.Name</td>
+                <td><a href="/S3/@s3obj.BucketName?handler=Download&object=@Uri.EscapeDataString(obj.Name)">@obj.Name</a></td>
                 <td>@obj.Size.ToFormattedFileSize()</td>
                 <td>@obj.LastModified</td>
             </tr>

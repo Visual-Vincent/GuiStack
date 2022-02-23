@@ -1,5 +1,9 @@
 ﻿@page "{bucket?}"
+
+@using System.Net
+@using Amazon.S3
 @model GuiStack.Pages.S3.IndexModel
+
 @{
     ViewData["Title"] = "S3 Buckets";
     ViewData["NavSelectedItem"] = "S3";
@@ -15,12 +19,48 @@ else
 }
 
 <div id="list-container">
-    @if(string.IsNullOrWhiteSpace(Model.Bucket))
+    @try
     {
-        await Html.RenderPartialAsync("~/Pages/S3/_BucketsTable.cshtml", await Model.GetBuckets());
+        if(string.IsNullOrWhiteSpace(Model.Bucket))
+        {
+            await Html.RenderPartialAsync("~/Pages/S3/_BucketsTable.cshtml", await Model.GetBuckets());
+        }
+        else
+        {
+            await Html.RenderPartialAsync("~/Pages/S3/_ObjectsTable.cshtml", await Model.GetBucketContents(Model.Bucket));
+        }
     }
-    else
+    catch(AmazonS3Exception ex)
     {
-        await Html.RenderPartialAsync("~/Pages/S3/_ObjectsTable.cshtml", await Model.GetBucketContents(Model.Bucket));
+        if(ex.StatusCode == HttpStatusCode.NotFound)
+        {
+            <h2 class="error-text">Bucket not found</h2>
+        }
+        else
+        {
+            if(string.IsNullOrWhiteSpace(Model.Bucket))
+            {
+                <h2 class="error-text">Failed to fetch buckets:</h2>
+            }
+            else
+            {
+                <h2 class="error-text">Failed to fetch bucket contents:</h2>
+            }
+
+            <p class="error-text">@ex.Message</p>
+        }
+    }
+    catch(Exception ex)
+    {
+        if(string.IsNullOrWhiteSpace(Model.Bucket))
+        {
+            <h2 class="error-text">Failed to fetch buckets:</h2>
+        }
+        else
+        {
+            <h2 class="error-text">Failed to fetch bucket contents:</h2>
+        }
+
+        <p class="error-text">@ex.Message</p>
     }
 </div>

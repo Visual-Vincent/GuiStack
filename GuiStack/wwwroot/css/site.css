@@ -10,6 +10,22 @@ html
     padding: 0;
 }
 
+a, a:visited
+{
+    color: #00E0FF;
+    text-decoration: none;
+}
+
+a:hover
+{
+    color: #BBF7FF;
+}
+
+a:active
+{
+    color: #0090A4;
+}
+
 .error-text
 {
     color: #FF0000;

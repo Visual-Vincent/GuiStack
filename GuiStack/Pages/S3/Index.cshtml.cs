@@ -11,28 +11,18 @@ namespace GuiStack.Pages.S3
 {
     public class IndexModel : PageModel
     {
-        private IS3Repository s3BucketRepository;
+        public IS3Repository S3Repository { get; }
 
         [BindProperty(SupportsGet = true)]
         public string Bucket { get; set; }
 
-        public IndexModel(IS3Repository s3BucketRepository)
+        public IndexModel(IS3Repository s3Repository)
         {
-            this.s3BucketRepository = s3BucketRepository;
+            this.S3Repository = s3Repository;
         }
 
         public void OnGet()
         {
-        }
-
-        public async Task<IEnumerable<S3Bucket>> GetBuckets()
-        {
-            return await s3BucketRepository.GetBucketsAsync();
-        }
-
-        public async Task<IEnumerable<S3Object>> GetBucketContents(string bucket)
-        {
-            return await s3BucketRepository.GetObjectsAsync(bucket);
         }
     }
 }

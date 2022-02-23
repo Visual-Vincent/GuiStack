@@ -23,11 +23,11 @@ else
     {
         if(string.IsNullOrWhiteSpace(Model.Bucket))
         {
-            await Html.RenderPartialAsync("~/Pages/S3/_BucketsTable.cshtml", await Model.GetBuckets());
+            await Html.RenderPartialAsync("~/Pages/S3/_BucketsTable.cshtml", await Model.S3Repository.GetBucketsAsync());
         }
         else
         {
-            await Html.RenderPartialAsync("~/Pages/S3/_ObjectsTable.cshtml", await Model.GetBucketContents(Model.Bucket));
+            await Html.RenderPartialAsync("~/Pages/S3/_ObjectsTable.cshtml", await Model.S3Repository.GetObjectsAsync(Model.Bucket));
         }
     }
     catch(AmazonS3Exception ex)

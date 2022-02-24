@@ -102,3 +102,40 @@ table.gs-list th, table.gs-list td
     border: 1px solid rgba(255, 255, 255, 0.5);
     border-collapse: collapse;
 }
+
+.gs-icons
+{
+    display: flex;
+    flex-wrap: wrap;
+    align-content: center;
+    justify-content: center;
+    align-items: center;
+}
+
+.gs-icons a
+{
+    display: block;
+    height: 21px;
+    font-size: 21px;
+    text-align: center;
+    padding: 2px 4px 2px 4px;
+}
+
+.gs-icons a,
+.gs-icons a:visited
+{
+    color: #FFFFFF;
+    text-decoration: none;
+}
+
+.gs-icons a.red:hover  { color: #FF7F7F; }
+.gs-icons a.red:active { color: #FF0000; }
+
+.gs-icons a.blue:hover  { color: #7FBFFF; }
+.gs-icons a.blue:active { color: #007FFF; }
+
+.gs-icons a.green:hover  { color: #80DFA3; }
+.gs-icons a.green:active { color: #00C048; }
+
+.gs-icons a.purple:hover  { color: #CE7FFF; }
+.gs-icons a.purple:active { color: #A000FF; }

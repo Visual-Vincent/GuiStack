@@ -16,7 +16,7 @@
         {
             var obj = s3obj.Object;
             <tr>
-                <td><a href="/S3/@s3obj.BucketName?handler=Download&object=@Uri.EscapeDataString(obj.Name)">@obj.Name</a></td>
+                <td><a asp-controller="Buckets" asp-action="Download" asp-route-bucket="@s3obj.BucketName" asp-route-objectName="@obj.Name">@obj.Name</a></td>
                 <td>@obj.Size.ToFormattedFileSize()</td>
                 <td>@obj.LastModified</td>
                 <td>

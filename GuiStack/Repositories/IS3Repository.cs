@@ -36,6 +36,9 @@ namespace GuiStack.Repositories
 
         public async Task<IEnumerable<S3Object>> GetObjectsAsync(string bucketName)
         {
+            if(bucketName == null)
+                throw new ArgumentNullException(nameof(bucketName));
+
             using var s3 = authenticator.Authenticate();
             var response = await s3.ListObjectsV2Async(new Amazon.S3.Model.ListObjectsV2Request() {
                 BucketName = bucketName
@@ -53,6 +56,12 @@ namespace GuiStack.Repositories
 
         public async Task<Amazon.S3.Model.GetObjectResponse> GetObjectAsync(string bucketName, string objectName)
         {
+            if(bucketName == null)
+                throw new ArgumentNullException(nameof(bucketName));
+
+            if(objectName == null)
+                throw new ArgumentNullException(nameof(objectName));
+
             using var s3 = authenticator.Authenticate();
             var response = await s3.GetObjectAsync(bucketName, objectName);
             return response;

@@ -4,8 +4,10 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+using Amazon.S3.Util;
 using GuiStack.Authentication.AWS;
 using GuiStack.Models;
+using GuiStack.Services;
 
 namespace GuiStack.Repositories
 {
@@ -19,6 +21,12 @@ namespace GuiStack.Repositories
     public class S3Repository : IS3Repository
     {
         private S3Authenticator authenticator = new S3Authenticator();
+        private IS3UrlBuilder urlBuilder;
+
+        public S3Repository(IS3UrlBuilder urlBuilder)
+        {
+            this.urlBuilder = urlBuilder;
+        }
 
         public async Task<IEnumerable<S3Bucket>> GetBucketsAsync()
         {
@@ -50,7 +58,9 @@ namespace GuiStack.Repositories
             return response.S3Objects.Select(obj => new S3Object() {
                 Name = obj.Key,
                 Size = obj.Size,
-                LastModified = obj.LastModified
+                LastModified = obj.LastModified,
+                S3Uri = urlBuilder.GetS3Uri(s3, obj.BucketName, obj.Key),
+                Url = urlBuilder.GetHttpUrl(s3, obj.BucketName, obj.Key)
             });
         }
 

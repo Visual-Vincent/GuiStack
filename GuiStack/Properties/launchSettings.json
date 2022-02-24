@@ -13,6 +13,7 @@
       "launchBrowser": true,
       "environmentVariables": {
         "AWS_SECRET_ACCESS_KEY": "localstack",
+        "AWS_S3_FORCE_PATH_STYLE": "true",
         "AWS_ACCESS_KEY_ID": "localstack",
         "ASPNETCORE_ENVIRONMENT": "Development",
         "AWS_S3_ENDPOINT_URL": "http://localhost:4566",

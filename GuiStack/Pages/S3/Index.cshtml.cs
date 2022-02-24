@@ -1,7 +1,4 @@
 using System;
-using System.Net;
-using System.Net.Mime;
-using System.Threading.Tasks;
 using GuiStack.Repositories;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;

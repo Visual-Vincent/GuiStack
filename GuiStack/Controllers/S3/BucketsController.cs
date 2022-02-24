@@ -1,8 +1,10 @@
 ﻿using System;
+using System.IO;
 using System.Net;
 using System.Net.Mime;
 using System.Threading.Tasks;
 using Amazon.S3;
+using GuiStack.Extensions;
 using GuiStack.Repositories;
 using Microsoft.AspNetCore.Mvc;
 
@@ -52,8 +54,13 @@ namespace GuiStack.Controllers.S3
         }
 
         [HttpGet("{bucket}")]
-        public async Task<ActionResult> GetObjects(string bucket)
+        public async Task<ActionResult> GetObjects([FromRoute] string bucket)
         {
+            if(string.IsNullOrWhiteSpace(bucket))
+                return StatusCode((int)HttpStatusCode.NotFound);
+
+            bucket = bucket.DecodeRouteParameter();
+
             try
             {
                 var objects = await s3Repository.GetObjectsAsync(bucket);
@@ -66,13 +73,16 @@ namespace GuiStack.Controllers.S3
         }
 
         [HttpGet("{bucket}/download/{objectName}")]
-        public async Task<ActionResult> Download(string bucket, string objectName)
+        public async Task<ActionResult> Download([FromRoute] string bucket, [FromRoute] string objectName)
         {
+            if(string.IsNullOrWhiteSpace(bucket) || string.IsNullOrWhiteSpace(objectName))
+                return StatusCode((int)HttpStatusCode.NotFound);
+
+            bucket = bucket.DecodeRouteParameter();
+            objectName = objectName.DecodeRouteParameter();
+
             try
             {
-                if(string.IsNullOrWhiteSpace(bucket) || string.IsNullOrWhiteSpace(objectName))
-                    return StatusCode((int)HttpStatusCode.NotFound);
-
                 using var obj = await s3Repository.GetObjectAsync(bucket, objectName);
                 using var stream = obj.ResponseStream;
 
@@ -81,7 +91,7 @@ namespace GuiStack.Controllers.S3
 
                 var contentDisposition = new ContentDisposition
                 {
-                    FileName = objectName,
+                    FileName = Path.GetFileName(objectName),
                     Inline = false
                 };
 

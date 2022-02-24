@@ -10,7 +10,7 @@ namespace GuiStack.Authentication.AWS
         {
             var config = new AmazonS3Config() {
                 MaxErrorRetry = 1,
-                ForcePathStyle = true, // LocalStack support
+                ForcePathStyle = EnvironmentVariables.S3ForcePathStyle // Should be True for LocalStack support
             };
 
             string endpointUrl = Environment.GetEnvironmentVariable("AWS_S3_ENDPOINT_URL");

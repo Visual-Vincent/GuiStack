@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using GuiStack.Repositories;
+using GuiStack.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -27,6 +28,7 @@ namespace GuiStack
             services.AddRazorPages();
             services.AddControllers();
             services.AddScoped<IS3Repository, S3Repository>();
+            services.AddSingleton<IS3UrlBuilder, S3UrlBuilder>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

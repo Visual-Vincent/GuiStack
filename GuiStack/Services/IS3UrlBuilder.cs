@@ -1,5 +1,6 @@
 ﻿using System;
 using Amazon.S3;
+using GuiStack.Extensions;
 
 namespace GuiStack.Services
 {
@@ -19,7 +20,7 @@ namespace GuiStack.Services
                 throw new ArgumentNullException(nameof(client));
 
             bucketName = Uri.EscapeDataString(bucketName);
-            objectName = Uri.EscapeDataString(objectName);
+            objectName = Uri.EscapeDataString(objectName).DecodeRouteParameter();
 
             Uri url = new Uri(client.Config.DetermineServiceURL());
 
@@ -34,7 +35,10 @@ namespace GuiStack.Services
             if(client == null)
                 throw new ArgumentNullException(nameof(client));
 
-            return string.Format(S3UriFormat, Uri.EscapeDataString(bucketName), Uri.EscapeDataString(objectName));
+            bucketName = Uri.EscapeDataString(bucketName);
+            objectName = Uri.EscapeDataString(objectName).DecodeRouteParameter();
+
+            return string.Format(S3UriFormat, bucketName, objectName);
         }
     }
 }

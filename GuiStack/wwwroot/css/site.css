@@ -31,6 +31,42 @@ a:active
     color: #FF0000;
 }
 
+#gs-error-banner
+{
+    display: none;
+    position: relative;
+    box-sizing: border-box;
+    padding: 12px;
+    margin: 8px auto;
+    background: #F8D7DA;
+    border: 1px solid #9F121E;
+    border-radius: 8px;
+    box-shadow: #9f121e 0px 0px 20px 4px;
+    color: #9F121E;
+    width: 1280px;
+}
+
+#gs-error-banner.visible
+{
+    display: block;
+}
+
+#gs-error-banner .title
+{
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+#gs-error-banner .close-btn
+{
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    cursor: pointer;
+    width: 16px;
+    height: 16px;
+}
+
 .gs-main-container
 {
     display: flex;

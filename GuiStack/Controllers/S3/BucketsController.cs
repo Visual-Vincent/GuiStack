@@ -29,10 +29,10 @@ namespace GuiStack.Controllers.S3
             if(ex is AmazonS3Exception s3ex)
             {
                 if(s3ex.StatusCode == HttpStatusCode.NotFound)
-                    return StatusCode((int)s3ex.StatusCode);
+                    return StatusCode((int)s3ex.StatusCode, s3ex.Message);
 
                 Console.Error.WriteLine(s3ex);
-                return StatusCode((int)HttpStatusCode.InternalServerError);
+                return StatusCode((int)HttpStatusCode.InternalServerError, ex.Message);
             }
 
             Console.Error.WriteLine(ex);
@@ -53,17 +53,17 @@ namespace GuiStack.Controllers.S3
             }
         }
 
-        [HttpGet("{bucket}")]
-        public async Task<ActionResult> GetObjects([FromRoute] string bucket)
+        [HttpGet("{bucketName}")]
+        public async Task<ActionResult> GetObjects([FromRoute] string bucketName)
         {
-            if(string.IsNullOrWhiteSpace(bucket))
-                return StatusCode((int)HttpStatusCode.NotFound);
+            if(string.IsNullOrWhiteSpace(bucketName))
+                return StatusCode((int)HttpStatusCode.BadRequest);
 
-            bucket = bucket.DecodeRouteParameter();
+            bucketName = bucketName.DecodeRouteParameter();
 
             try
             {
-                var objects = await s3Repository.GetObjectsAsync(bucket);
+                var objects = await s3Repository.GetObjectsAsync(bucketName);
                 return Json(objects);
             }
             catch(Exception ex)
@@ -72,18 +72,18 @@ namespace GuiStack.Controllers.S3
             }
         }
 
-        [HttpGet("{bucket}/download/{objectName}")]
-        public async Task<ActionResult> Download([FromRoute] string bucket, [FromRoute] string objectName)
+        [HttpGet("{bucketName}/download/{objectName}")]
+        public async Task<ActionResult> Download([FromRoute] string bucketName, [FromRoute] string objectName)
         {
-            if(string.IsNullOrWhiteSpace(bucket) || string.IsNullOrWhiteSpace(objectName))
-                return StatusCode((int)HttpStatusCode.NotFound);
+            if(string.IsNullOrWhiteSpace(bucketName) || string.IsNullOrWhiteSpace(objectName))
+                return StatusCode((int)HttpStatusCode.BadRequest);
 
-            bucket = bucket.DecodeRouteParameter();
+            bucketName = bucketName.DecodeRouteParameter();
             objectName = objectName.DecodeRouteParameter();
 
             try
             {
-                using var obj = await s3Repository.GetObjectAsync(bucket, objectName);
+                using var obj = await s3Repository.GetObjectAsync(bucketName, objectName);
                 using var stream = obj.ResponseStream;
 
                 Response.ContentLength = obj.ContentLength;
@@ -106,6 +106,26 @@ namespace GuiStack.Controllers.S3
                 }
 
                 return new EmptyResult();
+            }
+            catch(Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+        [HttpDelete("{bucketName}/{objectName}")]
+        public async Task<ActionResult> DeleteObject([FromRoute] string bucketName, [FromRoute] string objectName)
+        {
+            if(string.IsNullOrWhiteSpace(bucketName) || string.IsNullOrWhiteSpace(objectName))
+                return StatusCode((int)HttpStatusCode.BadRequest);
+
+            bucketName = bucketName.DecodeRouteParameter();
+            objectName = objectName.DecodeRouteParameter();
+
+            try
+            {
+                await s3Repository.DeleteObjectAsync(bucketName, objectName);
+                return Ok();
             }
             catch(Exception ex)
             {

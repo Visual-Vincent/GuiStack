@@ -16,18 +16,49 @@
         {
             var obj = s3obj.Object;
             <tr>
-                <td><a asp-controller="Buckets" asp-action="Download" asp-route-bucket="@s3obj.BucketName" asp-route-objectName="@obj.Name">@obj.Name</a></td>
+                <td><a asp-controller="Buckets" asp-action="Download" asp-route-bucketName="@s3obj.BucketName" asp-route-objectName="@obj.Name">@obj.Name</a></td>
                 <td>@obj.Size.ToFormattedFileSize()</td>
                 <td>@obj.LastModified</td>
                 <td>
                     <div class="gs-icons">
-                        <a href="/" class="blue" title="Rename"><i class="fa-solid fa-i-cursor"></i></a>
-                        <a href="javascript:void(0)" class="purple" title="Copy S3 URI" onclick="navigator.clipboard.writeText('@obj.S3Uri')"><i class="fa-solid fa-link"></i></a>
-                        <a href="javascript:void(0)" class="green" title="Copy URL" onclick="navigator.clipboard.writeText('@obj.Url')"><i class="bi bi-globe"></i></a>
-                        <a href="/" class="red" title="Delete"><i class="fa-solid fa-trash-can"></i></a>
+                        <a href="javascript:void(0)" class="blue lnk-s3-rename" title="Rename">
+                            <i class="fa-solid fa-i-cursor"></i>
+                        </a>
+                        <a href="javascript:void(0)" class="purple" title="Copy S3 URI" onclick="navigator.clipboard.writeText('@obj.S3Uri')">
+                            <i class="fa-solid fa-link"></i>
+                        </a>
+                        <a href="javascript:void(0)" class="green" title="Copy URL" onclick="navigator.clipboard.writeText('@obj.Url')">
+                            <i class="bi bi-globe"></i>
+                        </a>
+                        <a href="javascript:void(0)" class="red lnk-s3-delete" title="Delete" data-delete-url="@Url.Action("DeleteObject", "Buckets", new { bucketName = s3obj.BucketName, objectName = obj.Name })">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </a>
                     </div>
                 </td>
             </tr>
         }
     </tbody>
 </table>
+
+<script>
+    $(".lnk-s3-delete").click(s3_DeleteObject);
+
+    async function s3_DeleteObject(event)
+    {
+        try
+        {
+            var url = event.currentTarget.getAttribute("data-delete-url");
+            var response = await fetch(url, { method: "DELETE" });
+
+            if(!response.ok) {
+                throw new Error("Failed to delete S3 object: Server returned HTTP status " + response.status);
+            }
+
+            window.location.reload(true);
+        }
+        catch(error)
+        {
+            gs_DisplayError(error);
+        }
+    }
+</script>

@@ -1,4 +1,10 @@
-﻿// Please see documentation at https://docs.microsoft.com/aspnet/core/client-side/bundling-and-minification
-// for details on configuring this project to bundle and minify static web assets.
+﻿function gs_DisplayError(message)
+{
+    document.getElementById("gs-error-banner").classList.add("visible");
+    document.getElementById("gs-error-text").innerText = message;
+}
 
-// Write your Javascript code.
+function gs_CloseError()
+{
+    document.getElementById("gs-error-banner").classList.remove("visible");
+}

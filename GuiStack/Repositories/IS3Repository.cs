@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
-using Amazon.S3.Util;
 using GuiStack.Authentication.AWS;
+using GuiStack.Extensions;
 using GuiStack.Models;
 using GuiStack.Services;
 
@@ -13,6 +12,7 @@ namespace GuiStack.Repositories
 {
     public interface IS3Repository
     {
+        Task DeleteObjectAsync(string bucketName, string objectName);
         Task<IEnumerable<S3Bucket>> GetBucketsAsync();
         Task<IEnumerable<S3Object>> GetObjectsAsync(string bucketName);
         Task<Amazon.S3.Model.GetObjectResponse> GetObjectAsync(string bucketName, string objectName);
@@ -28,12 +28,21 @@ namespace GuiStack.Repositories
             this.urlBuilder = urlBuilder;
         }
 
+        public async Task DeleteObjectAsync(string bucketName, string objectName)
+        {
+            using var s3 = authenticator.Authenticate();
+            var response = await s3.DeleteObjectAsync(bucketName, objectName);
+
+            if(!response.HttpStatusCode.IsSuccessful())
+                throw new WebException($"Amazon S3 returned status code {(int)response.HttpStatusCode}");
+        }
+
         public async Task<IEnumerable<S3Bucket>> GetBucketsAsync()
         {
             using var s3 = authenticator.Authenticate();
             var response = await s3.ListBucketsAsync();
 
-            if(response.HttpStatusCode != HttpStatusCode.OK)
+            if(!response.HttpStatusCode.IsSuccessful())
                 throw new WebException($"Amazon S3 returned status code {(int)response.HttpStatusCode}");
 
             return response.Buckets.Select(b => new S3Bucket() {
@@ -52,7 +61,7 @@ namespace GuiStack.Repositories
                 BucketName = bucketName
             });
 
-            if(response.HttpStatusCode != HttpStatusCode.OK)
+            if(!response.HttpStatusCode.IsSuccessful())
                 throw new WebException($"Amazon S3 returned status code {(int)response.HttpStatusCode}");
 
             return response.S3Objects.Select(obj => new S3Object() {

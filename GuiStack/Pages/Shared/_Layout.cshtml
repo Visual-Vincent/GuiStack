@@ -8,8 +8,15 @@
     <link rel="stylesheet" href="~/css/site.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
 </head>
     <body>
+        <div id="gs-error-banner">
+            <div class="close-btn" onclick="gs_CloseError();"><i class="fa-solid fa-xmark"></i></div>
+            <div class="title"><i class="fa-solid fa-circle-xmark"></i> An error occurred</div>
+            <div id="gs-error-text"></div>
+        </div>
+
         <div class="gs-main-container">
             <header>
                 <h1 style="text-align: center">GuiStack</h1>

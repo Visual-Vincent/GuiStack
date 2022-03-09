@@ -2,6 +2,16 @@
 @using GuiStack.Extensions;
 @model IEnumerable<S3ObjectModel>
 
+<div id="deleteS3ObjectModal" class="cssWindow dark backdropblur text-center">
+    <div class="closeWindowButton"><a href="javascript:void(0)" onclick="closeWindow('deleteS3ObjectModal')">×</a></div>
+
+    <h2 class="title">Are you sure you want to delete <span class="object-name" style="color: #FF8000"></span>?</h2>
+    <p>This cannot be undone!</p>
+    <div class="text-center">
+        <button class="yes-button">Yes</button>&nbsp;<button onclick="closeWindow('deleteS3ObjectModal')">No</button>
+    </div>
+</div>
+
 <table class="gs-list">
     <thead>
         <tr>
@@ -30,7 +40,7 @@
                         <a href="javascript:void(0)" class="green" title="Copy URL" onclick="navigator.clipboard.writeText('@obj.Url')">
                             <i class="bi bi-globe"></i>
                         </a>
-                        <a href="javascript:void(0)" class="red lnk-s3-delete" title="Delete" data-delete-url="@Url.Action("DeleteObject", "Buckets", new { bucketName = s3obj.BucketName, objectName = obj.Name })">
+                        <a href="javascript:void(0)" class="red lnk-s3-delete" title="Delete" data-object-name="@obj.Name" data-delete-url="@Url.Action("DeleteObject", "Buckets", new { bucketName = s3obj.BucketName, objectName = obj.Name })">
                             <i class="fa-solid fa-trash-can"></i>
                         </a>
                     </div>
@@ -41,7 +51,20 @@
 </table>
 
 <script>
-    $(".lnk-s3-delete").click(s3_DeleteObject);
+    $(".lnk-s3-delete").click(s3_DeleteObjectPrompt);
+    $("#deleteS3ObjectModal .yes-button").click(s3_DeleteObject);
+
+    function s3_DeleteObjectPrompt(event)
+    {
+        var objNameElement = document.querySelector("#deleteS3ObjectModal .title .object-name");
+        var objName = event.currentTarget.getAttribute("data-object-name")
+        var deleteUrl = event.currentTarget.getAttribute("data-delete-url");
+        var yesButton = document.querySelector("#deleteS3ObjectModal .yes-button");
+
+        objNameElement.innerText = objName;
+        yesButton.setAttribute("data-delete-url", deleteUrl);
+        showWindow("deleteS3ObjectModal");
+    }
 
     async function s3_DeleteObject(event)
     {

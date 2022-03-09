@@ -28,6 +28,7 @@ namespace GuiStack
             services.AddRazorPages();
             services.AddControllers();
             services.AddScoped<IS3Repository, S3Repository>();
+            services.AddScoped<ISQSRepository, SQSRepository>();
             services.AddSingleton<IS3UrlBuilder, S3UrlBuilder>();
         }
 

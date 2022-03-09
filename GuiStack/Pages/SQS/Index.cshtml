@@ -1,0 +1,66 @@
+﻿@page "{queue?}"
+
+@using System.Net
+@using Amazon.SQS
+@model GuiStack.Pages.SQS.IndexModel
+
+@{
+    ViewData["Title"] = "SQS Queues";
+}
+
+@if(!string.IsNullOrWhiteSpace(Model.Queue))
+{
+    <h1>@Model.Queue</h1>
+}
+else
+{
+    <h1>SQS Queues</h1>
+}
+
+<div id="list-container">
+    @try
+    {
+        if(string.IsNullOrWhiteSpace(Model.Queue))
+        {
+            await Html.RenderPartialAsync("~/Pages/SQS/_QueuesTable.cshtml", await Model.SQSRepository.GetQueuesAsync());
+        }
+        else
+        {
+            // TODO
+            //await Html.RenderPartialAsync("~/Pages/SQS/_ObjectsTable.cshtml", null);
+        }
+    }
+    catch(AmazonSQSException ex)
+    {
+        if(ex.StatusCode == HttpStatusCode.NotFound)
+        {
+            <h2 class="error-text">Queue not found</h2>
+        }
+        else
+        {
+            if(string.IsNullOrWhiteSpace(Model.Queue))
+            {
+                <h2 class="error-text">Failed to fetch queues:</h2>
+            }
+            else
+            {
+                <h2 class="error-text">Failed to fetch queue contents:</h2>
+            }
+
+            <p class="error-text">@ex.Message</p>
+        }
+    }
+    catch(Exception ex)
+    {
+        if(string.IsNullOrWhiteSpace(Model.Queue))
+        {
+            <h2 class="error-text">Failed to fetch queues:</h2>
+        }
+        else
+        {
+            <h2 class="error-text">Failed to fetch queue contents:</h2>
+        }
+
+        <p class="error-text">@ex.Message</p>
+    }
+</div>

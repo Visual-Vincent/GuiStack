@@ -17,6 +17,7 @@
         "AWS_ACCESS_KEY_ID": "localstack",
         "ASPNETCORE_ENVIRONMENT": "Development",
         "AWS_S3_ENDPOINT_URL": "http://localhost:4566",
+        "AWS_SQS_ENDPOINT_URL": "http://localhost:4566",
         "ASPNETCORE_HOSTINGSTARTUPASSEMBLIES": "Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation"
       }
     },

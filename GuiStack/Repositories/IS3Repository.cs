@@ -38,17 +38,15 @@ namespace GuiStack.Repositories
             using var s3 = authenticator.Authenticate();
             var response = await s3.DeleteObjectAsync(bucketName, objectName);
 
-            if(!response.HttpStatusCode.IsSuccessful())
-                throw new WebException($"Amazon S3 returned status code {(int)response.HttpStatusCode}");
+            response.ThrowIfUnsuccessful("S3");
         }
 
         public async Task<IEnumerable<S3Bucket>> GetBucketsAsync()
         {
             using var s3 = authenticator.Authenticate();
             var response = await s3.ListBucketsAsync();
-
-            if(!response.HttpStatusCode.IsSuccessful())
-                throw new WebException($"Amazon S3 returned status code {(int)response.HttpStatusCode}");
+            
+            response.ThrowIfUnsuccessful("S3");
 
             return response.Buckets.Select(b => new S3Bucket() {
                 Name = b.BucketName,
@@ -66,8 +64,7 @@ namespace GuiStack.Repositories
                 BucketName = bucketName
             });
 
-            if(!response.HttpStatusCode.IsSuccessful())
-                throw new WebException($"Amazon S3 returned status code {(int)response.HttpStatusCode}");
+            response.ThrowIfUnsuccessful("S3");
 
             return response.S3Objects.Select(obj => new S3Object() {
                 Name = obj.Key,
@@ -108,15 +105,12 @@ namespace GuiStack.Repositories
                 return;
 
             using var s3 = authenticator.Authenticate();
-            var copyResponse = await s3.CopyObjectAsync(bucketName, objectName, bucketName, newName);
 
-            if(!copyResponse.HttpStatusCode.IsSuccessful())
-                    throw new WebException($"Amazon S3 copy returned status code {(int)copyResponse.HttpStatusCode}");
+            var copyResponse = await s3.CopyObjectAsync(bucketName, objectName, bucketName, newName);
+            copyResponse.ThrowIfUnsuccessful("S3 copy");
 
             var deleteResponse = await s3.DeleteObjectAsync(bucketName, objectName);
-
-            if(!deleteResponse.HttpStatusCode.IsSuccessful())
-                throw new WebException($"Amazon S3 delete returned status code {(int)deleteResponse.HttpStatusCode}");
+            deleteResponse.ThrowIfUnsuccessful("S3 delete");
         }
     }
 }

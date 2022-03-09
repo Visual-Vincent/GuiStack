@@ -1,0 +1,18 @@
+﻿@using GuiStack.Models; 
+@model IEnumerable<SQSQueue>
+
+<table class="gs-list">
+    <thead>
+        <tr>
+            <th>Name</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach(var queue in Model ?? Enumerable.Empty<SQSQueue>())
+        {
+            <tr>
+                <td><a href="/SQS/@queue.Name">@queue.Name</a></td>
+            </tr>
+        }
+    </tbody>
+</table>

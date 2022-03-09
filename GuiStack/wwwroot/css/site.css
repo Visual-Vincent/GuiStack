@@ -31,6 +31,10 @@ a:active
     color: #FF0000;
 }
 
+.text-left   { text-align: left; }
+.text-center { text-align: center; }
+.text-right  { text-align: right; }
+
 #gs-error-banner
 {
     display: none;
@@ -175,3 +179,38 @@ table.gs-list th, table.gs-list td
 
 .gs-icons a.purple:hover  { color: #CE7FFF; }
 .gs-icons a.purple:active { color: #A000FF; }
+
+.cssWindow .closeWindowButton
+{
+    position: relative;
+}
+
+.cssWindow .closeWindowButton > a:first-child
+{
+    position: absolute;
+    top: -11px;
+    right: 0px;
+    font-size: 32px;
+    color: #000000;
+    text-decoration: none;
+}
+
+.cssWindow.dark .closeWindowButton > a:first-child
+{
+    position: absolute;
+    top: -11px;
+    right: 0px;
+    font-size: 32px;
+    color: #FFFFFF;
+    text-decoration: none;
+}
+
+.cssWindow .closeWindowButton > a:first-child:hover
+{
+    color: #FF7F7F;
+}
+
+.cssWindow .closeWindowButton > a:first-child:active
+{
+    color: #FF0000;
+}

@@ -26,8 +26,8 @@ else
         }
         else
         {
-            // TODO
-            //await Html.RenderPartialAsync("~/Pages/SQS/_ObjectsTable.cshtml", null);
+            var queueUrl = await Model.SQSRepository.GetQueueUrlAsync(Model.Queue);
+            await Html.RenderPartialAsync("~/Pages/SQS/_QueueInfo.cshtml", await Model.SQSRepository.GetQueueAttributesAsync(queueUrl));
         }
     }
     catch(AmazonSQSException ex)

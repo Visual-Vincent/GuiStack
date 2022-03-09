@@ -132,5 +132,26 @@ namespace GuiStack.Controllers.S3
                 return HandleException(ex);
             }
         }
+
+        [HttpPost("{bucketName}/rename/{objectName}/{newName}")]
+        public async Task<ActionResult> RenameObject([FromRoute] string bucketName, [FromRoute] string objectName, [FromRoute] string newName)
+        {
+            if(string.IsNullOrWhiteSpace(bucketName) || string.IsNullOrWhiteSpace(objectName) || string.IsNullOrWhiteSpace(newName))
+                return StatusCode((int)HttpStatusCode.BadRequest);
+
+            bucketName = bucketName.DecodeRouteParameter();
+            objectName = objectName.DecodeRouteParameter();
+            newName = newName.DecodeRouteParameter();
+
+            try
+            {
+                await s3Repository.RenameObjectAsync(bucketName, objectName, newName);
+                return Ok();
+            }
+            catch(Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
     }
 }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using GuiStack.Authentication.AWS;
 using GuiStack.Extensions;
@@ -16,10 +17,14 @@ namespace GuiStack.Repositories
         Task<IEnumerable<S3Bucket>> GetBucketsAsync();
         Task<IEnumerable<S3Object>> GetObjectsAsync(string bucketName);
         Task<Amazon.S3.Model.GetObjectResponse> GetObjectAsync(string bucketName, string objectName);
+        Task RenameObjectAsync(string bucketName, string objectName, string newName);
     }
 
     public class S3Repository : IS3Repository
     {
+        // https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-keys.html
+        private static readonly Regex InvalidObjectCharsRegex = new Regex("[^A-Z0-9!._*'()-]", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+
         private S3Authenticator authenticator = new S3Authenticator();
         private IS3UrlBuilder urlBuilder;
 
@@ -84,6 +89,34 @@ namespace GuiStack.Repositories
             using var s3 = authenticator.Authenticate();
             var response = await s3.GetObjectAsync(bucketName, objectName);
             return response;
+        }
+
+        public async Task RenameObjectAsync(string bucketName, string objectName, string newName)
+        {
+            if(bucketName == null)
+                throw new ArgumentNullException(nameof(bucketName));
+
+            if(objectName == null)
+                throw new ArgumentNullException(nameof(objectName));
+
+            if(newName == null)
+                throw new ArgumentNullException(nameof(newName));
+
+            newName = InvalidObjectCharsRegex.Replace(newName, "_");
+
+            if(objectName == newName)
+                return;
+
+            using var s3 = authenticator.Authenticate();
+            var copyResponse = await s3.CopyObjectAsync(bucketName, objectName, bucketName, newName);
+
+            if(!copyResponse.HttpStatusCode.IsSuccessful())
+                    throw new WebException($"Amazon S3 copy returned status code {(int)copyResponse.HttpStatusCode}");
+
+            var deleteResponse = await s3.DeleteObjectAsync(bucketName, objectName);
+
+            if(!deleteResponse.HttpStatusCode.IsSuccessful())
+                throw new WebException($"Amazon S3 delete returned status code {(int)deleteResponse.HttpStatusCode}");
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿@using GuiStack.Models; 
+﻿@using GuiStack.Models;
 @using GuiStack.Extensions;
 @model IEnumerable<S3ObjectModel>
 
@@ -7,8 +7,20 @@
 
     <h2 class="title">Are you sure you want to delete <span class="object-name" style="color: #FF8000"></span>?</h2>
     <p>This cannot be undone!</p>
+
     <div class="text-center">
         <button class="yes-button">Yes</button>&nbsp;<button onclick="closeWindow('deleteS3ObjectModal')">No</button>
+    </div>
+</div>
+
+<div id="renameS3ObjectModal" class="cssWindow dark backdropblur text-center">
+    <div class="closeWindowButton"><a href="javascript:void(0)" onclick="closeWindow('renameS3ObjectModal')">×</a></div>
+
+    <h2 class="title">Rename object</h2>
+    <p><input type="text" class="name-textbox text-center" maxlength="1024" style="width: 400px" /></p>
+
+    <div class="text-center">
+        <button class="ok-button" data-rename-url="@Url.Action("RenameObject", "Buckets", new { bucketName = Model.FirstOrDefault()?.BucketName ?? "", objectName = "__OLDNAME__", newName = "__NEWNAME__" })">OK</button>
     </div>
 </div>
 
@@ -31,7 +43,7 @@
                 <td>@obj.LastModified</td>
                 <td>
                     <div class="gs-icons">
-                        <a href="javascript:void(0)" class="blue lnk-s3-rename" title="Rename">
+                        <a href="javascript:void(0)" class="blue lnk-s3-rename" title="Rename" data-object-name="@obj.Name">
                             <i class="fa-solid fa-i-cursor"></i>
                         </a>
                         <a href="javascript:void(0)" class="purple" title="Copy S3 URI" onclick="navigator.clipboard.writeText('@obj.S3Uri')">
@@ -54,16 +66,30 @@
     $(".lnk-s3-delete").click(s3_DeleteObjectPrompt);
     $("#deleteS3ObjectModal .yes-button").click(s3_DeleteObject);
 
+    $(".lnk-s3-rename").click(s3_RenameObjectPrompt);
+    $("#renameS3ObjectModal .ok-button").click(s3_RenameObject);
+
     function s3_DeleteObjectPrompt(event)
     {
         var objNameElement = document.querySelector("#deleteS3ObjectModal .title .object-name");
-        var objName = event.currentTarget.getAttribute("data-object-name")
+        var objName = event.currentTarget.getAttribute("data-object-name");
         var deleteUrl = event.currentTarget.getAttribute("data-delete-url");
         var yesButton = document.querySelector("#deleteS3ObjectModal .yes-button");
 
         objNameElement.innerText = objName;
         yesButton.setAttribute("data-delete-url", deleteUrl);
         showWindow("deleteS3ObjectModal");
+    }
+
+    function s3_RenameObjectPrompt(event)
+    {
+        var objName = event.currentTarget.getAttribute("data-object-name");
+        var okButton = document.querySelector("#renameS3ObjectModal .ok-button");
+        var nameTextBox = document.querySelector("#renameS3ObjectModal .name-textbox");
+
+        nameTextBox.value = objName;
+        okButton.setAttribute("data-object-name", objName);
+        showWindow("renameS3ObjectModal");
     }
 
     async function s3_DeleteObject(event)
@@ -83,5 +109,34 @@
         {
             gs_DisplayError(error);
         }
+
+        closeWindow("deleteS3ObjectModal");
+    }
+
+    async function s3_RenameObject(event)
+    {
+        try
+        {
+            var oldName = encodeURIComponent(event.currentTarget.getAttribute("data-object-name"));
+            var newName = encodeURIComponent(document.querySelector("#renameS3ObjectModal .name-textbox").value);
+
+            var url = event.currentTarget.getAttribute("data-rename-url")
+                .replace("__OLDNAME__", oldName)
+                .replace("__NEWNAME__", newName);
+
+            var response = await fetch(url, { method: "POST" });
+
+            if(!response.ok) {
+                throw new Error("Failed to rename S3 object: Server returned HTTP status " + response.status);
+            }
+
+            window.location.reload(true);
+        }
+        catch(error)
+        {
+            gs_DisplayError(error);
+        }
+
+        closeWindow("renameS3ObjectModal");
     }
 </script>

@@ -3,25 +3,25 @@
 @model IEnumerable<S3ObjectModel>
 
 <div id="deleteS3ObjectModal" class="cssWindow dark backdropblur text-center">
-    <div class="closeWindowButton"><a no-href onclick="closeWindow('deleteS3ObjectModal')">×</a></div>
+    <div class="closeWindowButton"><a no-href onclick="closeParentWindow(event)">×</a></div>
 
     <h2 class="title">Are you sure you want to delete <span class="object-name" style="color: #FF8000"></span>?</h2>
     <p>This cannot be undone!</p>
 
     <div class="modal-buttons text-center">
-        <button class="yes-button" data-delete-url="@Url.Action("DeleteObject", "Buckets", new { bucketName = "__BUCKETNAME__", objectName = "__OBJECTNAME__" })">Yes</button>
-        <button onclick="closeWindow('deleteS3ObjectModal')">No</button>
+        <button class="yes-button">Yes</button>
+        <button onclick="closeParentWindow(event)">No</button>
     </div>
 </div>
 
 <div id="renameS3ObjectModal" class="cssWindow dark backdropblur text-center">
-    <div class="closeWindowButton"><a no-href onclick="closeWindow('renameS3ObjectModal')">×</a></div>
+    <div class="closeWindowButton"><a no-href onclick="closeParentWindow(event)">×</a></div>
 
     <h2 class="title">Rename object</h2>
     <p><input type="text" class="name-textbox text-center" maxlength="1024" style="width: 400px" /></p>
 
     <div class="modal-buttons text-center">
-        <button class="ok-button" data-rename-url="@Url.Action("RenameObject", "Buckets", new { bucketName = "__BUCKETNAME__", objectName = "__OLDNAME__", newName = "__NEWNAME__" })">OK</button>
+        <button class="ok-button">OK</button>
     </div>
 </div>
 
@@ -72,6 +72,9 @@
     $("#deleteS3ObjectModal .yes-button").click(s3_DeleteObject);
     $("#renameS3ObjectModal .ok-button").click(s3_RenameObject);
 
+    const URL_DELETE_OBJECT = "@Url.Action("DeleteObject", "Buckets", new { bucketName = "__BUCKETNAME__", objectName = "__OBJECTNAME__" })";
+    const URL_RENAME_OBJECT = "@Url.Action("RenameObject", "Buckets", new { bucketName = "__BUCKETNAME__", objectName = "__OLDNAME__", newName = "__NEWNAME__" })";
+
     var prompt_BucketName;
     var prompt_ObjectName;
 
@@ -85,7 +88,7 @@
         catch(error)
         {
             gs_DisplayError(error);
-        } 
+        }
     }
 
     function s3_CopyUrl(event)
@@ -98,7 +101,7 @@
         catch(error)
         {
             gs_DisplayError(error);
-        } 
+        }
     }
 
     function s3_DeleteObjectPrompt(event)
@@ -137,14 +140,14 @@
         }
     }
 
-    async function s3_DeleteObject(event)
+    async function s3_DeleteObject()
     {
         try
         {
             var bucketName = encodeURIComponent(prompt_BucketName);
             var objectName = encodeURIComponent(prompt_ObjectName);
 
-            var url = event.currentTarget.getAttribute("data-delete-url")
+            var url = URL_DELETE_OBJECT
                 .replace("__BUCKETNAME__", bucketName)
                 .replace("__OBJECTNAME__", objectName);
 
@@ -164,7 +167,7 @@
         closeWindow("deleteS3ObjectModal");
     }
 
-    async function s3_RenameObject(event)
+    async function s3_RenameObject()
     {
         try
         {
@@ -172,7 +175,7 @@
             var oldName = encodeURIComponent(prompt_ObjectName);
             var newName = encodeURIComponent(document.querySelector("#renameS3ObjectModal .name-textbox").value);
 
-            var url = event.currentTarget.getAttribute("data-rename-url")
+            var url = URL_RENAME_OBJECT
                 .replace("__BUCKETNAME__", bucketName)
                 .replace("__OLDNAME__", oldName)
                 .replace("__NEWNAME__", newName);

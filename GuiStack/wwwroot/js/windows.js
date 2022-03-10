@@ -87,6 +87,28 @@ function closeWindow(element)
 }
 
 /**
+ * Closes the parent window of the clicked element.
+ * @param {Event} event The event data from the onclick event.
+ */
+function closeParentWindow(event)
+{
+    if(event === undefined || event === null) {
+        throw "'event' cannot be null!";
+    }
+    else if(!(event instanceof Event)) {
+        throw "'event' must be an event type!";
+    }
+
+    var parent = event.currentTarget;
+    while((parent = parent.parentElement) != null && !parent.classList.contains("cssWindow"));
+
+    if(parent === null)
+        throw "No parent window found!";
+
+    closeWindow(parent);
+}
+
+/**
  * Gets the Z-index of the specified element as specified through CSS.
  * @param {HTMLElement} element The element which's Z-index to get.
  */

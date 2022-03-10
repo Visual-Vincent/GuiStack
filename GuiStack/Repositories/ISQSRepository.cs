@@ -55,7 +55,7 @@ namespace GuiStack.Repositories
                 LastModifiedTimestamp = response.LastModifiedTimestamp,
                 MaximumMessageSize = response.MaximumMessageSize,
                 MessageRetentionPeriod = response.MessageRetentionPeriod,
-                QueueArn = response.QueueARN,
+                QueueARN = response.QueueARN,
                 ReceiveMessageWaitTimeSeconds = ReceiveMessageWaitTimeSeconds,
                 VisibilityTimeout = response.VisibilityTimeout,
                 FifoQueue = response.FifoQueue,

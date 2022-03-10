@@ -1,3 +1,74 @@
-﻿@using GuiStack.Models; 
+﻿@using GuiStack.Models
+@using GuiStack.Extensions 
 @model SQSQueueInfo
 
+<table class="gs-info-table">
+    <tbody>
+        <tr>
+            <td>Type</td>
+            <td>@(Model.FifoQueue ? "FIFO" : "Standard")</td>
+        </tr>
+        <tr>
+            <td>ARN</td>
+            <td>@Model.QueueARN</td>
+        </tr>
+        <tr>
+            <td>Messages available ~</td>
+            <td>@Model.ApproximateNumberOfMessages</td>
+        </tr>
+        <tr>
+            <td>Messages in flight ~</td>
+            <td>@Model.ApproximateNumberOfMessagesNotVisible</td>
+        </tr>
+        <tr>
+            <td>Delayed messages ~</td>
+            <td>@Model.ApproximateNumberOfMessagesDelayed</td>
+        </tr>
+    </tbody>
+    <tbody class="additional-info">
+        <tr>
+            <td>Created</td>
+            <td>@Model.CreatedTimestamp</td>
+        </tr>
+        <tr>
+            <td>Last updated</td>
+            <td>@Model.LastModifiedTimestamp</td>
+        </tr>
+        <tr>
+            <td>Maximum message size</td>
+            <td>@Model.MaximumMessageSize.ToFormattedFileSize()</td>
+        </tr>
+        <tr>
+            <td>Delivery delay</td>
+            <td>@TimeSpan.FromSeconds(Model.DelaySeconds).ToFormattedString()</td>
+        </tr>
+        <tr>
+            <td>Default receive wait time</td>
+            <td>@TimeSpan.FromSeconds(Model.ReceiveMessageWaitTimeSeconds).ToFormattedString()</td>
+        </tr>
+        <tr>
+            <td>Default visibility timeout</td>
+            <td>@TimeSpan.FromSeconds(Model.VisibilityTimeout).ToFormattedString()</td>
+        </tr>
+        <tr>
+            <td>Message retention period</td>
+            <td>@TimeSpan.FromSeconds(Model.MessageRetentionPeriod).ToFormattedString()</td>
+        </tr>
+    </tbody>
+    <tbody>
+        <tr class="expand-button text-center collapsed">
+            <td colspan="2">
+                <a href="javascript:void(0)" onclick="gsevent_InfoTable_ToggleButton_Click(event)">
+                    View more <i class="fa-solid fa-angles-down" style="font-size: 12px"></i>
+                </a>
+            </td>
+        </tr>
+        <tr class="expand-button text-center expanded">
+            <td colspan="2">
+                <a href="javascript:void(0)" onclick="gsevent_InfoTable_ToggleButton_Click(event)">
+                    View less <i class="fa-solid fa-angles-up" style="font-size: 12px"></i>
+                </a>
+            </td>
+        </tr>
+    </tbody>
+</table>

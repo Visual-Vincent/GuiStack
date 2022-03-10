@@ -144,6 +144,30 @@ table.gs-list th, table.gs-list td
     border-collapse: collapse;
 }
 
+table.gs-info-table tr:not(.expand-button) > td:first-of-type
+{
+    color: #AFA;
+    font-weight: bold;
+}
+
+table.gs-info-table tr:not(.expand-button) > td:first-of-type::after
+{
+    content: "\00A0\00A0";
+}
+
+table.gs-info-table:not(.expanded) tbody.additional-info
+{
+    visibility: collapse;
+}
+
+table.gs-info-table.expanded tr.collapsed,
+table.gs-info-table.expanded td.collapsed,
+table.gs-info-table:not(.expanded) tr.expanded,
+table.gs-info-table:not(.expanded) td.expanded
+{
+    display: none;
+}
+
 .gs-icons
 {
     display: flex;

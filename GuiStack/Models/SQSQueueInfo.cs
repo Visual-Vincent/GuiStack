@@ -12,7 +12,7 @@ namespace GuiStack.Models
         public DateTime LastModifiedTimestamp { get; set; }
         public int MaximumMessageSize { get; set; }
         public int MessageRetentionPeriod { get; set; }
-        public string QueueArn { get; set; }
+        public string QueueARN { get; set; }
         public int ReceiveMessageWaitTimeSeconds { get; set; }
         public int VisibilityTimeout { get; set; }
         public bool FifoQueue { get; set; }

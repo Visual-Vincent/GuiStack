@@ -35,6 +35,11 @@ a:active
 .text-center { text-align: center; }
 .text-right  { text-align: right; }
 
+.modal-buttons
+{
+    white-space: nowrap;
+}
+
 #gs-error-banner
 {
     display: none;

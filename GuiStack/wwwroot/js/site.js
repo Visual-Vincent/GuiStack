@@ -19,7 +19,7 @@ function gs_CloseError()
     document.getElementById("gs-error-banner").classList.remove("visible");
 }
 
-function gs_GetParentTable(element)
+function gs_GetParentTable(element, throwNotFound)
 {
     if(typeof element === "string")
     {
@@ -42,18 +42,48 @@ function gs_GetParentTable(element)
     while(!isNull(parent = parent.parentElement) && !(parent instanceof HTMLTableElement));
 
     if(isNull(parent))
-        return null;
+        if(throwNotFound)
+            throw "No parent table element found";
+        else
+            return null;
+
+    return parent;
+}
+
+function gs_GetParentTableRow(element, throwNotFound)
+{
+    if(typeof element === "string")
+    {
+        var id = element;
+        element = document.getElementById(id);
+
+        if(isNull(element))
+            throw "Element '" + id + "' not found";
+    }
+    else if(isNull(element))
+    {
+        throw "'element' cannot be null";
+    }
+    else if(!isElement(element))
+    {
+        throw "'element' must be an HTMLElement";
+    }
+
+    var parent = element;
+    while(!isNull(parent = parent.parentElement) && !(parent instanceof HTMLTableRowElement));
+
+    if(isNull(parent))
+        if(throwNotFound)
+            throw "No parent table row element found";
+        else
+            return null;
 
     return parent;
 }
 
 function gsevent_InfoTable_ToggleButton_Click(event)
 {
-    var table = gs_GetParentTable(event.currentTarget);
-
-    if(isNull(table))
-        throw "No parent table element found";
-
+    var table = gs_GetParentTable(event.currentTarget, true);
     table.classList.toggle("expanded");
 }
 

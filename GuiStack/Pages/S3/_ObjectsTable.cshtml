@@ -8,8 +8,9 @@
     <h2 class="title">Are you sure you want to delete <span class="object-name" style="color: #FF8000"></span>?</h2>
     <p>This cannot be undone!</p>
 
-    <div class="text-center">
-        <button class="yes-button">Yes</button>&nbsp;<button onclick="closeWindow('deleteS3ObjectModal')">No</button>
+    <div class="modal-buttons text-center">
+        <button class="yes-button" data-delete-url="@Url.Action("DeleteObject", "Buckets", new { bucketName = "__BUCKETNAME__", objectName = "__OBJECTNAME__" })">Yes</button>
+        <button onclick="closeWindow('deleteS3ObjectModal')">No</button>
     </div>
 </div>
 
@@ -19,8 +20,8 @@
     <h2 class="title">Rename object</h2>
     <p><input type="text" class="name-textbox text-center" maxlength="1024" style="width: 400px" /></p>
 
-    <div class="text-center">
-        <button class="ok-button" data-rename-url="@Url.Action("RenameObject", "Buckets", new { bucketName = Model.FirstOrDefault()?.BucketName ?? "", objectName = "__OLDNAME__", newName = "__NEWNAME__" })">OK</button>
+    <div class="modal-buttons text-center">
+        <button class="ok-button" data-rename-url="@Url.Action("RenameObject", "Buckets", new { bucketName = "__BUCKETNAME__", objectName = "__OLDNAME__", newName = "__NEWNAME__" })">OK</button>
     </div>
 </div>
 
@@ -37,22 +38,22 @@
         @foreach(var s3obj in Model ?? Enumerable.Empty<S3ObjectModel>())
         {
             var obj = s3obj.Object;
-            <tr>
+            <tr data-bucket-name="@s3obj.BucketName" data-object-name="@obj.Name" data-s3uri="@obj.S3Uri" data-url="@obj.Url">
                 <td><a asp-controller="Buckets" asp-action="Download" asp-route-bucketName="@s3obj.BucketName" asp-route-objectName="@obj.Name">@obj.Name</a></td>
                 <td>@obj.Size.ToFormattedFileSize()</td>
                 <td>@obj.LastModified</td>
                 <td>
                     <div class="gs-icons">
-                        <a href="javascript:void(0)" class="blue lnk-s3-rename" title="Rename" data-object-name="@obj.Name">
+                        <a href="javascript:void(0)" class="blue lnk-s3-rename" title="Rename">
                             <i class="fa-solid fa-i-cursor"></i>
                         </a>
-                        <a href="javascript:void(0)" class="purple" title="Copy S3 URI" onclick="navigator.clipboard.writeText('@obj.S3Uri')">
+                        <a href="javascript:void(0)" class="purple lnk-s3-copyuri" title="Copy S3 URI">
                             <i class="fa-solid fa-link"></i>
                         </a>
-                        <a href="javascript:void(0)" class="green" title="Copy URL" onclick="navigator.clipboard.writeText('@obj.Url')">
+                        <a href="javascript:void(0)" class="green lnk-s3-copyurl" title="Copy URL">
                             <i class="bi bi-globe"></i>
                         </a>
-                        <a href="javascript:void(0)" class="red lnk-s3-delete" title="Delete" data-object-name="@obj.Name" data-delete-url="@Url.Action("DeleteObject", "Buckets", new { bucketName = s3obj.BucketName, objectName = obj.Name })">
+                        <a href="javascript:void(0)" class="red lnk-s3-delete" title="Delete">
                             <i class="fa-solid fa-trash-can"></i>
                         </a>
                     </div>
@@ -63,44 +64,94 @@
 </table>
 
 <script>
+    $(".lnk-s3-copyuri").click(s3_CopyS3Uri);
+    $(".lnk-s3-copyurl").click(s3_CopyUrl);
     $(".lnk-s3-delete").click(s3_DeleteObjectPrompt);
-    $("#deleteS3ObjectModal .yes-button").click(s3_DeleteObject);
-
     $(".lnk-s3-rename").click(s3_RenameObjectPrompt);
+
+    $("#deleteS3ObjectModal .yes-button").click(s3_DeleteObject);
     $("#renameS3ObjectModal .ok-button").click(s3_RenameObject);
+
+    var prompt_BucketName;
+    var prompt_ObjectName;
+
+    function s3_CopyS3Uri(event)
+    {
+        try
+        {
+            var uri = gs_GetParentTableRow(event.currentTarget, true).getAttribute("data-s3uri");
+            navigator.clipboard.writeText(uri);
+        }
+        catch(error)
+        {
+            gs_DisplayError(error);
+        } 
+    }
+
+    function s3_CopyUrl(event)
+    {
+        try
+        {
+            var url = gs_GetParentTableRow(event.currentTarget, true).getAttribute("data-url");
+            navigator.clipboard.writeText(url);
+        }
+        catch(error)
+        {
+            gs_DisplayError(error);
+        } 
+    }
 
     function s3_DeleteObjectPrompt(event)
     {
-        var objNameElement = document.querySelector("#deleteS3ObjectModal .title .object-name");
-        var objName = event.currentTarget.getAttribute("data-object-name");
-        var deleteUrl = event.currentTarget.getAttribute("data-delete-url");
-        var yesButton = document.querySelector("#deleteS3ObjectModal .yes-button");
+        try
+        {
+            var objNameElement = document.querySelector("#deleteS3ObjectModal .title .object-name");
 
-        objNameElement.innerText = objName;
-        yesButton.setAttribute("data-delete-url", deleteUrl);
-        showWindow("deleteS3ObjectModal");
+            prompt_BucketName = gs_GetParentTableRow(event.currentTarget, true).getAttribute("data-bucket-name");
+            prompt_ObjectName = gs_GetParentTableRow(event.currentTarget, true).getAttribute("data-object-name");
+
+            objNameElement.innerText = prompt_ObjectName;
+            showWindow("deleteS3ObjectModal");
+        }
+        catch(error)
+        {
+            gs_DisplayError(error);
+        }
     }
 
     function s3_RenameObjectPrompt(event)
     {
-        var objName = event.currentTarget.getAttribute("data-object-name");
-        var okButton = document.querySelector("#renameS3ObjectModal .ok-button");
-        var nameTextBox = document.querySelector("#renameS3ObjectModal .name-textbox");
+        try
+        {
+            var nameTextBox = document.querySelector("#renameS3ObjectModal .name-textbox");
 
-        nameTextBox.value = objName;
-        okButton.setAttribute("data-object-name", objName);
-        showWindow("renameS3ObjectModal");
+            prompt_BucketName = gs_GetParentTableRow(event.currentTarget, true).getAttribute("data-bucket-name");
+            prompt_ObjectName = gs_GetParentTableRow(event.currentTarget, true).getAttribute("data-object-name");
+
+            nameTextBox.value = prompt_ObjectName;
+            showWindow("renameS3ObjectModal");
+        }
+        catch(error)
+        {
+            gs_DisplayError(error);
+        }
     }
 
     async function s3_DeleteObject(event)
     {
         try
         {
-            var url = event.currentTarget.getAttribute("data-delete-url");
+            var bucketName = encodeURIComponent(prompt_BucketName);
+            var objectName = encodeURIComponent(prompt_ObjectName);
+
+            var url = event.currentTarget.getAttribute("data-delete-url")
+                .replace("__BUCKETNAME__", bucketName)
+                .replace("__OBJECTNAME__", objectName);
+
             var response = await fetch(url, { method: "DELETE" });
 
             if(!response.ok) {
-                throw new Error("Failed to delete S3 object: Server returned HTTP status " + response.status);
+                throw "Failed to delete S3 object: Server returned HTTP status " + response.status;
             }
 
             window.location.reload(true);
@@ -117,17 +168,19 @@
     {
         try
         {
-            var oldName = encodeURIComponent(event.currentTarget.getAttribute("data-object-name"));
+            var bucketName = encodeURIComponent(prompt_BucketName);
+            var oldName = encodeURIComponent(prompt_ObjectName);
             var newName = encodeURIComponent(document.querySelector("#renameS3ObjectModal .name-textbox").value);
 
             var url = event.currentTarget.getAttribute("data-rename-url")
+                .replace("__BUCKETNAME__", bucketName)
                 .replace("__OLDNAME__", oldName)
                 .replace("__NEWNAME__", newName);
 
             var response = await fetch(url, { method: "POST" });
 
             if(!response.ok) {
-                throw new Error("Failed to rename S3 object: Server returned HTTP status " + response.status);
+                throw "Failed to rename S3 object: Server returned HTTP status " + response.status;
             }
 
             window.location.reload(true);

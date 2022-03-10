@@ -52,13 +52,14 @@ namespace GuiStack.Repositories
                 ApproximateNumberOfMessagesNotVisible = response.ApproximateNumberOfMessagesNotVisible,
                 CreatedTimestamp = response.CreatedTimestamp,
                 DelaySeconds = response.DelaySeconds,
+                FifoQueue = response.FifoQueue,
                 LastModifiedTimestamp = response.LastModifiedTimestamp,
                 MaximumMessageSize = response.MaximumMessageSize,
                 MessageRetentionPeriod = response.MessageRetentionPeriod,
                 QueueARN = response.QueueARN,
+                QueueURL = queueUrl,
                 ReceiveMessageWaitTimeSeconds = ReceiveMessageWaitTimeSeconds,
                 VisibilityTimeout = response.VisibilityTimeout,
-                FifoQueue = response.FifoQueue,
             };
         }
 

@@ -81,10 +81,102 @@ function gs_GetParentTableRow(element, throwNotFound)
     return parent;
 }
 
+function gs_GetParentTabContainer(element, throwNotFound)
+{
+    if(typeof element === "string")
+    {
+        var id = element;
+        element = document.getElementById(id);
+
+        if(isNull(element))
+            throw "Element '" + id + "' not found";
+    }
+    else if(isNull(element))
+    {
+        throw "'element' cannot be null";
+    }
+    else if(!isElement(element))
+    {
+        throw "'element' must be an HTMLElement";
+    }
+
+    var parent = element;
+    while(!isNull(parent = parent.parentElement) && !parent.classList.contains("gs-tab-container"));
+
+    if(isNull(parent))
+        if(throwNotFound)
+            throw "No parent tab container found";
+        else
+            return null;
+
+    return parent;
+}
+
+function gs_GetParentTabControl(element, throwNotFound)
+{
+    if(typeof element === "string")
+    {
+        var id = element;
+        element = document.getElementById(id);
+
+        if(isNull(element))
+            throw "Element '" + id + "' not found";
+    }
+    else if(isNull(element))
+    {
+        throw "'element' cannot be null";
+    }
+    else if(!isElement(element))
+    {
+        throw "'element' must be an HTMLElement";
+    }
+
+    var parent = element;
+    while(!isNull(parent = parent.parentElement) && !parent.classList.contains("gs-tab-control"));
+
+    if(isNull(parent))
+        if(throwNotFound)
+            throw "No parent tab control found";
+        else
+            return null;
+
+    return parent;
+}
+
 function gsevent_InfoTable_ToggleButton_Click(event)
 {
     var table = gs_GetParentTable(event.currentTarget, true);
     table.classList.toggle("expanded");
+}
+
+function gsevent_TabItem_Click(event)
+{
+    var tabpageId = event.currentTarget.getAttribute("data-tabpage");
+    var tabcontrol = gs_GetParentTabControl(event.currentTarget, true);
+    var tabcontainer = gs_GetParentTabContainer(event.currentTarget, true);
+
+    if(isNull(tabpageId) || tabpageId.length <= 0)
+        throw "No tabpage specified";
+
+    var tabpage = document.getElementById(tabpageId);
+
+    if(isNull(tabpage))
+        throw "Element with id '" + tabpageId + "' not found";
+
+    var tabitems = tabcontainer.querySelectorAll(".gs-tabitem");
+    for(var i = 0; i < tabitems.length; i++)
+    {
+        tabitems[i].classList.remove("selected");
+    }
+
+    var tabpages = tabcontrol.querySelectorAll(".gs-tabpage");
+    for(var i = 0; i < tabpages.length; i++)
+    {
+        tabpages[i].classList.remove("selected");
+    }
+
+    tabpage.classList.add("selected");
+    event.currentTarget.classList.add("selected");
 }
 
 (function() {
@@ -107,4 +199,6 @@ function gsevent_InfoTable_ToggleButton_Click(event)
             break;
         }
     }
+
+    $(".gs-tab-control > .gs-tab-container > .gs-tabitem").click(gsevent_TabItem_Click);
 })();

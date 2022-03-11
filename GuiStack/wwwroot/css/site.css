@@ -210,6 +210,34 @@ table.gs-info-table:not(.expanded) td.expanded
     display: none;
 }
 
+.gs-tab-container
+{
+    border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.gs-tabitem
+{
+    display: inline-block;
+    text-decoration: none;
+    padding: 6px 10px;
+    cursor: pointer;
+}
+
+.gs-tabitem.selected
+{
+    border-bottom: 2px solid #00E1FF;
+}
+
+.gs-tabpage
+{
+    padding: 8px;
+}
+
+.gs-tabpage:not(.selected)
+{
+    display: none;
+}
+
 .cssWindow .closeWindowButton
 {
     position: relative;

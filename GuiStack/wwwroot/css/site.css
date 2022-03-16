@@ -238,6 +238,30 @@ table.gs-info-table:not(.expanded) td.expanded
     display: none;
 }
 
+.gs-sqs-messages-list
+{
+    display: flex;
+}
+
+.gs-sqs-messages-list > *
+{
+    flex: 1 1 0px;
+}
+
+.gs-sqs-messages-list.viewing-contents table.sqs-messages-table > tr > th:not(:nth-child(1)),
+.gs-sqs-messages-list.viewing-contents table.sqs-messages-table > tr > td:not(:nth-child(1)),
+.gs-sqs-messages-list.viewing-contents table.sqs-messages-table > thead > tr > th:not(:nth-child(1)),
+.gs-sqs-messages-list.viewing-contents table.sqs-messages-table > thead > tr > td:not(:nth-child(1)),
+.gs-sqs-messages-list.viewing-contents table.sqs-messages-table > tbody > tr > td:not(:nth-child(1))
+{
+    display: none;
+}
+
+.gs-sqs-messages-list:not(.viewing-contents) .sqs-message-contents
+{
+    display: none;
+}
+
 .cssWindow .closeWindowButton
 {
     position: relative;

@@ -143,6 +143,43 @@ function gs_GetParentTabControl(element, throwNotFound)
     return parent;
 }
 
+function gs_FindParent(element, selector, throwNotFound)
+{
+    if(typeof element === "string")
+    {
+        var id = element;
+        element = document.getElementById(id);
+
+        if(isNull(element))
+            throw "Element '" + id + "' not found";
+    }
+    else if(isNull(element))
+    {
+        throw "'element' cannot be null";
+    }
+    else if(!isElement(element))
+    {
+        throw "'element' must be an HTMLElement";
+    }
+
+    if(isNull(selector) || selector === "")
+        return element.parentElement;
+
+    if(typeof selector !== "string")
+        throw "'selector' must be a string";
+
+    var parent = element;
+    while(!isNull(parent = parent.parentElement) && !parent.matches(selector));
+
+    if(isNull(parent))
+        if(throwNotFound)
+            throw "No parent element found that matches selector '" + selector + "'";
+        else
+            return null;
+
+    return parent;
+}
+
 function gsevent_InfoTable_ToggleButton_Click(event)
 {
     var table = gs_GetParentTable(event.currentTarget, true);

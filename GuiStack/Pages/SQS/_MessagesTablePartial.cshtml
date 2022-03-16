@@ -2,29 +2,54 @@
 @using System.Text.Json
 @using GuiStack.Models
 
-@model IEnumerable<SQSMessage>
+@model SQSMessagesModel
 
-<table class="gs-list">
-    <thead>
-        <tr>
-            <th>Message ID</th>
-            <th>Sent</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach(var message in Model ?? Enumerable.Empty<SQSMessage>())
-        {
-            <tr>
-                <td>@message.MessageId</td>
-                <td>@message.SentTimestamp</td>
-            </tr>
-        }
-    </tbody>
-</table>
+<div class="gs-sqs-messages-list">
+    <div>
+        <table class="gs-list sqs-messages-table">
+            <thead>
+                <tr>
+                    <th>Message ID</th>
+                    <th>Sent</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach(var message in Model.Messages ?? Enumerable.Empty<SQSMessage>())
+                {
+                    <tr>
+                        <td><a no-href class="lnk-sqs-view-message" data-message-id="@message.MessageId">@message.MessageId</a></td>
+                        <td>@message.SentTimestamp</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <textarea id="sqs-@Model.Prefix-msg-contents" class="sqs-message-contents"></textarea>
+</div>
 
 <script type="text/javascript">
-    @* TODO: Need unique variable name for multiple partials *@
-    var __sqs_messages = @Html.Raw(
-        JsonSerializer.Serialize(Model.ToDictionary(m => m.MessageId))
+    var __sqs_@(Model.Prefix)_messages = @Html.Raw(
+        JsonSerializer.Serialize(Model.Messages.ToDictionary(m => m.MessageId))
     );
+
+    $(".lnk-sqs-view-message").click(gs_SQS@(Model.Prefix)Message_Click);
+
+    function gs_SQS@(Model.Prefix)Message_Click(event)
+    {
+        var parent = gs_FindParent(event.currentTarget, ".gs-sqs-messages-list", true);
+        var msgContents = document.getElementById("sqs-@Model.Prefix-msg-contents");
+        var messageId = event.currentTarget.getAttribute("data-message-id");
+
+        if(msgContents.getAttribute("data-message-id") == messageId && parent.classList.contains("viewing-contents"))
+        {
+            parent.classList.remove("viewing-contents");
+            return;
+        }
+
+        parent.classList.add("viewing-contents");
+
+        msgContents.setAttribute("data-message-id", messageId);
+        msgContents.value = __sqs_@(Model.Prefix)_messages[messageId].Body;
+    }
 </script>

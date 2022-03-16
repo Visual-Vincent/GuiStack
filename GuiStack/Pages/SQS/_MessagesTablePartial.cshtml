@@ -1,0 +1,30 @@
+﻿@using System.Linq
+@using System.Text.Json
+@using GuiStack.Models
+
+@model IEnumerable<SQSMessage>
+
+<table class="gs-list">
+    <thead>
+        <tr>
+            <th>Message ID</th>
+            <th>Sent</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach(var message in Model ?? Enumerable.Empty<SQSMessage>())
+        {
+            <tr>
+                <td>@message.MessageId</td>
+                <td>@message.SentTimestamp</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<script type="text/javascript">
+    @* TODO: Need unique variable name for multiple partials *@
+    var __sqs_messages = @Html.Raw(
+        JsonSerializer.Serialize(Model.ToDictionary(m => m.MessageId))
+    );
+</script>

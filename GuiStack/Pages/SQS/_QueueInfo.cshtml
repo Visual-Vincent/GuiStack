@@ -89,10 +89,43 @@
     </div>
 
     <div id="sqs-peek" class="gs-tabpage">
-        Peek page
+        <div style="margin-bottom: 8px">
+            <span>Max message count: <input class="input-max-msgs" type="number" min="1" max="10" value="1" /></span>
+            <span>Max wait time (seconds): <input class="input-wait-secs" type="number" min="0" max="20" value="0" /></span>
+            <a no-href class="lnk-sqs-peek">Peek</a>
+        </div>
+
+        <div class="peek-container"></div>
     </div>
 
     <div id="sqs-receive" class="gs-tabpage">
         Receive page
     </div>
 </div>
+
+<script type="text/javascript">
+    var peekContainer = $("#sqs-peek .peek-container");
+
+    $(".lnk-sqs-peek").click(sqs_PeekMessages_Click);
+
+    function sqs_PeekMessages_Click(event)
+    {
+        var parent = event.currentTarget.parentElement;
+        var maxAmount = parent.querySelector("input.input-max-msgs").value;
+        var waitTime = parent.querySelector("input.input-wait-secs").value;
+
+        $.ajax({
+            type: "GET",
+            url: window.location.pathName,
+            data: {
+                handler: "PeekMessagesPartial",
+                maxAmount: maxAmount,
+                waitTimeSeconds: waitTime
+            },
+            cache: false,
+            success: function(result) {
+                peekContainer.html(result);
+            }
+        });
+    }
+</script>

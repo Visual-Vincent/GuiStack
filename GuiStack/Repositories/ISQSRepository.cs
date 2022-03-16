@@ -14,6 +14,8 @@ namespace GuiStack.Repositories
         Task<IEnumerable<SQSQueue>> GetQueuesAsync();
         Task<SQSQueueInfo> GetQueueAttributesAsync(string queueUrl);
         Task<string> GetQueueUrlAsync(string queueName);
+        Task DeleteMessageAsync(string queueUrl, string receiptHandle);
+        Task<IEnumerable<SQSMessage>> ReceiveMessagesAsync(string queueUrl, int maxAmount, int waitTimeSeconds = 0);
     }
 
     public class SQSRepository : ISQSRepository
@@ -32,6 +34,9 @@ namespace GuiStack.Repositories
 
         public async Task<SQSQueueInfo> GetQueueAttributesAsync(string queueUrl)
         {
+            if(string.IsNullOrWhiteSpace(queueUrl))
+                throw new ArgumentNullException(nameof(queueUrl));
+
             using var sqs = authenticator.Authenticate();
             var response = await sqs.GetQueueAttributesAsync(queueUrl, new List<string>() {
                 "ApproximateNumberOfMessages", "ApproximateNumberOfMessagesDelayed", "ApproximateNumberOfMessagesNotVisible",
@@ -65,12 +70,65 @@ namespace GuiStack.Repositories
 
         public async Task<string> GetQueueUrlAsync(string queueName)
         {
+            if(string.IsNullOrWhiteSpace(queueName))
+                throw new ArgumentNullException(nameof(queueName));
+
             using var sqs = authenticator.Authenticate();
             var response = await sqs.GetQueueUrlAsync(queueName);
 
             response.ThrowIfUnsuccessful("SQS");
 
             return response.QueueUrl;
+        }
+
+        public async Task DeleteMessageAsync(string queueUrl, string receiptHandle)
+        {
+            if(string.IsNullOrWhiteSpace(queueUrl))
+                throw new ArgumentNullException(nameof(queueUrl));
+
+            if(string.IsNullOrWhiteSpace(receiptHandle))
+                throw new ArgumentNullException(nameof(receiptHandle));
+
+            using var sqs = authenticator.Authenticate();
+            await sqs.DeleteMessageAsync(queueUrl, receiptHandle);
+        }
+
+        public async Task<IEnumerable<SQSMessage>> ReceiveMessagesAsync(string queueUrl, int maxAmount, int waitTimeSeconds = 0)
+        {
+            if(string.IsNullOrWhiteSpace(queueUrl))
+                throw new ArgumentNullException(nameof(queueUrl));
+
+            if(maxAmount < 1 || maxAmount > 10)
+                throw new ArgumentOutOfRangeException(nameof(maxAmount), $"{nameof(maxAmount)} must be between 1-10");
+
+            if(waitTimeSeconds < 0 || waitTimeSeconds > 20)
+                throw new ArgumentOutOfRangeException(nameof(waitTimeSeconds), $"{nameof(waitTimeSeconds)} must be between 0-20");
+
+            using var sqs = authenticator.Authenticate();
+
+            var response = await sqs.ReceiveMessageAsync(new ReceiveMessageRequest() {
+                QueueUrl = queueUrl,
+                AttributeNames = new List<string>() { "SentTimestamp", "MessageGroupId", "SequenceNumber" },
+                MaxNumberOfMessages = maxAmount,
+                WaitTimeSeconds = waitTimeSeconds,
+            });
+
+            response.ThrowIfUnsuccessful("SQS");
+
+            return response.Messages.Select(m => new SQSMessage() {
+                Attributes = m.MessageAttributes.ToStringAttributes(),
+                Body = m.Body,
+                MessageId = m.MessageId,
+                ReceiptHandle = m.ReceiptHandle,
+                MessageGroupId = m.Attributes.GetValueOrDefault("MessageGroupId"),
+                SequenceNumber = m.Attributes.GetValueOrDefault("SequenceNumber"),
+                SentTimestamp = m.Attributes.ContainsKey("SentTimestamp")
+                    ? DateTime.SpecifyKind(
+                        DateTimeOffset.FromUnixTimeMilliseconds(long.Parse(m.Attributes["SentTimestamp"])).DateTime,
+                        DateTimeKind.Utc
+                      ).ToLocalTime()
+                    : (DateTime?)null
+            });
         }
     }
 }

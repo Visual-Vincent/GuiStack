@@ -1,4 +1,5 @@
 ﻿using System;
+using Amazon;
 using Amazon.Runtime;
 using Amazon.S3;
 
@@ -9,6 +10,7 @@ namespace GuiStack.Authentication.AWS
         public override AmazonS3Client Authenticate(AWSCredentials credentials)
         {
             var config = new AmazonS3Config() {
+                AuthenticationRegion = AWSConfigs.AWSRegion,
                 MaxErrorRetry = 1,
                 ForcePathStyle = EnvironmentVariables.S3ForcePathStyle // Should be True for LocalStack support
             };

@@ -1,4 +1,5 @@
 ﻿using System;
+using Amazon;
 using Amazon.Runtime;
 using Amazon.SQS;
 
@@ -9,6 +10,7 @@ namespace GuiStack.Authentication.AWS
         public override AmazonSQSClient Authenticate(AWSCredentials credentials)
         {
             var config = new AmazonSQSConfig() {
+                AuthenticationRegion = AWSConfigs.AWSRegion,
                 MaxErrorRetry = 1
             };
 

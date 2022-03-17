@@ -1,7 +1,5 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using Amazon;
 using GuiStack.Repositories;
 using GuiStack.Services;
 using Microsoft.AspNetCore.Builder;
@@ -57,6 +55,8 @@ namespace GuiStack
                 endpoints.MapRazorPages();
                 endpoints.MapControllers();
             });
+
+            AWSConfigs.AWSRegion = Environment.GetEnvironmentVariable("AWS_REGION") ?? "eu-central-1";
         }
     }
 }

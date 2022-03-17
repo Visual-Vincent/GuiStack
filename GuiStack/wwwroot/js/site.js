@@ -83,62 +83,30 @@ function gs_GetParentTableRow(element, throwNotFound)
 
 function gs_GetParentTabContainer(element, throwNotFound)
 {
-    if(typeof element === "string")
-    {
-        var id = element;
-        element = document.getElementById(id);
+    var parent = gs_FindParent(element, ".gs-tab-container", false);
 
-        if(isNull(element))
-            throw "Element '" + id + "' not found";
-    }
-    else if(isNull(element))
-    {
-        throw "'element' cannot be null";
-    }
-    else if(!isElement(element))
-    {
-        throw "'element' must be an HTMLElement";
-    }
-
-    var parent = element;
-    while(!isNull(parent = parent.parentElement) && !parent.classList.contains("gs-tab-container"));
-
-    if(isNull(parent))
-        if(throwNotFound)
-            throw "No parent tab container found";
-        else
-            return null;
+    if(isNull(parent) && throwNotFound)
+        throw "No parent tab container found";
 
     return parent;
 }
 
 function gs_GetParentTabControl(element, throwNotFound)
 {
-    if(typeof element === "string")
-    {
-        var id = element;
-        element = document.getElementById(id);
+    var parent = gs_FindParent(element, ".gs-tab-control", false);
 
-        if(isNull(element))
-            throw "Element '" + id + "' not found";
-    }
-    else if(isNull(element))
-    {
-        throw "'element' cannot be null";
-    }
-    else if(!isElement(element))
-    {
-        throw "'element' must be an HTMLElement";
-    }
+    if(isNull(parent) && throwNotFound)
+        throw "No parent tab control found";
 
-    var parent = element;
-    while(!isNull(parent = parent.parentElement) && !parent.classList.contains("gs-tab-control"));
+    return parent;
+}
 
-    if(isNull(parent))
-        if(throwNotFound)
-            throw "No parent tab control found";
-        else
-            return null;
+function gs_GetParentTabPage(element, throwNotFound)
+{
+    var parent = gs_FindParent(element, ".gs-tabpage", false);
+
+    if(isNull(parent) && throwNotFound)
+        throw "No parent tab page found";
 
     return parent;
 }

@@ -85,7 +85,12 @@
     </div>
 
     <div id="sqs-send" class="gs-tabpage selected">
-        Send page
+        <div style="display: flex">
+            <textarea class="gs-sqs-message-contents" placeholder="Enter message" style="flex: 1 1 0px;"></textarea>
+            <div>
+                <a no-href class="lnk-sqs-send">Send</a>
+            </div>
+        </div>
     </div>
 
     <div id="sqs-peek" class="gs-tabpage">
@@ -113,8 +118,27 @@
     var peekContainer = $("#sqs-peek .peek-container");
     var receiveContainer = $("#sqs-receive .receive-container");
 
+    $(".lnk-sqs-send").click(sqs_SendMessage_Click);
     $(".lnk-sqs-peek").click(sqs_PeekMessages_Click);
     $(".lnk-sqs-receive").click(sqs_ReceiveMessages_Click);
+
+    function sqs_SendMessage_Click(event)
+    {
+        var parent = gs_GetParentTabPage(event.currentTarget, true);
+        var msgContents = parent.querySelector(".gs-sqs-message-contents");
+
+        $.ajax({
+            type: "POST",
+            url: "@Url.Action("SendMessage", "Queues", new { queueName = ViewData["QueueName"] ?? "" })",
+            contentType: "application/json",
+            data: JSON.stringify({
+                body: msgContents.value
+            }),
+            success: function(result) {
+                msgContents.value = "";
+            }
+        });
+    }
 
     function sqs_PeekMessages_Click(event)
     {

@@ -6,6 +6,7 @@
 
 @{
     ViewData["Title"] = "SQS Queues";
+    ViewData["QueueName"] = Model.Queue;
 }
 
 @if(!string.IsNullOrWhiteSpace(Model.Queue))

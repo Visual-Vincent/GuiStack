@@ -240,24 +240,31 @@ table.gs-info-table:not(.expanded) td.expanded
 
 .gs-sqs-messages-list
 {
-    display: flex;
+    margin-top: 8px;
 }
 
-.gs-sqs-messages-list > *
+.gs-sqs-messages-list > .gs-sqs-message-contents
 {
-    flex: 1 1 0px;
+    margin-top: 8px;
 }
 
-.gs-sqs-messages-list.viewing-contents table.sqs-messages-table > tr > th:not(:nth-child(1)),
-.gs-sqs-messages-list.viewing-contents table.sqs-messages-table > tr > td:not(:nth-child(1)),
-.gs-sqs-messages-list.viewing-contents table.sqs-messages-table > thead > tr > th:not(:nth-child(1)),
-.gs-sqs-messages-list.viewing-contents table.sqs-messages-table > thead > tr > td:not(:nth-child(1)),
-.gs-sqs-messages-list.viewing-contents table.sqs-messages-table > tbody > tr > td:not(:nth-child(1))
+.gs-sqs-message-contents
 {
-    display: none;
+    width: 100%;
+    height: 400px;
+    max-width: 100%;
 }
 
-.gs-sqs-messages-list:not(.viewing-contents) .sqs-message-contents
+textarea.gs-sqs-message-contents
+{
+    color: #FFFFFF;
+    background: #262626;
+    font-family: monospace;
+    font-size: 11pt;
+    resize: vertical;
+}
+
+.gs-sqs-messages-list:not(.viewing-contents) .gs-sqs-message-contents
 {
     display: none;
 }

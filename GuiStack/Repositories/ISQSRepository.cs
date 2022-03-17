@@ -16,6 +16,7 @@ namespace GuiStack.Repositories
         Task<string> GetQueueUrlAsync(string queueName);
         Task DeleteMessageAsync(string queueUrl, string receiptHandle);
         Task<IEnumerable<SQSMessage>> ReceiveMessagesAsync(string queueUrl, int maxAmount, int waitTimeSeconds = 0);
+        Task<string> SendMessageAsync(string queueUrl, string messageBody);
     }
 
     public class SQSRepository : ISQSRepository
@@ -129,6 +130,16 @@ namespace GuiStack.Repositories
                       ).ToLocalTime()
                     : (DateTime?)null
             });
+        }
+
+        public async Task<string> SendMessageAsync(string queueUrl, string messageBody)
+        {
+            using var sqs = authenticator.Authenticate();
+            var response = await sqs.SendMessageAsync(new SendMessageRequest(queueUrl, messageBody));
+
+            response.ThrowIfUnsuccessful("SQS");
+
+            return response.MessageId;
         }
     }
 }

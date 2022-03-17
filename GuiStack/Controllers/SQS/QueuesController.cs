@@ -2,6 +2,7 @@
 using System.Net;
 using System.Threading.Tasks;
 using Amazon.SQS;
+using GuiStack.Models;
 using GuiStack.Repositories;
 using Microsoft.AspNetCore.Mvc;
 
@@ -37,12 +38,34 @@ namespace GuiStack.Controllers.SQS
         }
 
         [HttpGet]
+        [Produces("application/json")]
         public async Task<ActionResult> GetQueues()
         {
             try
             {
                 var queues = await sqsRepository.GetQueuesAsync();
                 return Json(queues);
+            }
+            catch(Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+        [HttpPost("{queueName}")]
+        [Consumes("application/json")]
+        [Produces("application/json")]
+        public async Task<ActionResult> SendMessage([FromRoute] string queueName, [FromBody] SQSSendMessageModel message)
+        {
+            if(message == null)
+                return StatusCode((int)HttpStatusCode.BadRequest);
+
+            try
+            {
+                var queueUrl = await sqsRepository.GetQueueUrlAsync(queueName);
+                var messageId = await sqsRepository.SendMessageAsync(queueUrl, message.Body);
+
+                return Json(new { messageId = messageId });
             }
             catch(Exception ex)
             {

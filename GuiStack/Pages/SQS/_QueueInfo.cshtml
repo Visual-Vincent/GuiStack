@@ -86,7 +86,7 @@
 
     <div id="sqs-send" class="gs-tabpage selected">
         <div style="display: flex">
-            <textarea class="gs-sqs-message-contents" placeholder="Enter message" style="flex: 1 1 0px;"></textarea>
+            <div class="gs-sqs-message-contents" placeholder="Enter message" style="flex: 1 1 0px;"></div>
             <div>
                 <a no-href class="lnk-sqs-send">Send</a>
             </div>
@@ -115,6 +115,7 @@
 </div>
 
 <script type="text/javascript">
+    var __sqsSendMessageEditor = null;
     var peekContainer = $("#sqs-peek .peek-container");
     var receiveContainer = $("#sqs-receive .receive-container");
 
@@ -122,20 +123,30 @@
     $(".lnk-sqs-peek").click(sqs_PeekMessages_Click);
     $(".lnk-sqs-receive").click(sqs_ReceiveMessages_Click);
 
+    require(["vs/editor/editor.main"], function() {
+        __sqsSendMessageEditor = monaco.editor.create(document.querySelector("#sqs-send .gs-sqs-message-contents"), {
+            value: "",
+            language: "json",
+            theme: "vs-dark",
+            minimap: {
+                enabled: false
+            }
+        });
+
+        __sqsSendMessageEditor.layout();
+    });
+
     function sqs_SendMessage_Click(event)
     {
-        var parent = gs_GetParentTabPage(event.currentTarget, true);
-        var msgContents = parent.querySelector(".gs-sqs-message-contents");
-
         $.ajax({
             type: "POST",
             url: "@Url.Action("SendMessage", "Queues", new { queueName = ViewData["QueueName"] ?? "" })",
             contentType: "application/json",
             data: JSON.stringify({
-                body: msgContents.value
+                body: __sqsSendMessageEditor.getValue()
             }),
             success: function(result) {
-                msgContents.value = "";
+                __sqsSendMessageEditor.setValue("");
             }
         });
     }

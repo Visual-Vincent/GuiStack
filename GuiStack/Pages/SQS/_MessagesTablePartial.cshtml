@@ -25,13 +25,32 @@
         </table>
     </div>
 
-    <textarea id="sqs-@Model.Prefix-msg-contents" class="gs-sqs-message-contents"></textarea>
+    <div id="sqs-@Model.Prefix-msg-contents" class="gs-sqs-message-contents"></div>
 </div>
 
+@{
+    string editor = $"__sqs_{Model.Prefix}_editor";
+    string messages = $"__sqs_{Model.Prefix}_messages";
+}
+
 <script type="text/javascript">
-    var __sqs_@(Model.Prefix)_messages = @Html.Raw(
+    var @editor = null;
+    var @messages = @Html.Raw(
         JsonSerializer.Serialize(Model.Messages.ToDictionary(m => m.MessageId))
     );
+
+    require(["vs/editor/editor.main"], function() {
+        @editor = monaco.editor.create(document.getElementById("sqs-@Model.Prefix-msg-contents"), {
+            value: "",
+            language: "json",
+            theme: "vs-dark",
+            readOnly: true,
+            domReadOnly: true,
+            minimap: {
+                enabled: false
+            }
+        });
+    });
 
     $(".lnk-sqs-view-message").click(gs_SQS@(Model.Prefix)Message_Click);
 
@@ -50,6 +69,7 @@
         parent.classList.add("viewing-contents");
 
         msgContents.setAttribute("data-message-id", messageId);
-        msgContents.value = __sqs_@(Model.Prefix)_messages[messageId].Body;
+        @(editor).setValue(@(messages)[messageId].Body);
+        @(editor).layout();
     }
 </script>

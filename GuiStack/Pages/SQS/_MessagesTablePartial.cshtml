@@ -25,7 +25,17 @@
         </table>
     </div>
 
-    <div id="sqs-@Model.Prefix-msg-contents" class="gs-sqs-message-contents"></div>
+    <div class="gs-sqs-message-contents">
+        <div class="text-right" style="margin-bottom: 4px">
+            Syntax highlighting:
+            <select class="lang-select" onchange="sqs_@(Model.Prefix)_LanguageSelect(event)">
+                <option value="plaintext" selected>Plain Text</option>
+                <option value="json">JSON</option>
+                <option value="xml">XML</option>
+            </select>
+        </div>
+        <div id="sqs-@Model.Prefix-msg-contents" class="gs-sqs-message-contents"></div>
+    </div>
 </div>
 
 @{
@@ -42,7 +52,7 @@
     require(["vs/editor/editor.main"], function() {
         @editor = monaco.editor.create(document.getElementById("sqs-@Model.Prefix-msg-contents"), {
             value: "",
-            language: "json",
+            language: "plaintext",
             theme: "vs-dark",
             readOnly: true,
             domReadOnly: true,
@@ -71,5 +81,10 @@
         msgContents.setAttribute("data-message-id", messageId);
         @(editor).setValue(@(messages)[messageId].Body);
         @(editor).layout();
+    }
+
+    function sqs_@(Model.Prefix)_LanguageSelect(event)
+    {
+        monaco.editor.setModelLanguage(@(editor).getModel(), event.currentTarget.value);
     }
 </script>

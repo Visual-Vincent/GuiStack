@@ -85,29 +85,46 @@
     </div>
 
     <div id="sqs-send" class="gs-tabpage selected">
-        <div style="display: flex">
-            <div class="gs-sqs-message-contents" placeholder="Enter message" style="flex: 1 1 0px;"></div>
-            <div>
-                <a no-href class="lnk-sqs-send">Send</a>
-            </div>
-        </div>
+        <table>
+            <tbody>
+                <tr>
+                    <td class="text-right">
+                        Syntax highlighting:
+                        <select class="lang-select">
+                            <option value="plaintext" selected>Plain Text</option>
+                            <option value="json">JSON</option>
+                            <option value="xml">XML</option>
+                        </select>
+                    </td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td style="width: 100%">
+                        <div class="gs-sqs-message-contents" placeholder="Enter message"></div>
+                    </td>
+                    <td style="vertical-align: top">
+                        <a no-href class="gs-button lnk-sqs-send" style="margin-left: 8px">Send</a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
     </div>
 
     <div id="sqs-peek" class="gs-tabpage">
-        <div style="margin-bottom: 8px">
-            <span>Max message count: <input class="input-max-msgs" type="number" min="1" max="10" value="1" /></span>
-            <span>Max wait time (seconds): <input class="input-wait-secs" type="number" min="0" max="20" value="0" /></span>
-            <a no-href class="lnk-sqs-peek">Peek</a>
+        <div class="gs-block-grid" style="margin-bottom: 8px">
+            <div>Max message count: <input class="input-max-msgs" type="number" min="1" max="10" value="1" /></div>
+            <div>Max wait time (seconds): <input class="input-wait-secs" type="number" min="0" max="20" value="0" /></div>
+            <a no-href class="gs-button lnk-sqs-peek">Peek</a>
         </div>
 
         <div class="peek-container"></div>
     </div>
 
     <div id="sqs-receive" class="gs-tabpage">
-        <div style="margin-bottom: 8px">
-            <span>Max message count: <input class="input-max-msgs" type="number" min="1" max="10" value="1" /></span>
-            <span>Max wait time (seconds): <input class="input-wait-secs" type="number" min="0" max="20" value="0" /></span>
-            <a no-href class="lnk-sqs-receive">Receive</a>
+        <div class="gs-block-grid" style="margin-bottom: 8px">
+            <div>Max message count: <input class="input-max-msgs" type="number" min="1" max="10" value="1" /></div>
+            <div>Max wait time (seconds): <input class="input-wait-secs" type="number" min="0" max="20" value="0" /></div>
+            <a no-href class="gs-button lnk-sqs-receive">Receive</a>
         </div>
 
         <div class="receive-container"></div>
@@ -123,10 +140,12 @@
     $(".lnk-sqs-peek").click(sqs_PeekMessages_Click);
     $(".lnk-sqs-receive").click(sqs_ReceiveMessages_Click);
 
+    $("#sqs-send .lang-select").click(sqs_Send_LanguageSelect);
+
     require(["vs/editor/editor.main"], function() {
         __sqsSendMessageEditor = monaco.editor.create(document.querySelector("#sqs-send .gs-sqs-message-contents"), {
             value: "",
-            language: "json",
+            language: "plaintext",
             theme: "vs-dark",
             minimap: {
                 enabled: false
@@ -194,5 +213,10 @@
                 receiveContainer.html(result);
             }
         });
+    }
+
+    function sqs_Send_LanguageSelect(event)
+    {
+        monaco.editor.setModelLanguage(__sqsSendMessageEditor.getModel(), event.currentTarget.value);
     }
 </script>

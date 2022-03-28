@@ -1,13 +1,12 @@
 ﻿/* Please see documentation at https://docs.microsoft.com/aspnet/core/client-side/bundling-and-minification
 for details on configuring this project to bundle and minify static web assets. */
 
-html
+body
 {
     background: rgb(32, 32, 32);
     background: linear-gradient(0deg, rgb(80, 80, 80), rgb(32, 32, 32));
-    height: 100%;
-    margin: 0;
-    padding: 0;
+    min-height: calc(100vh - 8px * 2);
+    margin: 8px;
 }
 
 a, a:visited

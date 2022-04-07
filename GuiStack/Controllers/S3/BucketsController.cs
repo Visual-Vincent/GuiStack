@@ -29,10 +29,10 @@ namespace GuiStack.Controllers.S3
             if(ex is AmazonS3Exception s3ex)
             {
                 if(s3ex.StatusCode == HttpStatusCode.NotFound)
-                    return StatusCode((int)s3ex.StatusCode, s3ex.Message);
+                    return StatusCode((int)s3ex.StatusCode, new { error = s3ex.Message });
 
                 Console.Error.WriteLine(s3ex);
-                return StatusCode((int)HttpStatusCode.InternalServerError, ex.Message);
+                return StatusCode((int)HttpStatusCode.InternalServerError, new { error = ex.Message });
             }
 
             Console.Error.WriteLine(ex);

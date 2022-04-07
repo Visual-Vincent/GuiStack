@@ -27,10 +27,10 @@ namespace GuiStack.Controllers.SQS
             if(ex is AmazonSQSException sqsEx)
             {
                 if(sqsEx.StatusCode == HttpStatusCode.NotFound)
-                    return StatusCode((int)sqsEx.StatusCode, sqsEx.Message);
+                    return StatusCode((int)sqsEx.StatusCode, new { error = sqsEx.Message });
 
                 Console.Error.WriteLine(sqsEx);
-                return StatusCode((int)HttpStatusCode.InternalServerError, ex.Message);
+                return StatusCode((int)HttpStatusCode.InternalServerError, new { error = ex.Message });
             }
 
             Console.Error.WriteLine(ex);

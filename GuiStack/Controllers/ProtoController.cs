@@ -8,6 +8,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Google.Protobuf;
 using Google.Protobuf.Reflection;
 using GuiStack.Extensions;
 using GuiStack.Models;
@@ -84,7 +85,7 @@ namespace GuiStack.Controllers
                     }
                 }
 
-                Dictionary<string, string> definitions = new Dictionary<string, string>();
+                List<string> result = new List<string>();
 
                 foreach(string filename in protofiles)
                 {
@@ -143,10 +144,15 @@ namespace GuiStack.Controllers
 
                     FileDescriptorSet definition = FileDescriptorSet.Parser.ParseFrom(System.IO.File.ReadAllBytes(outputFile));
 
-                    definitions.Add(filename, JsonSerializer.Serialize(definition.File));
+                    var file = definition.File.FirstOrDefault();
+                    if(file == null)
+                        continue;
+
+                    var protoJson = JsonFormatter.Default.Format(file);
+                    result.Add(protoJson);
                 }
 
-                return Json(definitions);
+                return Content("[" + string.Join(", ", result) + "]", "application/json");
             }
             catch(Exception ex)
             {

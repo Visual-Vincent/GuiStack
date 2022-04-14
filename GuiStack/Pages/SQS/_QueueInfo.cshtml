@@ -166,6 +166,7 @@
             data: JSON.stringify({
                 body: __sqsSendMessageEditor.getValue()
             }),
+            error: gsevent_AjaxError,
             success: function(result) {
                 __sqsSendMessageEditor.setValue("");
             }
@@ -188,6 +189,7 @@
                 waitTimeSeconds: waitTime
             },
             cache: false,
+            error: gsevent_AjaxError,
             success: function(result) {
                 peekContainer.html(result);
             }
@@ -210,8 +212,8 @@
                 waitTimeSeconds: waitTime
             },
             cache: false,
-            success: function(result)
-            {
+            error: gsevent_AjaxError,
+            success: function(result) {
                 receiveContainer.html(result);
             }
         });

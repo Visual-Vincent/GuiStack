@@ -192,6 +192,32 @@ function gsevent_TreeNode_Click(event)
     event.currentTarget.classList.toggle("expanded");
 }
 
+function gsevent_AjaxError(request, status, errorThrown)
+{
+    if(!isNull(request) && !isNull(request.responseText))
+    {
+        if(!(request.getResponseHeader("Content-Type") || "").includes("application/json"))
+        {
+            gs_DisplayError(request.responseText);
+            return;
+        }
+
+        var obj = JSON.parse(request.responseText);
+
+        if(!isNull(obj.error))
+            gs_DisplayError(obj.error);
+        else
+            gs_DisplayError(request.responseText);
+        
+        return;
+    }
+
+    if(!isNull(errorThrown) && errorThrown !== "")
+        gs_DisplayError(errorThrown);
+    else
+        gs_DisplayError("An unknown error occurred");
+}
+
 (function() {
     var navs = document.querySelectorAll(".gs-navbar > a");
     var currentUrl = window.location.pathname.split("?")[0];

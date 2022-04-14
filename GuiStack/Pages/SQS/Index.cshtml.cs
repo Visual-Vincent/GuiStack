@@ -1,4 +1,5 @@
 using System;
+using System.Net;
 using System.Threading.Tasks;
 using GuiStack.Models;
 using GuiStack.Repositories;
@@ -19,35 +20,58 @@ namespace GuiStack.Pages.SQS
             this.SQSRepository = sqsRepository;
         }
 
+        private IActionResult HandleException(Exception ex)
+        {
+            if(ex == null)
+                throw new ArgumentNullException(nameof(ex));
+
+            Console.Error.WriteLine(ex);
+            return StatusCode((int)HttpStatusCode.InternalServerError, new { error = ex.Message });
+        }
+
         public void OnGet()
         {
         }
 
         public async Task<IActionResult> OnGetPeekMessagesPartial(string prefix, int maxAmount, int waitTimeSeconds)
         {
-            var queueUrl = await SQSRepository.GetQueueUrlAsync(Queue);
-            var messages = await SQSRepository.ReceiveMessagesAsync(queueUrl, maxAmount, waitTimeSeconds);
+            try
+            {
+                var queueUrl = await SQSRepository.GetQueueUrlAsync(Queue);
+                var messages = await SQSRepository.ReceiveMessagesAsync(queueUrl, maxAmount, waitTimeSeconds);
 
-            return Partial("_MessagesTablePartial", new SQSMessagesModel() {
-                Messages = messages,
-                Prefix = prefix
-            });
+                return Partial("_MessagesTablePartial", new SQSMessagesModel() {
+                    Messages = messages,
+                    Prefix = prefix
+                });
+            }
+            catch(Exception ex)
+            {
+                return HandleException(ex);
+            }
         }
 
         public async Task<IActionResult> OnGetReceiveMessagesPartial(string prefix, int maxAmount, int waitTimeSeconds)
         {
-            var queueUrl = await SQSRepository.GetQueueUrlAsync(Queue);
-            var messages = await SQSRepository.ReceiveMessagesAsync(queueUrl, maxAmount, waitTimeSeconds);
-
-            foreach(var message in messages)
+            try
             {
-                await SQSRepository.DeleteMessageAsync(queueUrl, message.ReceiptHandle);
-            }
+                var queueUrl = await SQSRepository.GetQueueUrlAsync(Queue);
+                var messages = await SQSRepository.ReceiveMessagesAsync(queueUrl, maxAmount, waitTimeSeconds);
 
-            return Partial("_MessagesTablePartial", new SQSMessagesModel() {
-                Messages = messages,
-                Prefix = prefix
-            });
+                foreach(var message in messages)
+                {
+                    await SQSRepository.DeleteMessageAsync(queueUrl, message.ReceiptHandle);
+                }
+
+                return Partial("_MessagesTablePartial", new SQSMessagesModel() {
+                    Messages = messages,
+                    Prefix = prefix
+                });
+            }
+            catch(Exception ex)
+            {
+                return HandleException(ex);
+            }
         }
     }
 }

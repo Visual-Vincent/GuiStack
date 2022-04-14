@@ -1,9 +1,12 @@
 using System;
+using System.IO;
+using System.Linq;
 using Amazon;
 using GuiStack.Repositories;
 using GuiStack.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -25,6 +28,8 @@ namespace GuiStack
         {
             services.AddRazorPages();
             services.AddControllers();
+            services.AddSession();
+            services.AddDistributedMemoryCache();
             services.AddScoped<IS3Repository, S3Repository>();
             services.AddScoped<ISQSRepository, SQSRepository>();
             services.AddSingleton<IS3UrlBuilder, S3UrlBuilder>();
@@ -48,8 +53,11 @@ namespace GuiStack
             app.UseStaticFiles();
 
             app.UseRouting();
-
             app.UseAuthorization();
+
+            app.UseSession(new SessionOptions() {
+                IdleTimeout = TimeSpan.FromHours(2)
+            });
 
             app.UseEndpoints(endpoints => {
                 endpoints.MapRazorPages();
@@ -57,6 +65,21 @@ namespace GuiStack
             });
 
             AWSConfigs.AWSRegion = Environment.GetEnvironmentVariable("AWS_REGION") ?? "eu-central-1";
+
+            EnumerationOptions enumerationOptions = new EnumerationOptions() {
+                IgnoreInaccessible = true,
+                RecurseSubdirectories = false,
+                ReturnSpecialDirectories = false
+            };
+
+            // Delete old temp files
+            foreach(string dir in Directory.EnumerateDirectories(Path.GetTempPath(), "guistack-proto-*", enumerationOptions))
+            {
+                if(Path.GetFileName(dir).Count(c => c == '-') > 2)
+                    continue;
+
+                try { Directory.Delete(dir, true); } catch { }
+            }
         }
     }
 }

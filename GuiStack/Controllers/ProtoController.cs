@@ -45,7 +45,8 @@ namespace GuiStack.Controllers
         [RequestFormLimits(MultipartBodyLengthLimit = MaxFileSize)]
         public async Task<ActionResult> Generate(List<IFormFile> files)
         {
-            string protoDir = Path.Combine(Path.GetTempPath(), $"guistack-proto-{DateTime.Now:yyyyMMddHHmmssffffff}");
+            string identifier = DateTime.Now.ToString("yyyyMMddHHmmssffffff");
+            string protoDir = Path.Combine(Path.GetTempPath(), $"guistack-proto-{identifier}");
 
             try
             {
@@ -152,15 +153,58 @@ namespace GuiStack.Controllers
                     result.Add(protoJson);
                 }
 
+                HttpContext.Session.SetString("proto-identifier", identifier);
+
                 return Content("[" + string.Join(", ", result) + "]", "application/json");
+            }
+            catch(Exception ex)
+            {
+                try { Directory.Delete(protoDir, true); } catch { }
+                return HandleException(ex);
+            }
+        }
+
+        [HttpGet("{filename}")]
+        public ActionResult Download([FromRoute] string filename)
+        {
+            if(!HttpContext.Session.Keys.Contains("proto-identifier"))
+                return StatusCode((int)HttpStatusCode.BadRequest, new { error = "No protobuf identifier is present in the current session" });
+
+            filename = FileNameSanitizer.Replace(Path.GetFileName(filename.DecodeRouteParameter()), "");
+
+            string identifier = HttpContext.Session.GetString("proto-identifier");
+            string protoDir = Path.Combine(Path.GetTempPath(), $"guistack-proto-{identifier}");
+            string protoPath = Path.Combine(protoDir, filename);
+
+            try
+            {
+                var fileStream = new FileStream(protoPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+                return File(fileStream, "application/octet-stream");
             }
             catch(Exception ex)
             {
                 return HandleException(ex);
             }
-            finally
+        }
+
+        [HttpGet]
+        public ActionResult ClearSession()
+        {
+            try
             {
-                try { Directory.Delete(protoDir, true); } catch { }
+                if(!HttpContext.Session.Keys.Contains("proto-identifier"))
+                    return StatusCode((int)HttpStatusCode.BadRequest, new { error = "No protobuf identifier is present in the current session" });
+
+                string identifier = HttpContext.Session.GetString("proto-identifier");
+                string protoDir = Path.Combine(Path.GetTempPath(), $"guistack-proto-{identifier}");
+
+                Directory.Delete(protoDir, true);
+
+                return StatusCode((int)HttpStatusCode.OK);
+            }
+            catch(Exception ex)
+            {
+                return HandleException(ex);
             }
         }
     }

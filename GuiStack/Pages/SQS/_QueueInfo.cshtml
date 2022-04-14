@@ -1,4 +1,4 @@
-﻿@using GuiStack.Models
+@using GuiStack.Models
 @using GuiStack.Extensions
 @model SQSQueueInfo
 
@@ -108,6 +108,8 @@
                 </tr>
             </tbody>
         </table>
+
+        <partial name="~/Pages/_ProtobufListPartial.cshtml"/>
     </div>
 
     <div id="sqs-peek" class="gs-tabpage">

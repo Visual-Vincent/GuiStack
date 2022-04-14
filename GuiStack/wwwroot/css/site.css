@@ -290,6 +290,48 @@ textarea.gs-sqs-message-contents
     margin-left: 8px;
 }
 
+ul.gs-tree > li
+{
+    padding: 4px 0px 4px 8px;
+}
+
+ul.gs-tree > li:first-child
+{
+    padding-top: 8px;
+}
+
+ul.gs-tree > li:last-child
+{
+    padding-bottom: 0px;
+}
+
+ul.gs-tree > li::before
+{
+    content: attr(data-title);
+    cursor: pointer;
+}
+
+ul.gs-tree > li[data-title]:not(.expanded) > *
+{
+    display: none;
+}
+
+ul.gs-tree > li[data-title]::marker
+{
+    content: "\25B6";
+    cursor: pointer;
+}
+
+ul.gs-tree > li[data-title].expanded::marker
+{
+    content: "\25E2";
+}
+
+ul.gs-tree > li:not([data-title])
+{
+    list-style-type: none;
+}
+
 .cssWindow .closeWindowButton
 {
     position: relative;

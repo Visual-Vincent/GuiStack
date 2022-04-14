@@ -184,6 +184,14 @@ function gsevent_TabItem_Click(event)
     event.currentTarget.classList.add("selected");
 }
 
+function gsevent_TreeNode_Click(event)
+{
+    if(event.currentTarget !== event.target)
+        return;
+
+    event.currentTarget.classList.toggle("expanded");
+}
+
 (function() {
     var navs = document.querySelectorAll(".gs-navbar > a");
     var currentUrl = window.location.pathname.split("?")[0];
@@ -206,4 +214,5 @@ function gsevent_TabItem_Click(event)
     }
 
     $(".gs-tab-control > .gs-tab-container > .gs-tabitem").click(gsevent_TabItem_Click);
+    $("ul.gs-tree > li[data-title]").click(gsevent_TreeNode_Click);
 })();

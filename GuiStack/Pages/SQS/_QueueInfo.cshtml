@@ -102,8 +102,19 @@
                 </tr>
                 <tr>
                     <td class="additional-info" style="vertical-align: top; height: 1px">
-                        <div style="width: 200px; height: 100%; overflow: auto">
-                            <partial name="~/Pages/_ProtobufListPartial.cshtml" />
+                        <div class="gs-drop-container" style="display: flex; flex-direction: column; height: 100%">
+                            <div class="gs-drop-overlay">
+                                Drop Protobuf file(s)
+                            </div>
+                            <form>
+                                <a no-href class="gs-upload-field">
+                                    <i class="bi bi-plus-circle"></i> Add definition(s)...
+                                    <input type="file" id="sqs-protobuf-fileupload" />
+                                </a>
+                            </form>
+                            <div style="width: 200px; height: 100%; overflow: auto">
+                                <partial name="~/Pages/_ProtobufListPartial.cshtml" />
+                            </div>
                         </div>
                     </td>
                     <td class="collapsed">

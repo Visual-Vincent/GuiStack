@@ -241,4 +241,37 @@ function gsevent_AjaxError(request, status, errorThrown)
 
     $(".gs-tab-control > .gs-tab-container > .gs-tabitem").click(gsevent_TabItem_Click);
     $("ul.gs-tree > li[data-title]").click(gsevent_TreeNode_Click);
+
+    var __gs_bodyDragCounter = 0;
+
+    $("body").on("dragenter", function() {
+        if(__gs_bodyDragCounter <= 0)
+        {
+            document.querySelector("body").classList.add("is-dragging");
+            $(".gs-drop-container .gs-upload-field").css("position", "static");
+
+            __gs_bodyDragCounter = 0;
+        }
+
+        __gs_bodyDragCounter++;
+    });
+
+    $("body").on("dragleave dragend drop", function() {
+        __gs_bodyDragCounter--;
+
+        if(__gs_bodyDragCounter <= 0)
+        {
+            document.querySelector("body").classList.remove("is-dragging");
+            $(".gs-drop-container .gs-upload-field").css("position", "");
+
+            __gs_bodyDragCounter = 0;
+        }
+    });
+
+    $(window).on("blur", function() {
+        document.querySelector("body").classList.remove("is-dragging");
+        $(".gs-drop-container .gs-upload-field").css("position", "");
+
+        __gs_bodyDragCounter = 0;
+    });
 })();

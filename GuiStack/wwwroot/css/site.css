@@ -356,6 +356,53 @@ ul.gs-tree > li:not([data-title])
     list-style-type: none;
 }
 
+.gs-upload-field
+{
+    position: relative;
+    display: block;
+    padding: 8px;
+    border: 1px dashed;
+    cursor: pointer;
+}
+
+.gs-upload-field > input[type="file"]:first-of-type
+{
+    position: absolute;
+    display: block;
+    top: 0;
+    left: 0;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+}
+
+.gs-drop-container
+{
+    position: relative !important;
+}
+
+.gs-drop-container .gs-drop-overlay
+{
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transition: opacity 0.5s;
+    background: repeating-linear-gradient(-45deg, rgba(34, 34, 34, 0.75), rgba(34, 34, 34, 0.75) 10px, rgba(51, 51, 51, 0.75) 10px, rgba(51, 51, 51, 0.75) 20px); /* Thanks to CSS-Tricks: https://css-tricks.com/stripes-css/ */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
+body.is-dragging .gs-drop-container .gs-drop-overlay
+{
+    opacity: 1;
+}
+
 .cssWindow .closeWindowButton
 {
     position: relative;

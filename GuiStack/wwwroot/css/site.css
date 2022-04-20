@@ -25,6 +25,14 @@ a:active
     color: #0090A4;
 }
 
+a.vertical
+{
+    display: block;
+    writing-mode: vertical-lr;
+    text-orientation: sideways;
+    transform: rotate(180deg);
+}
+
 a.gs-button
 {
     display: inline-block;
@@ -197,7 +205,7 @@ table.gs-list th, table.gs-list td
     border-collapse: collapse;
 }
 
-table.gs-info-table tr:not(.expand-button) > td:first-of-type
+table.gs-info-table.colored tr:not(.expand-button) > td:first-of-type
 {
     color: #AFA;
     font-weight: bold;
@@ -211,6 +219,12 @@ table.gs-info-table tr:not(.expand-button) > td:first-of-type::after
 table.gs-info-table:not(.expanded) tbody.additional-info
 {
     visibility: collapse;
+}
+
+table.gs-info-table:not(.expanded) tr.additional-info,
+table.gs-info-table:not(.expanded) td.additional-info
+{
+    display: none;
 }
 
 table.gs-info-table.expanded tr.collapsed,
@@ -288,6 +302,16 @@ textarea.gs-sqs-message-contents
 .gs-block-grid > *:not(:first-child)
 {
     margin-left: 8px;
+}
+
+ul.gs-tree
+{
+    padding-left: 16px;
+}
+
+ul.gs-tree:first-child
+{
+    margin-top: 0px;
 }
 
 ul.gs-tree > li

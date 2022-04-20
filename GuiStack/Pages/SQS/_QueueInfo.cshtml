@@ -2,7 +2,7 @@
 @using GuiStack.Extensions
 @model SQSQueueInfo
 
-<table class="gs-info-table">
+<table class="gs-info-table colored">
     <tbody>
         <tr>
             <td>Type</td>
@@ -85,9 +85,11 @@
     </div>
 
     <div id="sqs-send" class="gs-tabpage selected">
-        <table>
+        <table class="gs-info-table">
             <tbody>
                 <tr>
+                    <td class="additional-info"></td>
+                    <td></td>
                     <td class="text-right">
                         Syntax highlighting:
                         <select class="lang-select">
@@ -99,6 +101,21 @@
                     <td></td>
                 </tr>
                 <tr>
+                    <td class="additional-info" style="vertical-align: top; height: 1px">
+                        <div style="width: 200px; height: 100%; overflow: auto">
+                            <partial name="~/Pages/_ProtobufListPartial.cshtml" />
+                        </div>
+                    </td>
+                    <td class="collapsed">
+                        <a no-href class="vertical" onclick="sqs_ProtobufPanel_Toggle(event)">
+                            <i class="fa-solid fa-angles-down" style="font-size: 12px"></i> Protobuf <i class="fa-solid fa-angles-down" style="font-size: 12px"></i>
+                        </a>
+                    </td>
+                    <td class="expanded">
+                        <a no-href class="vertical" onclick="sqs_ProtobufPanel_Toggle(event)">
+                            <i class="fa-solid fa-angles-up" style="font-size: 12px"></i> Protobuf <i class="fa-solid fa-angles-up" style="font-size: 12px"></i>
+                        </a>
+                    </td>
                     <td style="width: 100%">
                         <div class="gs-sqs-message-contents" placeholder="Enter message"></div>
                     </td>
@@ -108,8 +125,6 @@
                 </tr>
             </tbody>
         </table>
-
-        <partial name="~/Pages/_ProtobufListPartial.cshtml"/>
     </div>
 
     <div id="sqs-peek" class="gs-tabpage">
@@ -222,5 +237,17 @@
     function sqs_Send_LanguageSelect(event)
     {
         monaco.editor.setModelLanguage(__sqsSendMessageEditor.getModel(), event.currentTarget.value);
+    }
+
+    function sqs_ProtobufPanel_Toggle(event)
+    {
+        var editorElement = document.querySelector("#sqs-send .gs-sqs-message-contents");
+        gsevent_InfoTable_ToggleButton_Click(event);
+
+        // Force the editor to shrink before resizing
+        editorElement.style.width = "1px";
+        __sqsSendMessageEditor.layout();
+        editorElement.style.removeProperty("width");
+        __sqsSendMessageEditor.layout();
     }
 </script>

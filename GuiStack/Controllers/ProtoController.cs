@@ -37,8 +37,99 @@ namespace GuiStack.Controllers
             return StatusCode((int)HttpStatusCode.InternalServerError, new { error = ex.Message });
         }
 
+        [HttpGet, HttpPost]
+        public ActionResult ClearSession()
+        {
+            try
+            {
+                if(!HttpContext.Session.Keys.Contains("proto-identifier"))
+                    return StatusCode((int)HttpStatusCode.BadRequest, new { error = "No protobuf identifier is present in the current session" });
+
+                string identifier = HttpContext.Session.GetString("proto-identifier");
+                string protoDir = Path.Combine(Path.GetTempPath(), $"guistack-proto-{identifier}");
+
+                Directory.Delete(protoDir, true);
+
+                return Ok();
+            }
+            catch(Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+        [HttpGet("{filename}")]
+        public ActionResult Download([FromRoute] string filename)
+        {
+            if(!HttpContext.Session.Keys.Contains("proto-identifier"))
+                return StatusCode((int)HttpStatusCode.BadRequest, new { error = "No protobuf identifier is present in the current session" });
+
+            filename = FileNameSanitizer.Replace(Path.GetFileName(filename.DecodeRouteParameter()), "");
+
+            string identifier = HttpContext.Session.GetString("proto-identifier");
+            string protoDir = Path.Combine(Path.GetTempPath(), $"guistack-proto-{identifier}");
+            string protoPath = Path.Combine(protoDir, filename);
+
+            try
+            {
+                var fileStream = new FileStream(protoPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+                return File(fileStream, "application/octet-stream");
+            }
+            catch(FileNotFoundException ex)
+            {
+                return StatusCode((int)HttpStatusCode.NotFound);
+            }
+            catch(Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
         const long MaxFileSize = 512 * 1024L; // 512 KB
 
+        [HttpPost]
+        [Produces("application/json")]
+        [RequestSizeLimit(MaxFileSize)]
+        [RequestFormLimits(MultipartBodyLengthLimit = MaxFileSize)]
+        public async Task<ActionResult> Upload(List<IFormFile> files)
+        {
+            string identifier = DateTime.Now.ToString("yyyyMMddHHmmssffffff");
+            string protoDir = Path.Combine(Path.GetTempPath(), $"guistack-proto-{identifier}");
+
+            List<string> protofiles = new List<string>();
+
+            try
+            {
+                Directory.CreateDirectory(protoDir);
+
+                foreach(var file in files)
+                {
+                    string filename = FileNameSanitizer.Replace(Path.GetFileName(file.FileName), "");
+                    string filePath = Path.Combine(protoDir, filename);
+
+                    if(file.Length > MaxFileSize)
+                        throw new Exception($"File \"{filename}\" exceeds the maximum allowed size of {MaxFileSize.ToFormattedFileSize()}");
+
+                    using var fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None);
+                    await file.CopyToAsync(fileStream);
+
+                    protofiles.Add(filename);
+                }
+
+                HttpContext.Session.SetString("proto-identifier", identifier);
+
+                return Json(protofiles);
+            }
+            catch(Exception ex)
+            {
+                try { Directory.Delete(protoDir, true); } catch { }
+                return HandleException(ex);
+            }
+        }
+
+        // 
+        // Unused
+        // 
         [HttpPost]
         [Produces("application/json")]
         [RequestSizeLimit(MaxFileSize)]
@@ -160,50 +251,6 @@ namespace GuiStack.Controllers
             catch(Exception ex)
             {
                 try { Directory.Delete(protoDir, true); } catch { }
-                return HandleException(ex);
-            }
-        }
-
-        [HttpGet("{filename}")]
-        public ActionResult Download([FromRoute] string filename)
-        {
-            if(!HttpContext.Session.Keys.Contains("proto-identifier"))
-                return StatusCode((int)HttpStatusCode.BadRequest, new { error = "No protobuf identifier is present in the current session" });
-
-            filename = FileNameSanitizer.Replace(Path.GetFileName(filename.DecodeRouteParameter()), "");
-
-            string identifier = HttpContext.Session.GetString("proto-identifier");
-            string protoDir = Path.Combine(Path.GetTempPath(), $"guistack-proto-{identifier}");
-            string protoPath = Path.Combine(protoDir, filename);
-
-            try
-            {
-                var fileStream = new FileStream(protoPath, FileMode.Open, FileAccess.Read, FileShare.Read);
-                return File(fileStream, "application/octet-stream");
-            }
-            catch(Exception ex)
-            {
-                return HandleException(ex);
-            }
-        }
-
-        [HttpGet]
-        public ActionResult ClearSession()
-        {
-            try
-            {
-                if(!HttpContext.Session.Keys.Contains("proto-identifier"))
-                    return StatusCode((int)HttpStatusCode.BadRequest, new { error = "No protobuf identifier is present in the current session" });
-
-                string identifier = HttpContext.Session.GetString("proto-identifier");
-                string protoDir = Path.Combine(Path.GetTempPath(), $"guistack-proto-{identifier}");
-
-                Directory.Delete(protoDir, true);
-
-                return StatusCode((int)HttpStatusCode.OK);
-            }
-            catch(Exception ex)
-            {
                 return HandleException(ex);
             }
         }

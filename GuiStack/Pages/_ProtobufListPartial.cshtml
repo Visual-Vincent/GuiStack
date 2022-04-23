@@ -1,4 +1,9 @@
-﻿<ul class="gs-tree">
+﻿@{
+    var protoListId = Guid.NewGuid().ToString("N");
+    var protoList = $"__gs_protodefs_{protoListId}";
+}
+
+<ul id="gs-protobuf-list-@protoListId" class="gs-tree">
     <li data-title="tollbiller.proto">
         <ul class="gs-tree">
             <li>FindAgreementRequest</li>
@@ -14,5 +19,40 @@
 </ul>
 
 <script type="text/javascript">
+    const @protoList = {};
 
+    (function() {
+        for(var i = 0; i < localStorage.length; i++)
+        {
+            var key = localStorage.key(i);
+            if(!key.startsWith("proto/"))
+                continue;
+
+            var path = key.split("/");
+            if(path.length <= 1)
+                continue;
+
+            var currentLeaf = @protoList;
+
+            for(var p = 1; p < path.length; p++)
+            {
+                var part = path[p];
+                if(part.length <= 0)
+                    continue;
+
+                if(p == path.length - 1)
+                {
+                    currentLeaf[part] = localStorage.getItem(key);
+                    break;
+                }
+
+                if(!currentLeaf.hasOwnProperty(part))
+                    currentLeaf[part] = {};
+
+                currentLeaf = currentLeaf[part];
+            }
+        }
+
+        // TODO: Populate HTML list
+    })();
 </script>

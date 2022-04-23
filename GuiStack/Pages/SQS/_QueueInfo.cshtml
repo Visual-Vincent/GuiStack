@@ -109,7 +109,7 @@
                             <form>
                                 <a no-href class="gs-upload-field">
                                     <i class="bi bi-plus-circle"></i> Add definition(s)...
-                                    <input type="file" id="sqs-protobuf-fileupload" />
+                                    <input type="file" id="sqs-protobuf-fileupload" multiple />
                                 </a>
                             </form>
                             <div style="width: 200px; height: 100%; overflow: auto">
@@ -169,6 +169,7 @@
     $(".lnk-sqs-receive").click(sqs_ReceiveMessages_Click);
 
     $("#sqs-send .lang-select").click(sqs_Send_LanguageSelect);
+    $("#sqs-protobuf-fileupload").change(sqs_ProtobufUpload_FilesSelected);
 
     require(["vs/editor/editor.main"], function() {
         __sqsSendMessageEditor = monaco.editor.create(document.querySelector("#sqs-send .gs-sqs-message-contents"), {
@@ -260,5 +261,144 @@
         __sqsSendMessageEditor.layout();
         editorElement.style.removeProperty("width");
         __sqsSendMessageEditor.layout();
+    }
+
+    function sqs_ProtobufUpload_FilesSelected(event)
+    {
+        var element = event.currentTarget;
+        var files = element.files;
+        var formData = new FormData();
+
+        var cleanup = function() {
+            navigator.sendBeacon("@Url.Action("ClearSession", "Proto")");
+        };
+
+        for(var i = 0; i < files.length; i++)
+        {
+            formData.append("files", files[i]);
+        }
+
+        $.ajax({
+            type: "POST",
+            url: "@Url.Action("Upload", "Proto")",
+            data: formData,
+            cache: false,
+            processData: false,
+            contentType: false,
+            error: function(request, status, errorThrown) {
+                cleanup();
+                gsevent_AjaxError(request, status, errorThrown);
+            },
+            success: function(result) {
+                if(isNull(result))
+                {
+                    cleanup();
+                    gs_DisplayError("Server response was empty");
+                    return;
+                }
+
+                if(typeof result === "string")
+                {
+                    cleanup();
+                    gs_DisplayError("Response was a string, expected JSON object. Value: " + result);
+                    return;
+                }
+
+                if(!isNull(result.error))
+                {
+                    cleanup();
+                    gs_DisplayError("An error occurred: " + result.error);
+                    return;
+                }
+
+                if(!Array.isArray(result))
+                {
+                    cleanup();
+                    gs_DisplayError("Unexpected response: " + JSON.stringify(result));
+                    return;
+                }
+
+                try
+                {
+                    var parsed = 0;
+
+                    for(var i = 0; i < result.length; i++)
+                    {
+                        var filename = result[i];
+
+                        if(typeof filename !== "string")
+                            continue;
+
+                        protobuf.load("/api/Proto/Download/" + filename, function(err, root) {
+                            if(err)
+                            {
+                                parsed++;
+
+                                if(parsed >= result.length)
+                                    cleanup();
+
+                                gs_DisplayError(
+                                    "An error occurred while parsing '" + filename + "'.\n\n" +
+                                    "Things to keep in mind if you receive error 404:\n" +
+                                    "* Make sure you include all Protobuf files that '" + filename + "' requires in the same request\n" +
+                                    "* GuiStack does not support special characters in filenames and thus will convert them to '_'. This will break the importing of such files\n\n" +
+                                    "Error message: " + err
+                                );
+                                return;
+                            }
+
+                            try
+                            {
+                                var packages = root.nested;
+
+                                for(var pkgName in packages)
+                                {
+                                    if(pkgName === "google")
+                                        continue;
+
+                                    var types = packages[pkgName].nested;
+
+                                    for(var typeName in types)
+                                    {
+                                        var type = types[typeName];
+
+                                        // TODO: How are we going to handle enums?
+                                        if(!(type instanceof protobuf.Message || type instanceof protobuf.Type))
+                                            continue;
+
+                                        var empty = type.create({});
+                                        var obj = type.toObject(empty, {
+                                            enums: String,
+                                            longs: String,
+                                            bytes: String,
+                                            defaults: true
+                                        });
+
+                                        var json = JSON.stringify(obj);
+                                        localStorage.setItem("proto/" + pkgName + "/" + typeName, json);
+                                    }
+                                }
+                            }
+                            catch(error)
+                            {
+                                gs_DisplayError("An error occurred while parsing '" + filename + "': " + error);
+                            }
+
+                            parsed++;
+
+                            if(parsed >= result.length)
+                                cleanup();
+                        });
+                    }
+                }
+                catch(error)
+                {
+                    cleanup();
+                    gs_DisplayError("An error occurred while parsing Protobuf definitions: " + error);
+                }
+            }
+        });
+
+        element.value = null;
     }
 </script>

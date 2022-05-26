@@ -22,13 +22,25 @@
     const @protoList = {};
 
     (function() {
+        var protobufs = [];
+
         for(var i = 0; i < localStorage.length; i++)
         {
             var key = localStorage.key(i);
+
             if(!key.startsWith("proto/"))
                 continue;
 
+            protobufs.push(key);
+        }
+
+        protobufs.sort((a, b) => b.localeCompare(a));
+
+        for(var i = 0; i < protobufs.length; i++)
+        {
+            var key = protobufs[i];
             var path = key.split("/");
+
             if(path.length <= 1)
                 continue;
 
@@ -42,7 +54,7 @@
 
                 if(p == path.length - 1)
                 {
-                    currentLeaf[part] = localStorage.getItem(key);
+                    currentLeaf[part] = { __gs_isProto: true, path: key, proto: localStorage.getItem(key) };
                     break;
                 }
 
@@ -53,6 +65,40 @@
             }
         }
 
-        // TODO: Populate HTML list
+        var stack = [];
+
+        for(var item in @protoList)
+        {
+            stack.push({ name: item, value: @(protoList)[item], parent: document.getElementById("gs-protobuf-list-@protoListId") });
+        }
+
+        while(stack.length > 0)
+        {
+            var node = stack.pop();
+
+            if(node.value.__gs_isProto)
+            {
+                var itemElement = document.createElement("li");
+                itemElement.innerText = node.name;
+                itemElement.setAttribute("data-proto-path", node.value.path);
+
+                node.parent.appendChild(itemElement);
+                continue;
+            }
+
+            var treeElement = document.createElement("ul");
+            treeElement.classList.add("gs-tree");
+
+            var nodeElement = document.createElement("li");
+            nodeElement.setAttribute("data-title", node.name);
+            nodeElement.appendChild(treeElement);
+
+            node.parent.appendChild(nodeElement);
+
+            for(var item in node.value)
+            {
+                stack.push({ name: item, value: node.value[item], parent: treeElement });
+            }
+        }
     })();
 </script>

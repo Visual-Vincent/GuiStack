@@ -25,6 +25,12 @@ a:active
     color: #0090A4;
 }
 
+a.glowy:hover,
+a.glowy:active
+{
+    text-shadow: 0 0 8px #00E0FF;
+}
+
 a.vertical
 {
     display: block;
@@ -172,23 +178,24 @@ a.gs-button:active { background: #005577; }
 .gs-navbar > a
 {
     display: block;
+    background: linear-gradient(0deg, #373737, #52555A);
     border-top: 1px solid rgba(255, 255, 255, 0.3);
-    border-bottom: 1px solid rgba(0, 0, 0, 0.3);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.8);
     padding: 10px;
     color: #FFFFFF;
     text-decoration: none;
-    transition: background 0.2s;
 }
 
 .gs-navbar > a.selected
 {
+    background: #4d5054;
     color: #00FF55;
     font-weight: bold;
 }
 
 .gs-navbar > a:hover
 {
-    background: rgba(255, 255, 255, 0.15);
+    background: #4d5054;
 }
 
 table.gs-list
@@ -306,7 +313,7 @@ textarea.gs-sqs-message-contents
 
 ul.gs-tree
 {
-    padding-left: 16px;
+    padding-left: 10px;
 }
 
 ul.gs-tree:first-child
@@ -317,6 +324,17 @@ ul.gs-tree:first-child
 ul.gs-tree > li
 {
     padding: 4px 0px 4px 8px;
+    cursor: pointer;
+}
+
+ul.gs-tree > li:hover::before,
+ul.gs-tree > li.expanded::before,
+ul.gs-tree > li[data-title]:hover::marker,
+ul.gs-tree > li[data-title].expanded::marker,
+ul.gs-tree > li:not([data-title]):hover
+{
+    text-shadow: 0 0 8px #00E0FF;
+    color: #77EEFF;
 }
 
 ul.gs-tree > li:first-child
@@ -332,7 +350,6 @@ ul.gs-tree > li:last-child
 ul.gs-tree > li::before
 {
     content: attr(data-title);
-    cursor: pointer;
 }
 
 ul.gs-tree > li[data-title]:not(.expanded) > *
@@ -343,7 +360,7 @@ ul.gs-tree > li[data-title]:not(.expanded) > *
 ul.gs-tree > li[data-title]::marker
 {
     content: "\25B6";
-    cursor: pointer;
+    font-size: 10pt;
 }
 
 ul.gs-tree > li[data-title].expanded::marker

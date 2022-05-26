@@ -112,7 +112,8 @@
                                     <input type="file" id="sqs-protobuf-fileupload" multiple />
                                 </a>
                             </form>
-                            <div style="width: 200px; height: 100%; overflow: auto">
+                            @*                                    calc(height - fontsize * lineheight - padding * 2 - scrollbar)*@
+                            <div style="width: 200px; max-height: calc(400px - 1em * 1.2 - 8px * 2 - 16px); overflow: auto">
                                 <partial name="~/Pages/_ProtobufListPartial.cshtml" />
                             </div>
                         </div>

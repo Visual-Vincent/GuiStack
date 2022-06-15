@@ -112,8 +112,8 @@
                                     <input type="file" id="sqs-protobuf-fileupload" multiple />
                                 </a>
                             </form>
-                            @*                                    calc(height - fontsize * lineheight - padding * 2 - scrollbar)*@
-                            <div style="width: 200px; max-height: calc(400px - 1em * 1.2 - 8px * 2 - 16px); overflow: auto">
+                            @*                                    calc(height - fontsize * lineheight - padding * 2 - border * 2 - scrollbar)*@
+                            <div style="width: 200px; max-height: calc(400px - 1em * 1.2 - 8px * 2 - 1px * 2 - 16px); overflow: auto">
                                 <partial name="~/Pages/_ProtobufListPartial.cshtml" />
                             </div>
                         </div>
@@ -164,6 +164,7 @@
     var __sqsSendMessageEditor = null;
     var peekContainer = $("#sqs-peek .peek-container");
     var receiveContainer = $("#sqs-receive .receive-container");
+    var protobufList = $("#sqs-send .gs-protobuf-list");
 
     $(".lnk-sqs-send").click(sqs_SendMessage_Click);
     $(".lnk-sqs-peek").click(sqs_PeekMessages_Click);
@@ -171,6 +172,9 @@
 
     $("#sqs-send .lang-select").click(sqs_Send_LanguageSelect);
     $("#sqs-protobuf-fileupload").change(sqs_ProtobufUpload_FilesSelected);
+
+    // jQuery does not work as expected with custom events
+    protobufList[0].addEventListener("gs.protobuf.selected", sqs_ProtobufList_DefinitionSelected);
 
     require(["vs/editor/editor.main"], function() {
         __sqsSendMessageEditor = monaco.editor.create(document.querySelector("#sqs-send .gs-sqs-message-contents"), {
@@ -262,6 +266,14 @@
         __sqsSendMessageEditor.layout();
         editorElement.style.removeProperty("width");
         __sqsSendMessageEditor.layout();
+    }
+
+    function sqs_ProtobufList_DefinitionSelected(event)
+    {
+        var protoPath = event.detail.protoPath;
+        var protoContents = localStorage.getItem(protoPath);
+
+        __sqsSendMessageEditor.setValue(protoContents);
     }
 
     function sqs_ProtobufUpload_FilesSelected(event)
@@ -388,7 +400,10 @@
                             parsed++;
 
                             if(parsed >= result.length)
+                            {
                                 cleanup();
+                                gs_RefreshProtobufList(protobufList[0]);
+                            }
                         });
                     }
                 }

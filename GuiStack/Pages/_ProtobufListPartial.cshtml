@@ -3,25 +3,18 @@
     var protoList = $"__gs_protodefs_{protoListId}";
 }
 
-<ul id="gs-protobuf-list-@protoListId" class="gs-tree">
-    <li data-title="tollbiller.proto">
-        <ul class="gs-tree">
-            <li>FindAgreementRequest</li>
-            <li>FindInvoiceRequest</li>
-            <li data-title="Nested">
-                <ul class="gs-tree">
-                    <li>FindAgreementResponse</li>
-                    <li>FindInvoiceResponse</li>
-                </ul>
-            </li>
-        </ul>
-    </li>
-</ul>
+<ul id="gs-protobuf-list-@protoListId" data-proto-list-id="@protoListId" class="gs-tree gs-protobuf-list"></ul>
 
 <script type="text/javascript">
     const @protoList = {};
 
     (function() {
+        __gs_DynamicFunctions["gs_RefreshProtobufList_@protoListId"] = gs_RefreshProtobufList_@protoListId;
+        gs_RefreshProtobufList_@(protoListId)();
+    })();
+
+    function gs_RefreshProtobufList_@(protoListId)()
+    {
         var protobufs = [];
 
         for(var i = 0; i < localStorage.length; i++)
@@ -65,11 +58,18 @@
             }
         }
 
+        var protobufList = document.getElementById("gs-protobuf-list-@protoListId");
+
+        // Clear the definitions list
+        while(protobufList.firstChild) {
+            protobufList.removeChild(protobufList.lastChild);
+        }
+
         var stack = [];
 
         for(var item in @protoList)
         {
-            stack.push({ name: item, value: @(protoList)[item], parent: document.getElementById("gs-protobuf-list-@protoListId") });
+            stack.push({ name: item, value: @(protoList)[item], parent: protobufList });
         }
 
         while(stack.length > 0)
@@ -81,6 +81,7 @@
                 var itemElement = document.createElement("li");
                 itemElement.innerText = node.name;
                 itemElement.setAttribute("data-proto-path", node.value.path);
+                itemElement.addEventListener("click", Protobuf_DefinitionSelected);
 
                 node.parent.appendChild(itemElement);
                 continue;
@@ -100,5 +101,19 @@
                 stack.push({ name: item, value: node.value[item], parent: treeElement });
             }
         }
-    })();
+
+        // Small delay to allow the DOM to update
+        window.setTimeout(__gs_RefreshTreeHandlers, 1);
+
+        // This was intentionally put inside the gs_RefreshProtobufList function, so that it's not exposed globally
+        function Protobuf_DefinitionSelected(event)
+        {
+            var protoPath = event.currentTarget.getAttribute("data-proto-path");
+
+            document.getElementById("gs-protobuf-list-@protoListId").dispatchEvent(new CustomEvent("gs.protobuf.selected", {
+                bubbles: false,
+                detail: { element: event.currentTarget, protoPath: protoPath }
+            }));
+        }
+    }
 </script>

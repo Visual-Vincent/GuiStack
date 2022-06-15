@@ -16,6 +16,7 @@
         <script type="text/javascript">
             require.config({ paths: { "vs": "https://unpkg.com/monaco-editor@latest/min/vs" } });
         </script>
+        <script src="~/js/site.js" asp-append-version="true"></script>
     </head>
     <body>
         <div id="gs-error-banner">
@@ -42,7 +43,6 @@
 
         <script src="~/lib/jquery/dist/jquery.min.js"></script>
         <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-        <script src="~/js/site.js" asp-append-version="true"></script>
 
         @RenderSection("Scripts", required: false)
     </body>

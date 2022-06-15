@@ -1,4 +1,6 @@
-﻿function isNull(obj)
+﻿const __gs_DynamicFunctions = {};
+
+function isNull(obj)
 {
     return obj === undefined || obj === null;
 }
@@ -148,6 +150,22 @@ function gs_FindParent(element, selector, throwNotFound)
     return parent;
 }
 
+function gs_RefreshProtobufList(element)
+{
+    if(!isElement(element) || !(element instanceof HTMLUListElement))
+        throw "'element' must be an <ul> element";
+    
+    if(
+        !element.classList.contains("gs-tree") || 
+        !element.classList.contains("gs-protobuf-list") ||
+        !element.hasAttribute("data-proto-list-id") ||
+        element.getAttribute("data-proto-list-id").length <= 0
+    )
+        throw "The specified element is not a valid protobuf definitions list (id=" + element.id + ")";
+    
+    __gs_DynamicFunctions["gs_RefreshProtobufList_" + element.getAttribute("data-proto-list-id")]();
+}
+
 function gsevent_InfoTable_ToggleButton_Click(event)
 {
     var table = gs_GetParentTable(event.currentTarget, true);
@@ -218,7 +236,13 @@ function gsevent_AjaxError(request, status, errorThrown)
         gs_DisplayError("An unknown error occurred");
 }
 
-(function() {
+function __gs_RefreshTreeHandlers()
+{
+    $("ul.gs-tree > li[data-title]").unbind("click", gsevent_TreeNode_Click);
+    $("ul.gs-tree > li[data-title]").click(gsevent_TreeNode_Click);
+}
+
+$(document).ready(function() {
     var navs = document.querySelectorAll(".gs-navbar > a");
     var currentUrl = window.location.pathname.split("?")[0];
 
@@ -239,8 +263,8 @@ function gsevent_AjaxError(request, status, errorThrown)
         }
     }
 
+    __gs_RefreshTreeHandlers();
     $(".gs-tab-control > .gs-tab-container > .gs-tabitem").click(gsevent_TabItem_Click);
-    $("ul.gs-tree > li[data-title]").click(gsevent_TreeNode_Click);
 
     var __gs_bodyDragCounter = 0;
 
@@ -274,4 +298,4 @@ function gsevent_AjaxError(request, status, errorThrown)
 
         __gs_bodyDragCounter = 0;
     });
-})();
+});

@@ -91,12 +91,18 @@
                     <td class="additional-info"></td>
                     <td></td>
                     <td class="text-right">
-                        Syntax highlighting:
-                        <select class="lang-select">
-                            <option value="plaintext" selected>Plain Text</option>
-                            <option value="json">JSON</option>
-                            <option value="xml">XML</option>
-                        </select>
+                        <div>
+                            Syntax highlighting:
+                            <select class="lang-select">
+                                <option value="plaintext" selected>Plain Text</option>
+                                <option value="json">JSON</option>
+                                <option value="xml">XML</option>
+                                <option value="protojson">Protobuf (JSON)</option>
+                            </select>
+                        </div>
+                        <div class="definition-box hidden" style="margin-top: 4px">
+                            Selected definition: <span class="definition-label" style="color: #00E0FF"></span>
+                        </div>
                     </td>
                     <td></td>
                 </tr>
@@ -132,7 +138,9 @@
                         <div class="gs-sqs-message-contents" placeholder="Enter message"></div>
                     </td>
                     <td style="vertical-align: top">
-                        <a no-href class="gs-button lnk-sqs-send" style="margin-left: 8px">Send</a>
+                        <a no-href class="gs-button lnk-sqs-send" style="display: block; margin-left: 8px; margin-bottom: 8px">Send</a>
+                        <input id="sqs-send-as-base64" type="checkbox" />
+                        <label for="sqs-send-as-base64" title="Send message as a Base64-encoded string">Base64</label>
                     </td>
                 </tr>
             </tbody>
@@ -162,9 +170,13 @@
 
 <script type="text/javascript">
     var __sqsSendMessageEditor = null;
+    var __sqsSendPage = document.getElementById("sqs-send");
+
     var peekContainer = $("#sqs-peek .peek-container");
     var receiveContainer = $("#sqs-receive .receive-container");
-    var protobufList = $("#sqs-send .gs-protobuf-list");
+
+    var __sqsSendProtobufList = document.querySelector("#sqs-send .gs-protobuf-list");
+    var __sqsSendLanguageSelect = document.querySelector("#sqs-send .lang-select");
 
     $(".lnk-sqs-send").click(sqs_SendMessage_Click);
     $(".lnk-sqs-peek").click(sqs_PeekMessages_Click);
@@ -174,7 +186,7 @@
     $("#sqs-protobuf-fileupload").change(sqs_ProtobufUpload_FilesSelected);
 
     // jQuery does not work as expected with custom events
-    protobufList[0].addEventListener("gs.protobuf.selected", sqs_ProtobufList_DefinitionSelected);
+    __sqsSendProtobufList.addEventListener("gs.protobuf.selected", sqs_ProtobufList_DefinitionSelected);
 
     require(["vs/editor/editor.main"], function() {
         __sqsSendMessageEditor = monaco.editor.create(document.querySelector("#sqs-send .gs-sqs-message-contents"), {
@@ -191,12 +203,50 @@
 
     function sqs_SendMessage_Click(event)
     {
+        var lang = __sqsSendLanguageSelect.value;
+        var data = __sqsSendMessageEditor.getValue();
+        var isProtobuf = (lang == "protojson");
+        var base64Encode = document.getElementById("sqs-send-as-base64").checked;
+
+        if(isProtobuf)
+        {
+            try
+            {
+                var protoPath = __sqsSendPage.getAttribute("data-selected-proto");
+
+                if(isNull(protoPath) || protoPath.length <= 0)
+                {
+                    gs_DisplayError("No Protobuf definition selected");
+                    return;
+                }
+
+                var protoRoot = gs_GetProtobufRootDefinition(protoPath);
+                var protoType = protoPath
+                    .replace(/^proto\//, "")
+                    .replace("/", ".");
+
+                var root = protobuf.Root.fromJSON(protoRoot);
+                var type = root.lookupType(protoType);
+                var payload = JSON.parse(data);
+                var message = type.fromObject(payload);
+
+                body = gs_Uint8ArrayToBase64(type.encode(message).finish());
+            }
+            catch(error)
+            {
+                gs_DisplayError("An error occurred while constructing the Protobuf message: " + error);
+                return;
+            }
+        }
+
         $.ajax({
             type: "POST",
             url: "@Url.Action("SendMessage", "Queues", new { queueName = ViewData["QueueName"] ?? "" })",
             contentType: "application/json",
             data: JSON.stringify({
-                body: __sqsSendMessageEditor.getValue()
+                body: data,
+                isProtobuf: isProtobuf,
+                base64Encode: base64Encode
             }),
             error: gsevent_AjaxError,
             success: function(result) {
@@ -253,7 +303,21 @@
 
     function sqs_Send_LanguageSelect(event)
     {
-        monaco.editor.setModelLanguage(__sqsSendMessageEditor.getModel(), event.currentTarget.value);
+        var lang = event.currentTarget.value;
+        var parentRow = gs_GetParentTableRow(event.currentTarget, true);
+        var definitionBox = parentRow.querySelector(".definition-box");
+
+        if(lang == "protojson")
+        {
+            lang = "json";
+            definitionBox.classList.remove("hidden");
+        }
+        else
+        {
+            definitionBox.classList.add("hidden");
+        }
+
+        monaco.editor.setModelLanguage(__sqsSendMessageEditor.getModel(), lang);
     }
 
     function sqs_ProtobufPanel_Toggle(event)
@@ -271,9 +335,14 @@
     function sqs_ProtobufList_DefinitionSelected(event)
     {
         var protoPath = event.detail.protoPath;
-        var protoContents = localStorage.getItem(protoPath);
+        var protoContents = gs_GetProtobufMessage(protoPath);
 
         __sqsSendMessageEditor.setValue(protoContents);
+
+        __sqsSendPage.setAttribute("data-selected-proto", event.detail.protoPath);
+        __sqsSendPage.querySelector(".definition-label").innerText = event.detail.protoPath;
+
+        gs_SelectOption($(__sqsSendLanguageSelect), "protojson");
     }
 
     function sqs_ProtobufUpload_FilesSelected(event)
@@ -369,7 +438,11 @@
                                     if(pkgName === "google")
                                         continue;
 
-                                    var types = packages[pkgName].nested;
+                                    var pkgRoot = packages[pkgName];
+                                    var rootJson = pkgRoot.toJSON();
+                                    var types = pkgRoot.nested;
+
+                                    localStorage.setItem("protoroot/" + pkgName, rootJson);
 
                                     for(var typeName in types)
                                     {
@@ -384,10 +457,12 @@
                                             enums: String,
                                             longs: String,
                                             bytes: String,
-                                            defaults: true
+                                            defaults: true,
+                                            arrays: true,
+                                            objects: true
                                         });
 
-                                        var json = JSON.stringify(obj);
+                                        var json = JSON.stringify(obj, null, 4);
                                         localStorage.setItem("proto/" + pkgName + "/" + typeName, json);
                                     }
                                 }
@@ -402,7 +477,7 @@
                             if(parsed >= result.length)
                             {
                                 cleanup();
-                                gs_RefreshProtobufList(protobufList[0]);
+                                gs_RefreshProtobufList(__sqsSendProtobufList);
                             }
                         });
                     }

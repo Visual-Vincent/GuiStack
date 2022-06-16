@@ -61,6 +61,8 @@ a.gs-button:active { background: #005577; }
     white-space: nowrap;
 }
 
+.hidden { display: none; }
+
 .text-left   { text-align: left; }
 .text-center { text-align: center; }
 .text-right  { text-align: right; }
@@ -335,6 +337,12 @@ ul.gs-tree > li:not([data-title]):hover
 {
     text-shadow: 0 0 8px #00E0FF;
     color: #77EEFF;
+}
+
+ul.gs-tree > li.selected
+{
+    text-shadow: 0 0 8px #00FFAA;
+    color: #66FFCC;
 }
 
 ul.gs-tree > li:first-child

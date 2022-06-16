@@ -110,6 +110,9 @@
         {
             var protoPath = event.currentTarget.getAttribute("data-proto-path");
 
+            $("ul#gs-protobuf-list-@protoListId li[data-proto-path]").removeClass("selected");
+            event.currentTarget.classList.add("selected");
+
             document.getElementById("gs-protobuf-list-@protoListId").dispatchEvent(new CustomEvent("gs.protobuf.selected", {
                 bubbles: false,
                 detail: { element: event.currentTarget, protoPath: protoPath }

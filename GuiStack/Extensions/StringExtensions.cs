@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GuiStack.Extensions
@@ -16,6 +17,16 @@ namespace GuiStack.Extensions
         public static string DecodeRouteParameter(this string value)
         {
             return value.Replace("%2F", "/");
+        }
+
+        /// <summary>
+        /// Converts the byte array as-is to a string, without using any particular encoding.
+        /// </summary>
+        /// <param name="bytes"></param>
+        public static string ToRawString(this byte[] bytes)
+        {
+            char[] chars = bytes.Select(b => (char)b).ToArray();
+            return new string(chars);
         }
     }
 }

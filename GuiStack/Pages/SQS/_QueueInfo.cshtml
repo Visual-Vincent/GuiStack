@@ -222,15 +222,18 @@
 
                 var protoRoot = gs_GetProtobufRootDefinition(protoPath);
                 var protoType = protoPath
-                    .replace(/^proto\//, "")
+                    .replace(/^proto\/[^\/]+\/?/, "")
                     .replace("/", ".");
 
-                var root = protobuf.Root.fromJSON(protoRoot);
+                if(protoType.length <= 0)
+                    throw "'" + protoPath + "' is not a valid protobuf definition path: Path is too short";
+
+                var root = protobuf.Root.fromJSON(JSON.parse(protoRoot));
                 var type = root.lookupType(protoType);
                 var payload = JSON.parse(data);
                 var message = type.fromObject(payload);
 
-                body = gs_Uint8ArrayToBase64(type.encode(message).finish());
+                data = gs_Uint8ArrayToBase64(type.encode(message).finish());
             }
             catch(error)
             {
@@ -439,7 +442,8 @@
                                         continue;
 
                                     var pkgRoot = packages[pkgName];
-                                    var rootJson = pkgRoot.toJSON();
+                                    var rootJObj = pkgRoot.toJSON();
+                                    var rootJson = JSON.stringify(rootJObj);
                                     var types = pkgRoot.nested;
 
                                     localStorage.setItem("protoroot/" + pkgName, rootJson);

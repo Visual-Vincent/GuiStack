@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Net;
+using System.Text;
 using System.Threading.Tasks;
 using Amazon.SQS;
+using GuiStack.Extensions;
 using GuiStack.Models;
 using GuiStack.Repositories;
 using Microsoft.AspNetCore.Mvc;
@@ -62,8 +64,29 @@ namespace GuiStack.Controllers.SQS
 
             try
             {
+                string body = message.Body;
+
+                if(message.IsProtobuf)
+                {
+                    byte[] protoData = Convert.FromBase64String(body);
+
+                    // This re-encoding to Base64 is intentional, as I want to rely on .NET's Base64 implementation to ensure that
+                    // in the event that encoding isn't properly performed by the client, we don't send incorrectly encoded messages.
+                    // (Insead, the decoding above will likely throw an error)
+
+                    if(message.Base64Encode)
+                        body = Convert.ToBase64String(protoData);
+                    else
+                        body = protoData.ToRawString();
+                }
+                else if(message.Base64Encode)
+                {
+                    byte[] data = Encoding.UTF8.GetBytes(body);
+                    body = Convert.ToBase64String(data);
+                }
+
                 var queueUrl = await sqsRepository.GetQueueUrlAsync(queueName);
-                var messageId = await sqsRepository.SendMessageAsync(queueUrl, message.Body);
+                var messageId = await sqsRepository.SendMessageAsync(queueUrl, body);
 
                 return Json(new { messageId = messageId });
             }

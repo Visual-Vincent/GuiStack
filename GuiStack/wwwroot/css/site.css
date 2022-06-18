@@ -61,6 +61,11 @@ a.gs-button:active { background: #005577; }
     white-space: nowrap;
 }
 
+.modal-buttons > button
+{
+    padding: 2px 20px;
+}
+
 .hidden { display: none; }
 
 .text-left   { text-align: left; }
@@ -190,9 +195,11 @@ a.gs-button:active { background: #005577; }
 
 .gs-navbar > a.selected
 {
-    background: #4d5054;
-    color: #00FF55;
+    background: linear-gradient(180deg, #303030, #4d5054);
+    box-shadow: inset rgba(0, 0, 0, 0.69) 0px 0px 4px 0px;
+    border-top: 1px solid rgba(0, 0, 0, 0.69);
     font-weight: bold;
+    color: #00FF55;
 }
 
 .gs-navbar > a:hover

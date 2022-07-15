@@ -7,9 +7,10 @@
 
 @{
     ViewData["Title"] = "S3 Buckets";
+    bool hasBucketName = !string.IsNullOrWhiteSpace(Model.Bucket);
 }
 
-@if(!string.IsNullOrWhiteSpace(Model.Bucket))
+@if(hasBucketName)
 {
     <h1>@Model.Bucket</h1>
 }
@@ -21,7 +22,7 @@ else
 <div id="list-container">
     @try
     {
-        if(string.IsNullOrWhiteSpace(Model.Bucket))
+        if(!hasBucketName)
         {
             await Html.RenderPartialAsync("~/Pages/S3/_BucketsTable.cshtml", await Model.S3Repository.GetBucketsAsync());
         }
@@ -38,7 +39,7 @@ else
         }
         else
         {
-            if(string.IsNullOrWhiteSpace(Model.Bucket))
+            if(!hasBucketName)
             {
                 <h2 class="error-text">Failed to fetch buckets:</h2>
             }
@@ -52,7 +53,7 @@ else
     }
     catch(Exception ex)
     {
-        if(string.IsNullOrWhiteSpace(Model.Bucket))
+        if(!hasBucketName)
         {
             <h2 class="error-text">Failed to fetch buckets:</h2>
         }

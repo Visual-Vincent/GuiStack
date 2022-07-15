@@ -15,21 +15,54 @@ a, a:visited
     text-decoration: none;
 }
 
-a:hover
+a         > .gs-icon-overlay.stroked,
+a:visited > .gs-icon-overlay.stroked
 {
-    color: #BBF7FF;
+    -webkit-text-stroke-color: #00E0FF;
 }
 
-a:active
-{
-    color: #0090A4;
-}
+a:hover  { color: #BBF7FF; }
+a:active { color: #0090A4; }
+a:hover  > .gs-icon-overlay.stroked { -webkit-text-stroke-color: #BBF7FF; }
+a:active > .gs-icon-overlay.stroked { -webkit-text-stroke-color: #0090A4; }
 
 a.glowy:hover,
 a.glowy:active
 {
     text-shadow: 0 0 8px #00E0FF;
 }
+
+a.initial-white { color: #FFFFFF; }
+
+a.red:hover  { color: #FF7F7F; }
+a.red:active { color: #FF0000; }
+a.red:hover  > .gs-icon-overlay.stroked { -webkit-text-stroke-color: #FF7F7F; }
+a.red:active > .gs-icon-overlay.stroked { -webkit-text-stroke-color: #FF0000; }
+a.red        > .gs-icon-overlay.stroked { -webkit-text-stroke-color: #FFFFFF; }
+
+a.blue:hover  { color: #7FBFFF; }
+a.blue:active { color: #007FFF; }
+a.blue:hover  > .gs-icon-overlay.stroked { -webkit-text-stroke-color: #7FBFFF; }
+a.blue:active > .gs-icon-overlay.stroked { -webkit-text-stroke-color: #007FFF; }
+a.blue        > .gs-icon-overlay.stroked { -webkit-text-stroke-color: #FFFFFF; }
+
+a.green:hover  { color: #80DFA3; }
+a.green:active { color: #00C048; }
+a.green:hover  > .gs-icon-overlay.stroked { -webkit-text-stroke-color: #80DFA3; }
+a.green:active > .gs-icon-overlay.stroked { -webkit-text-stroke-color: #00C048; }
+a.green        > .gs-icon-overlay.stroked { -webkit-text-stroke-color: #FFFFFF; }
+
+a.neon-green:hover  { color: #00FF00; }
+a.neon-green:active { color: #00BB00; }
+a.neon-green:hover  > .gs-icon-overlay.stroked { -webkit-text-stroke-color: #00FF00; }
+a.neon-green:active > .gs-icon-overlay.stroked { -webkit-text-stroke-color: #00BB00; }
+a.neon-green        > .gs-icon-overlay.stroked { -webkit-text-stroke-color: #FFFFFF; }
+
+a.purple:hover  { color: #CE7FFF; }
+a.purple:active { color: #A000FF; }
+a.purple:hover  > .gs-icon-overlay.stroked { -webkit-text-stroke-color: #CE7FFF; }
+a.purple:active > .gs-icon-overlay.stroked { -webkit-text-stroke-color: #A000FF; }
+a.purple        > .gs-icon-overlay.stroked { -webkit-text-stroke-color: #FFFFFF; }
 
 a.vertical
 {
@@ -63,7 +96,8 @@ a.gs-button:active { background: #005577; }
 
 .modal-buttons > button
 {
-    padding: 2px 20px;
+    padding: 2px 12px;
+    min-width: 64px;
 }
 
 .hidden { display: none; }
@@ -96,18 +130,6 @@ a.gs-button:active { background: #005577; }
     color: #FFFFFF;
     text-decoration: none;
 }
-
-.gs-icons a.red:hover  { color: #FF7F7F; }
-.gs-icons a.red:active { color: #FF0000; }
-
-.gs-icons a.blue:hover  { color: #7FBFFF; }
-.gs-icons a.blue:active { color: #007FFF; }
-
-.gs-icons a.green:hover  { color: #80DFA3; }
-.gs-icons a.green:active { color: #00C048; }
-
-.gs-icons a.purple:hover  { color: #CE7FFF; }
-.gs-icons a.purple:active { color: #A000FF; }
 
 #gs-error-banner
 {
@@ -375,7 +397,7 @@ ul.gs-tree > li[data-title]:not(.expanded) > *
 ul.gs-tree > li[data-title]::marker
 {
     content: "\25B6";
-    font-size: 10pt;
+    font-size: 0.75em;
 }
 
 ul.gs-tree > li[data-title].expanded::marker
@@ -433,6 +455,24 @@ ul.gs-tree > li:not([data-title])
 body.is-dragging .gs-drop-container .gs-drop-overlay
 {
     opacity: 1;
+}
+
+.gs-icon-stack
+{
+    position: relative;
+}
+
+.gs-icon-overlay
+{
+    position: absolute;
+    font-size: 0.5em;
+    bottom: 0;
+    right: 0;
+}
+
+.gs-icon-overlay.stroked
+{
+    -webkit-text-stroke: 1.5px #FFFFFF;
 }
 
 .cssWindow .closeWindowButton

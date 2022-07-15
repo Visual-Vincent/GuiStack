@@ -15,8 +15,27 @@
     <h1>@Model.Bucket</h1>
 }
 else
-{
-    <h1>S3 buckets</h1>
+{    
+    <div id="newS3BucketModal" class="cssWindow dark backdropblur text-center">
+        <div class="closeWindowButton"><a no-href onclick="closeParentWindow(event)">×</a></div>
+
+        <h2 class="title">New S3 bucket</h2>
+        <p><input type="text" class="name-textbox text-center" maxlength="63" style="width: 400px" /></p>
+
+        <div class="modal-buttons text-center">
+            <button onclick="s3_CreateBucket()">Create</button>
+        </div>
+    </div>
+
+    <div style="display: flex; align-items: center">
+        <h1>S3 buckets</h1>
+        <div style="text-align: right; font-size: 1.5em; flex-grow: 1">
+            <a no-href onclick="showWindow('newS3BucketModal')" class="gs-icon-stack initial-white neon-green">
+                <i class="bi bi-bucket"></i>
+                <i class="bi bi-plus-circle-fill gs-icon-overlay stroked" style="color: #000000"></i>
+            </a>
+        </div>
+    </div>
 }
 
 <div id="list-container">
@@ -65,3 +84,33 @@ else
         <p class="error-text">@ex.Message</p>
     }
 </div>
+
+@if(!hasBucketName)
+{
+    <script type="text/javascript">
+        const URL_CREATE_BUCKET = "@Url.Action("CreateBucket", "Buckets", new { bucketName = "__BUCKETNAME__" })";
+        
+        async function s3_CreateBucket()
+        {
+            try
+            {
+                var bucketName = encodeURIComponent(document.querySelector("#newS3BucketModal .name-textbox").value);
+                var url = URL_CREATE_BUCKET.replace("__BUCKETNAME__", bucketName);
+
+                var response = await fetch(url, { method: "POST" });
+
+                if(!response.ok) {
+                    throw "Failed to create S3 bucket: Server returned HTTP status " + response.status;
+                }
+
+                window.location.reload(true);
+            }
+            catch(error)
+            {
+                gs_DisplayError(error);
+            }
+
+            closeWindow("newS3BucketModal");
+        }
+    </script>
+}

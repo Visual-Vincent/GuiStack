@@ -15,8 +15,8 @@
     <h1>@Model.Bucket</h1>
 }
 else
-{    
-    <div id="newS3BucketModal" class="cssWindow dark backdropblur text-center">
+{
+    <div id="new-s3-bucket-modal" class="cssWindow dark backdropblur text-center">
         <div class="closeWindowButton"><a no-href onclick="closeParentWindow(event)">×</a></div>
 
         <h2 class="title">New S3 bucket</h2>
@@ -30,7 +30,7 @@ else
     <div style="display: flex; align-items: center">
         <h1>S3 buckets</h1>
         <div style="text-align: right; font-size: 1.5em; flex-grow: 1">
-            <a no-href onclick="showWindow('newS3BucketModal')" class="gs-icon-stack initial-white neon-green">
+            <a no-href onclick="showWindow('new-s3-bucket-modal')" class="gs-icon-stack initial-white neon-green">
                 <i class="bi bi-bucket"></i>
                 <i class="bi bi-plus-circle-fill gs-icon-overlay stroked" style="color: #000000"></i>
             </a>
@@ -94,7 +94,7 @@ else
         {
             try
             {
-                var bucketName = encodeURIComponent(document.querySelector("#newS3BucketModal .name-textbox").value);
+                var bucketName = encodeURIComponent(document.querySelector("#new-s3-bucket-modal .name-textbox").value);
                 var url = URL_CREATE_BUCKET.replace("__BUCKETNAME__", bucketName);
 
                 var response = await fetch(url, { method: "POST" });
@@ -110,7 +110,7 @@ else
                 gs_DisplayError(error);
             }
 
-            closeWindow("newS3BucketModal");
+            closeWindow("new-s3-bucket-modal");
         }
     </script>
 }

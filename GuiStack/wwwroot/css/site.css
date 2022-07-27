@@ -84,10 +84,7 @@ a.gs-button
 a.gs-button:hover  { background: #007EAF; }
 a.gs-button:active { background: #005577; }
 
-.error-text
-{
-    color: #FF0000;
-}
+.error-text { color: #FF0000; }
 
 .modal-buttons
 {
@@ -105,6 +102,14 @@ a.gs-button:active { background: #005577; }
 .text-left   { text-align: left; }
 .text-center { text-align: center; }
 .text-right  { text-align: right; }
+
+.gs-rotate-45  { transform:  rotate(45deg); }
+.gs-rotate-90  { transform:  rotate(90deg); }
+.gs-rotate-135 { transform: rotate(135deg); }
+.gs-rotate-180 { transform: rotate(180deg); }
+.gs-rotate-225 { transform: rotate(225deg); }
+.gs-rotate-270 { transform: rotate(270deg); }
+.gs-rotate-315 { transform: rotate(315deg); }
 
 .gs-icons
 {

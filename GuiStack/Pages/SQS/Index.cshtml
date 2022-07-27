@@ -7,21 +7,48 @@
 @{
     ViewData["Title"] = "SQS Queues";
     ViewData["QueueName"] = Model.Queue;
+
+    bool hasQueueName = !string.IsNullOrWhiteSpace(Model.Queue);
 }
 
-@if(!string.IsNullOrWhiteSpace(Model.Queue))
+@if(hasQueueName)
 {
     <h1>@Model.Queue</h1>
 }
 else
 {
-    <h1>SQS Queues</h1>
+    <div id="new-sqs-queue-modal" class="cssWindow dark backdropblur text-center">
+        <div class="closeWindowButton"><a no-href onclick="closeParentWindow(event)">×</a></div>
+
+        <h2 class="title">New SQS queue</h2>
+        <p>
+            <input type="text" class="name-textbox text-center" maxlength="80" style="width: 400px" />
+        </p>
+        <p>
+            <input type="checkbox" id="new-sqs-queue-fifo-checkbox" class="fifo-checkbox" />
+            <label for="new-sqs-queue-fifo-checkbox">FIFO</label>
+        </p>
+
+        <div class="modal-buttons text-center">
+            <button onclick="sqs_CreateQueue()">Create</button>
+        </div>
+    </div>
+
+    <div style="display: flex; align-items: center">
+        <h1>SQS queues</h1>
+        <div style="text-align: right; font-size: 1.5em; flex-grow: 1">
+            <a no-href onclick="showWindow('new-sqs-queue-modal')" class="gs-icon-stack initial-white neon-green">
+                <i class="fa-solid fa-database gs-rotate-90" style="margin-right: 4px"></i>
+                <i class="bi bi-plus-circle-fill gs-icon-overlay stroked" style="color: #000000"></i>
+            </a>
+        </div>
+    </div>
 }
 
 <div id="list-container">
     @try
     {
-        if(string.IsNullOrWhiteSpace(Model.Queue))
+        if(!hasQueueName)
         {
             await Html.RenderPartialAsync("~/Pages/SQS/_QueuesTable.cshtml", await Model.SQSRepository.GetQueuesAsync());
         }
@@ -39,7 +66,7 @@ else
         }
         else
         {
-            if(string.IsNullOrWhiteSpace(Model.Queue))
+            if(!hasQueueName)
             {
                 <h2 class="error-text">Failed to fetch queues:</h2>
             }
@@ -53,7 +80,7 @@ else
     }
     catch(Exception ex)
     {
-        if(string.IsNullOrWhiteSpace(Model.Queue))
+        if(!hasQueueName)
         {
             <h2 class="error-text">Failed to fetch queues:</h2>
         }
@@ -65,3 +92,38 @@ else
         <p class="error-text">@ex.Message</p>
     }
 </div>
+
+@if(!hasQueueName)
+{
+    <script type="text/javascript">
+        async function sqs_CreateQueue()
+        {
+            try
+            {
+                var queueName = document.querySelector("#new-sqs-queue-modal .name-textbox").value;
+                var isFifo = document.getElementById("new-sqs-queue-fifo-checkbox").checked;
+
+                var response = await fetch("@Url.Action("CreateQueue", "Queues")", {
+                    method: "PUT",
+                    headers: new Headers({ "Content-Type": "application/json" }),
+                    body: JSON.stringify({
+                        queueName: queueName,
+                        isFifo: isFifo
+                    })
+                });
+
+                if(!response.ok) {
+                    throw "Failed to create SQS queue: Server returned HTTP status " + response.status;
+                }
+
+                window.location.reload(true);
+            }
+            catch(error)
+            {
+                gs_DisplayError(error);
+            }
+
+            closeWindow("new-sqs-queue-modal");
+        }
+    </script>
+}

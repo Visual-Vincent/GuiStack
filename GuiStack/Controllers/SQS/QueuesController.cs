@@ -39,6 +39,24 @@ namespace GuiStack.Controllers.SQS
             return StatusCode((int)HttpStatusCode.InternalServerError);
         }
 
+        [HttpPut]
+        [Consumes("application/json")]
+        public async Task<ActionResult> CreateQueue([FromBody] SQSCreateQueueModel model)
+        {
+            if(string.IsNullOrWhiteSpace(model.QueueName))
+                return StatusCode((int)HttpStatusCode.BadRequest);
+
+            try
+            {
+                await sqsRepository.CreateQueueAsync(model);
+                return Ok();
+            }
+            catch(Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
         [HttpGet]
         [Produces("application/json")]
         public async Task<ActionResult> GetQueues()

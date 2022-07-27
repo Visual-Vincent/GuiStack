@@ -11,6 +11,7 @@ namespace GuiStack.Repositories
 {
     public interface ISQSRepository
     {
+        Task CreateQueueAsync(SQSCreateQueueModel model);
         Task<IEnumerable<SQSQueue>> GetQueuesAsync();
         Task<SQSQueueInfo> GetQueueAttributesAsync(string queueUrl);
         Task<string> GetQueueUrlAsync(string queueName);
@@ -22,6 +23,27 @@ namespace GuiStack.Repositories
     public class SQSRepository : ISQSRepository
     {
         private SQSAuthenticator authenticator = new SQSAuthenticator();
+
+        public async Task CreateQueueAsync(SQSCreateQueueModel model)
+        {
+            using var sqs = authenticator.Authenticate();
+            string queueName = model.QueueName;
+
+            if(model.IsFifo)
+                if(queueName.EndsWith(".fifo", StringComparison.OrdinalIgnoreCase))
+                    queueName = $"{queueName.Remove(queueName.Length - 5, 5)}.fifo"; // Ensure lowercase ".fifo"
+                else
+                    queueName = $"{queueName}.fifo";
+
+            var response = await sqs.CreateQueueAsync(new CreateQueueRequest() {
+                QueueName = queueName,
+                Attributes = new Dictionary<string, string>() {
+                    { "FifoQueue", model.IsFifo.ToString().ToLower() }
+                }
+            });
+
+            response.ThrowIfUnsuccessful("SQS");
+        }
 
         public async Task<IEnumerable<SQSQueue>> GetQueuesAsync()
         {

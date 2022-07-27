@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Mime;
 using System.Threading.Tasks;
@@ -39,80 +40,6 @@ namespace GuiStack.Controllers.S3
             return StatusCode((int)HttpStatusCode.InternalServerError);
         }
 
-        [HttpGet]
-        public async Task<ActionResult> GetBuckets()
-        {
-            try
-            {
-                var buckets = await s3Repository.GetBucketsAsync();
-                return Json(buckets);
-            }
-            catch(Exception ex)
-            {
-                return HandleException(ex);
-            }
-        }
-
-        [HttpGet("{bucketName}")]
-        public async Task<ActionResult> GetObjects([FromRoute] string bucketName)
-        {
-            if(string.IsNullOrWhiteSpace(bucketName))
-                return StatusCode((int)HttpStatusCode.BadRequest);
-
-            bucketName = bucketName.DecodeRouteParameter();
-
-            try
-            {
-                var objects = await s3Repository.GetObjectsAsync(bucketName);
-                return Json(objects);
-            }
-            catch(Exception ex)
-            {
-                return HandleException(ex);
-            }
-        }
-
-        [HttpGet("{bucketName}/download/{objectName}")]
-        public async Task<ActionResult> Download([FromRoute] string bucketName, [FromRoute] string objectName)
-        {
-            if(string.IsNullOrWhiteSpace(bucketName) || string.IsNullOrWhiteSpace(objectName))
-                return StatusCode((int)HttpStatusCode.BadRequest);
-
-            bucketName = bucketName.DecodeRouteParameter();
-            objectName = objectName.DecodeRouteParameter();
-
-            try
-            {
-                using var obj = await s3Repository.GetObjectAsync(bucketName, objectName);
-                using var stream = obj.ResponseStream;
-
-                Response.ContentLength = obj.ContentLength;
-                Response.ContentType = "application/octet-stream";
-
-                var contentDisposition = new ContentDisposition
-                {
-                    FileName = Path.GetFileName(objectName),
-                    Inline = false
-                };
-
-                Response.Headers.Add("Content-Disposition", contentDisposition.ToString());
-
-                int read = 0;
-                byte[] buffer = new byte[8192];
-
-                while((read = await stream.ReadAsync(buffer, 0, buffer.Length)) != 0)
-                {
-                    await Response.Body.WriteAsync(buffer, 0, read);
-                }
-
-                return new EmptyResult();
-            }
-            catch(Exception ex)
-            {
-                return HandleException(ex);
-            }
-        }
-
         [HttpPost("{bucketName}")]
         public async Task<ActionResult> CreateBucket([FromRoute] string bucketName)
         {
@@ -145,6 +72,83 @@ namespace GuiStack.Controllers.S3
             {
                 await s3Repository.DeleteObjectAsync(bucketName, objectName);
                 return Ok();
+            }
+            catch(Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+        [HttpGet("{bucketName}/download/{objectName}")]
+        public async Task<ActionResult> Download([FromRoute] string bucketName, [FromRoute] string objectName)
+        {
+            if(string.IsNullOrWhiteSpace(bucketName) || string.IsNullOrWhiteSpace(objectName))
+                return StatusCode((int)HttpStatusCode.BadRequest);
+
+            bucketName = bucketName.DecodeRouteParameter();
+            objectName = objectName.DecodeRouteParameter();
+
+            try
+            {
+                using var obj = await s3Repository.GetObjectAsync(bucketName, objectName);
+                using var stream = obj.ResponseStream;
+
+                Response.ContentLength = obj.ContentLength;
+                Response.ContentType = "application/octet-stream";
+
+                var contentDisposition = new ContentDisposition {
+                    FileName = Path.GetFileName(objectName),
+                    Inline = false
+                };
+
+                Response.Headers.Add("Content-Disposition", contentDisposition.ToString());
+
+                int read = 0;
+                byte[] buffer = new byte[8192];
+
+                while((read = await stream.ReadAsync(buffer, 0, buffer.Length)) != 0)
+                {
+                    await Response.Body.WriteAsync(buffer, 0, read);
+                }
+
+                return new EmptyResult();
+            }
+            catch(Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+        [HttpGet]
+        public async Task<ActionResult> GetBuckets()
+        {
+            try
+            {
+                var buckets = (await s3Repository.GetBucketsAsync())
+                    .OrderBy(b => b.Name);
+
+                return Json(buckets);
+            }
+            catch(Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+        [HttpGet("{bucketName}")]
+        public async Task<ActionResult> GetObjects([FromRoute] string bucketName)
+        {
+            if(string.IsNullOrWhiteSpace(bucketName))
+                return StatusCode((int)HttpStatusCode.BadRequest);
+
+            bucketName = bucketName.DecodeRouteParameter();
+
+            try
+            {
+                var objects = (await s3Repository.GetObjectsAsync(bucketName))
+                    .OrderBy(o => o.Name);
+
+                return Json(objects);
             }
             catch(Exception ex)
             {

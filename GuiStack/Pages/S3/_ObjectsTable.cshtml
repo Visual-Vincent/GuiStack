@@ -35,7 +35,7 @@
         </tr>
     </thead>
     <tbody>
-        @foreach(var s3obj in Model ?? Enumerable.Empty<S3ObjectModel>())
+        @foreach(var s3obj in (Model ?? Enumerable.Empty<S3ObjectModel>()).OrderBy(m => m.Object.Name))
         {
             var obj = s3obj.Object;
             <tr data-bucket-name="@s3obj.BucketName" data-object-name="@obj.Name" data-s3uri="@obj.S3Uri" data-url="@obj.Url">

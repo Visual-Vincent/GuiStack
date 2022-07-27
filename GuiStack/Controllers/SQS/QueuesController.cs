@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
@@ -63,7 +64,9 @@ namespace GuiStack.Controllers.SQS
         {
             try
             {
-                var queues = await sqsRepository.GetQueuesAsync();
+                var queues = (await sqsRepository.GetQueuesAsync())
+                    .OrderBy(q => q.Name);
+
                 return Json(queues);
             }
             catch(Exception ex)

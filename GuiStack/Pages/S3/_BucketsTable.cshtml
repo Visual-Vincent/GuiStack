@@ -9,7 +9,7 @@
         </tr>
     </thead>
     <tbody>
-        @foreach(var bucket in Model ?? Enumerable.Empty<S3Bucket>())
+        @foreach(var bucket in (Model ?? Enumerable.Empty<S3Bucket>()).OrderBy(m => m.Name))
         {
             <tr>
                 <td><a href="/S3/@bucket.Name">@bucket.Name</a></td>

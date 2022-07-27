@@ -8,7 +8,7 @@
         </tr>
     </thead>
     <tbody>
-        @foreach(var queue in Model ?? Enumerable.Empty<SQSQueue>())
+        @foreach(var queue in (Model ?? Enumerable.Empty<SQSQueue>()).OrderBy(m => m.Name))
         {
             <tr>
                 <td><a href="/SQS/@queue.Name">@queue.Name</a></td>

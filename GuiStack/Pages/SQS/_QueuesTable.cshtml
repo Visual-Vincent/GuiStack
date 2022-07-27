@@ -1,10 +1,11 @@
 ﻿@using GuiStack.Models; 
 @model IEnumerable<SQSQueue>
 
-<table class="gs-list">
+<table class="gs-list autosize-last-col">
     <thead>
         <tr>
             <th>Name</th>
+            <th>Actions</th>
         </tr>
     </thead>
     <tbody>
@@ -12,6 +13,19 @@
         {
             <tr>
                 <td><a href="/SQS/@queue.Name">@queue.Name</a></td>
+                <td>
+                    <div class="gs-icons">
+                        <a no-href class="purple lnk-sqs-copyuri" title="Copy ARN">
+                            <i class="fa-solid fa-link"></i>
+                        </a>
+                        <a no-href class="green lnk-sqs-copyurl" title="Copy URL">
+                            <i class="bi bi-globe"></i>
+                        </a>
+                        <a no-href class="red lnk-sqs-delete" title="Delete">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </a>
+                    </div>
+                </td>
             </tr>
         }
     </tbody>

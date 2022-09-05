@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Amazon;
 using GuiStack.Authentication.AWS;
 using GuiStack.Extensions;
 using GuiStack.Models;
@@ -39,6 +40,7 @@ namespace GuiStack.Repositories
             using var s3 = authenticator.Authenticate();
             var response = await s3.PutBucketAsync(new Amazon.S3.Model.PutBucketRequest() {
                 BucketName = bucketName,
+                BucketRegionName = AWSConfigs.AWSRegion,
                 UseClientRegion = true
             });
 

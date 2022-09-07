@@ -2,17 +2,7 @@
 @using GuiStack.Extensions;
 @model IEnumerable<S3ObjectModel>
 
-<div id="deleteS3ObjectModal" class="cssWindow dark backdropblur text-center">
-    <div class="closeWindowButton"><a no-href onclick="closeParentWindow(event)">×</a></div>
-
-    <h2 class="title">Are you sure you want to delete <span class="object-name" style="color: #FF8000"></span>?</h2>
-    <p>This cannot be undone!</p>
-
-    <div class="modal-buttons text-center">
-        <button class="yes-button">Yes</button>
-        <button onclick="closeParentWindow(event)">No</button>
-    </div>
-</div>
+@{ await Html.RenderPartialAsync("~/Pages/Shared/_DeleteModal.cshtml", new DeleteModalModel("deleteS3ObjectModal")); }
 
 <div id="renameS3ObjectModal" class="cssWindow dark backdropblur text-center">
     <div class="closeWindowButton"><a no-href onclick="closeParentWindow(event)">×</a></div>
@@ -72,8 +62,8 @@
     $("#deleteS3ObjectModal .yes-button").click(s3_DeleteObject);
     $("#renameS3ObjectModal .ok-button").click(s3_RenameObject);
 
-    const URL_DELETE_OBJECT = "@Url.Action("DeleteObject", "Buckets", new { bucketName = "__BUCKETNAME__", objectName = "__OBJECTNAME__" })";
-    const URL_RENAME_OBJECT = "@Url.Action("RenameObject", "Buckets", new { bucketName = "__BUCKETNAME__", objectName = "__OLDNAME__", newName = "__NEWNAME__" })";
+    const S3_URL_DELETE_OBJECT = "@Url.Action("DeleteObject", "Buckets", new { bucketName = "__BUCKETNAME__", objectName = "__OBJECTNAME__" })";
+    const S3_URL_RENAME_OBJECT = "@Url.Action("RenameObject", "Buckets", new { bucketName = "__BUCKETNAME__", objectName = "__OLDNAME__", newName = "__NEWNAME__" })";
 
     var prompt_BucketName;
     var prompt_ObjectName;
@@ -109,9 +99,10 @@
         try
         {
             var objNameElement = document.querySelector("#deleteS3ObjectModal .title .object-name");
+            var parentRow = gs_GetParentTableRow(event.currentTarget, true);
 
-            prompt_BucketName = gs_GetParentTableRow(event.currentTarget, true).getAttribute("data-bucket-name");
-            prompt_ObjectName = gs_GetParentTableRow(event.currentTarget, true).getAttribute("data-object-name");
+            prompt_BucketName = parentRow.getAttribute("data-bucket-name");
+            prompt_ObjectName = parentRow.getAttribute("data-object-name");
 
             objNameElement.innerText = prompt_ObjectName;
             showWindow("deleteS3ObjectModal");
@@ -127,9 +118,10 @@
         try
         {
             var nameTextBox = document.querySelector("#renameS3ObjectModal .name-textbox");
+            var parentRow = gs_GetParentTableRow(event.currentTarget, true);
 
-            prompt_BucketName = gs_GetParentTableRow(event.currentTarget, true).getAttribute("data-bucket-name");
-            prompt_ObjectName = gs_GetParentTableRow(event.currentTarget, true).getAttribute("data-object-name");
+            prompt_BucketName = parentRow.getAttribute("data-bucket-name");
+            prompt_ObjectName = parentRow.getAttribute("data-object-name");
 
             nameTextBox.value = prompt_ObjectName;
             showWindow("renameS3ObjectModal");
@@ -147,7 +139,7 @@
             var bucketName = encodeURIComponent(prompt_BucketName);
             var objectName = encodeURIComponent(prompt_ObjectName);
 
-            var url = URL_DELETE_OBJECT
+            var url = S3_URL_DELETE_OBJECT
                 .replace("__BUCKETNAME__", bucketName)
                 .replace("__OBJECTNAME__", objectName);
 
@@ -175,7 +167,7 @@
             var oldName = encodeURIComponent(prompt_ObjectName);
             var newName = encodeURIComponent(document.querySelector("#renameS3ObjectModal .name-textbox").value);
 
-            var url = URL_RENAME_OBJECT
+            var url = S3_URL_RENAME_OBJECT
                 .replace("__BUCKETNAME__", bucketName)
                 .replace("__OLDNAME__", oldName)
                 .replace("__NEWNAME__", newName);

@@ -16,6 +16,7 @@ namespace GuiStack.Repositories
         Task<SQSQueueInfo> GetQueueAttributesAsync(string queueUrl);
         Task<string> GetQueueUrlAsync(string queueName);
         Task DeleteMessageAsync(string queueUrl, string receiptHandle);
+        Task DeleteQueueAsync(string queueUrl);
         Task<IEnumerable<SQSMessage>> ReceiveMessagesAsync(string queueUrl, int maxAmount, int waitTimeSeconds = 0);
         Task<string> SendMessageAsync(string queueUrl, string messageBody);
     }
@@ -114,6 +115,15 @@ namespace GuiStack.Repositories
 
             using var sqs = authenticator.Authenticate();
             await sqs.DeleteMessageAsync(queueUrl, receiptHandle);
+        }
+
+        public async Task DeleteQueueAsync(string queueUrl)
+        {
+            if(string.IsNullOrWhiteSpace(queueUrl))
+                throw new ArgumentNullException(nameof(queueUrl));
+
+            using var sqs = authenticator.Authenticate();
+            await sqs.DeleteQueueAsync(queueUrl);
         }
 
         public async Task<IEnumerable<SQSMessage>> ReceiveMessagesAsync(string queueUrl, int maxAmount, int waitTimeSeconds = 0)

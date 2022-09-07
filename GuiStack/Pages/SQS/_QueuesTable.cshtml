@@ -1,6 +1,8 @@
 ﻿@using GuiStack.Models; 
 @model IEnumerable<SQSQueue>
 
+@{ await Html.RenderPartialAsync("~/Pages/Shared/_DeleteModal.cshtml", new DeleteModalModel("deleteSQSQueueModal")); }
+
 <table class="gs-list autosize-last-col">
     <thead>
         <tr>
@@ -11,13 +13,10 @@
     <tbody>
         @foreach(var queue in (Model ?? Enumerable.Empty<SQSQueue>()).OrderBy(m => m.Name))
         {
-            <tr>
+            <tr data-queue-name="@queue.Name" data-url="@queue.Url">
                 <td><a href="/SQS/@queue.Name">@queue.Name</a></td>
                 <td>
                     <div class="gs-icons">
-                        <a no-href class="purple lnk-sqs-copyuri" title="Copy ARN">
-                            <i class="fa-solid fa-link"></i>
-                        </a>
                         <a no-href class="green lnk-sqs-copyurl" title="Copy URL">
                             <i class="bi bi-globe"></i>
                         </a>
@@ -30,3 +29,70 @@
         }
     </tbody>
 </table>
+
+<script type="text/javascript">
+    $(".lnk-sqs-copyurl").click(sqs_CopyUrl);
+    $(".lnk-sqs-delete").click(sqs_DeleteQueuePrompt);
+    $("#deleteSQSQueueModal .yes-button").click(sqs_DeleteQueue);
+
+    const SQS_URL_DELETE_QUEUE = "@Url.Action("DeleteQueue", "Queues", new { queueUrl = "__QUEUEURL__" })";
+
+    var prompt_QueueUrl;
+
+    function sqs_CopyUrl(event)
+    {
+        try
+        {
+            var url = gs_GetParentTableRow(event.currentTarget, true).getAttribute("data-url");
+            navigator.clipboard.writeText(url);
+        }
+        catch(error)
+        {
+            gs_DisplayError(error);
+        }
+    }
+
+    function sqs_DeleteQueuePrompt(event)
+    {
+        try
+        {
+            var objNameElement = document.querySelector("#deleteSQSQueueModal .title .object-name");
+            var parentRow = gs_GetParentTableRow(event.currentTarget, true);
+            var queueName = parentRow.getAttribute("data-queue-name");
+
+            prompt_QueueUrl = parentRow.getAttribute("data-url");
+
+            objNameElement.innerText = queueName;
+            showWindow("deleteSQSQueueModal");
+        }
+        catch(error)
+        {
+            gs_DisplayError(error);
+        }
+    }
+
+    async function sqs_DeleteQueue()
+    {
+        try
+        {
+            var queueUrl = encodeURIComponent(prompt_QueueUrl);
+
+            var url = SQS_URL_DELETE_QUEUE
+                .replace("__QUEUEURL__", queueUrl);
+
+            var response = await fetch(url, { method: "DELETE" });
+
+            if(!response.ok) {
+                throw "Failed to delete SQS queue: Server returned HTTP status " + response.status;
+            }
+
+            window.location.reload(true);
+        }
+        catch(error)
+        {
+            gs_DisplayError(error);
+        }
+
+        closeWindow("deleteSQSQueueModal");
+    }
+</script>

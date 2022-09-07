@@ -58,6 +58,25 @@ namespace GuiStack.Controllers.SQS
             }
         }
 
+        [HttpDelete("{queueUrl}")]
+        public async Task<ActionResult> DeleteQueue([FromRoute] string queueUrl)
+        {
+            if(string.IsNullOrWhiteSpace(queueUrl))
+                return StatusCode((int)HttpStatusCode.BadRequest);
+
+            queueUrl = queueUrl.DecodeRouteParameter();
+
+            try
+            {
+                await sqsRepository.DeleteQueueAsync(queueUrl);
+                return Ok();
+            }
+            catch(Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
         [HttpGet]
         [Produces("application/json")]
         public async Task<ActionResult> GetQueues()

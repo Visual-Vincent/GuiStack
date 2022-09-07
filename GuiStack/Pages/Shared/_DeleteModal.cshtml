@@ -1,0 +1,14 @@
+﻿@using GuiStack.Models;
+@model DeleteModalModel
+
+<div id="@Model.ElementId" class="cssWindow dark backdropblur text-center">
+    <div class="closeWindowButton"><a no-href onclick="closeParentWindow(event)">×</a></div>
+
+    <h2 class="title">Are you sure you want to delete <span class="object-name" style="color: #FF8000"></span>?</h2>
+    <p>This cannot be undone!</p>
+
+    <div class="modal-buttons text-center">
+        <button class="yes-button">Yes</button>
+        <button onclick="closeParentWindow(event)">No</button>
+    </div>
+</div>

@@ -15,6 +15,7 @@ namespace GuiStack.Repositories
     public interface IS3Repository
     {
         Task CreateBucketAsync(string bucketName);
+        Task DeleteBucketAsync(string bucketName);
         Task DeleteObjectAsync(string bucketName, string objectName);
         Task<IEnumerable<S3Bucket>> GetBucketsAsync();
         Task<IEnumerable<S3Object>> GetObjectsAsync(string bucketName);
@@ -43,6 +44,14 @@ namespace GuiStack.Repositories
                 BucketRegionName = AWSConfigs.AWSRegion,
                 UseClientRegion = true
             });
+
+            response.ThrowIfUnsuccessful("S3");
+        }
+
+        public async Task DeleteBucketAsync(string bucketName)
+        {
+            using var s3 = authenticator.Authenticate();
+            var response = await s3.DeleteBucketAsync(bucketName);
 
             response.ThrowIfUnsuccessful("S3");
         }

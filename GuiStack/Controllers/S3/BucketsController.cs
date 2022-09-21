@@ -59,6 +59,25 @@ namespace GuiStack.Controllers.S3
             }
         }
 
+        [HttpDelete("{bucketName}")]
+        public async Task<ActionResult> DeleteBucket([FromRoute] string bucketName)
+        {
+            if(string.IsNullOrWhiteSpace(bucketName))
+                return StatusCode((int)HttpStatusCode.BadRequest);
+
+            bucketName = bucketName.DecodeRouteParameter();
+
+            try
+            {
+                await s3Repository.DeleteBucketAsync(bucketName);
+                return Ok();
+            }
+            catch(Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
         [HttpDelete("{bucketName}/{objectName}")]
         public async Task<ActionResult> DeleteObject([FromRoute] string bucketName, [FromRoute] string objectName)
         {

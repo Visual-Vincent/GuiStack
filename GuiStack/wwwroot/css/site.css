@@ -239,16 +239,17 @@ table.layout-fixed
     table-layout: fixed;
 }
 
-table.autosize-col-1    tr > td:nth-child(1),
-table.autosize-col-2    tr > td:nth-child(2),
-table.autosize-col-3    tr > td:nth-child(3),
-table.autosize-col-4    tr > td:nth-child(4),
-table.autosize-col-5    tr > td:nth-child(5),
-table.autosize-col-6    tr > td:nth-child(6),
-table.autosize-col-7    tr > td:nth-child(7),
-table.autosize-col-8    tr > td:nth-child(8),
-table.autosize-col-9    tr > td:nth-child(9),
-table.autosize-last-col tr > td:last-child
+table.autosize-col-1              tr > td:nth-child(1),
+table.autosize-col-2              tr > td:nth-child(2),
+table.autosize-col-3              tr > td:nth-child(3),
+table.autosize-col-4              tr > td:nth-child(4),
+table.autosize-col-5              tr > td:nth-child(5),
+table.autosize-col-6              tr > td:nth-child(6),
+table.autosize-col-7              tr > td:nth-child(7),
+table.autosize-col-8              tr > td:nth-child(8),
+table.autosize-col-9              tr > td:nth-child(9),
+table.autosize-last-col           tr > td:last-child,
+table.autosize-all-cols-but-first tr > td:not(:first-child)
 {
     width: 1px;
     white-space: nowrap;
@@ -265,6 +266,11 @@ table.gs-list th, table.gs-list td
 {
     border: 1px solid rgba(255, 255, 255, 0.5);
     border-collapse: collapse;
+}
+
+table.gs-list.padded th, table.gs-list td
+{
+    padding: 4px 8px;
 }
 
 table.gs-info-table.colored tr:not(.expand-button) > td:first-of-type

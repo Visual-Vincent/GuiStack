@@ -10,12 +10,8 @@
     bool hasBucketName = !string.IsNullOrWhiteSpace(Model.Bucket);
 }
 
-@if(hasBucketName)
-{
-    <h1>@Model.Bucket</h1>
-}
-else
-{
+@if(!hasBucketName)
+{ 
     <div id="new-s3-bucket-modal" class="cssWindow dark backdropblur text-center">
         <div class="closeWindowButton"><a no-href onclick="closeParentWindow(event)">×</a></div>
 
@@ -26,7 +22,21 @@ else
             <button onclick="s3_CreateBucket()">Create</button>
         </div>
     </div>
+}
 
+@if(hasBucketName)
+{
+    <div style="display: flex; align-items: center">
+        <h1>@Model.Bucket</h1>
+        <div style="text-align: right; font-size: 1.5em; flex-grow: 1">
+            <a no-href onclick="document.getElementById('s3-fileupload').click()" class="initial-white neon-green">
+                <i class="fa-solid fa-arrow-up-from-bracket"></i>
+            </a>
+        </div>
+    </div>
+}
+else
+{
     <div style="display: flex; align-items: center">
         <h1>S3 buckets</h1>
         <div style="text-align: right; font-size: 1.5em; flex-grow: 1">
@@ -47,7 +57,17 @@ else
         }
         else
         {
-            await Html.RenderPartialAsync("~/Pages/S3/_ObjectsTable.cshtml", (await Model.S3Repository.GetObjectsAsync(Model.Bucket)).ToObjectModel(Model.Bucket));
+            <div class="gs-drop-container">
+                <div class="gs-drop-overlay">
+                    Drop file(s) to upload to S3 bucket
+                </div>
+                <form>
+                    <div class="gs-upload-field invisible">
+                        <input type="file" id="s3-fileupload" />
+                    </div>
+                </form>
+                @{ await Html.RenderPartialAsync("~/Pages/S3/_ObjectsTable.cshtml", (await Model.S3Repository.GetObjectsAsync(Model.Bucket)).ToObjectModel(Model.Bucket)); }
+            </div>
         }
     }
     catch(AmazonS3Exception ex)
@@ -111,6 +131,68 @@ else
             }
 
             closeWindow("new-s3-bucket-modal");
+        }
+    </script>
+}
+else
+{
+    <script type="text/javascript">
+        $("#s3-fileupload").change(s3_FileUpload_FilesSelected);
+
+        function s3_FileUpload_FilesSelected(event)
+        {
+            var element = event.currentTarget;
+            var files = element.files;
+            var formData = new FormData();
+
+            if(files.length <= 0)
+                return;
+
+            formData.append("file", files[0]);
+
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("Upload", "Buckets", new { bucketName = Model.Bucket })",
+                data: formData,
+                cache: false,
+                processData: false,
+                contentType: false,
+                error: function(request, status, errorThrown) {
+                    gsevent_AjaxError(request, status, errorThrown);
+                },
+                success: function(result) {
+                    if(isNull(result))
+                    {
+                        gs_DisplayError("Server response was empty");
+                        return;
+                    }
+
+                    if(typeof result === "string")
+                    {
+                        gs_DisplayError("Response was a string, expected JSON object. Value: " + result);
+                        return;
+                    }
+
+                    if(!isNull(result.error))
+                    {
+                        gs_DisplayError("An error occurred: " + result.error);
+                        return;
+                    }
+
+                    if(isNull(result.success))
+                    {
+                        gs_DisplayError("Unexpected response: " + JSON.stringify(result));
+                        return;
+                    }
+
+                    if(!result.success)
+                        gs_DisplayError("An unknown error occurred");
+
+                    window.location.reload(true);
+                }
+            });
+
+            element.value = null;
         }
     </script>
 }

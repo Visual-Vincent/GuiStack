@@ -449,6 +449,13 @@ ul.gs-tree > li:not([data-title])
     cursor: pointer;
 }
 
+.gs-upload-field.invisible
+{
+    padding: 0;
+    opacity: 0;
+    border: none;
+}
+
 .gs-upload-field > input[type="file"]:first-of-type
 {
     position: absolute;

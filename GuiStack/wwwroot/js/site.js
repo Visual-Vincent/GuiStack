@@ -279,7 +279,7 @@ function gsevent_AjaxError(request, status, errorThrown)
     {
         if(!(request.getResponseHeader("Content-Type") || "").includes("application/json"))
         {
-            gs_DisplayError(request.responseText);
+            gs_DisplayError(request.responseText || "Server returned HTTP status " + request.status);
             return;
         }
 

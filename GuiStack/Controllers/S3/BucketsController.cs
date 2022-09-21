@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Amazon.S3;
 using GuiStack.Extensions;
 using GuiStack.Repositories;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GuiStack.Controllers.S3
@@ -189,6 +190,32 @@ namespace GuiStack.Controllers.S3
             {
                 await s3Repository.RenameObjectAsync(bucketName, objectName, newName);
                 return Ok();
+            }
+            catch(Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+        const long MaxFileSize = 2 * 1024L * 1024L * 1024L; // 2 GB
+
+        [HttpPost("{bucketName}/upload")]
+        [Produces("application/json")]
+        [RequestSizeLimit(MaxFileSize)]
+        [RequestFormLimits(MultipartBodyLengthLimit = MaxFileSize)]
+        public async Task<ActionResult> Upload([FromRoute] string bucketName, IFormFile file)
+        {
+            try
+            {
+                string filename = Uri.EscapeDataString(Path.GetFileName(file.FileName));
+
+                if(file.Length > MaxFileSize)
+                    throw new Exception($"File \"{filename}\" exceeds the maximum allowed size of {MaxFileSize.ToFormattedFileSize()}");
+
+                using(Stream stream = file.OpenReadStream())
+                    await s3Repository.UploadFile(bucketName, filename, stream);
+
+                return Json(new { success = true });
             }
             catch(Exception ex)
             {

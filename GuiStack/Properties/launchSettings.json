@@ -18,6 +18,7 @@
         "ASPNETCORE_ENVIRONMENT": "Development",
         "AWS_S3_ENDPOINT_URL": "http://localhost:4566",
         "AWS_SQS_ENDPOINT_URL": "http://localhost:4566",
+        "AWS_REGION": "eu-central-1",
         "ASPNETCORE_HOSTINGSTARTUPASSEMBLIES": "Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation"
       }
     },

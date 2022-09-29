@@ -1,4 +1,13 @@
-﻿@using GuiStack.Models;
+﻿@*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ * 
+ * Copyright © Vincent Bengtsson & Contributors 2022
+ * https://github.com/Visual-Vincent/GuiStack
+ *@
+
+@using GuiStack.Models;
 @model IEnumerable<S3Bucket>
 
 @{ await Html.RenderPartialAsync("~/Pages/Shared/_DeleteModal.cshtml", new DeleteModalModel("deleteS3BucketModal")); }

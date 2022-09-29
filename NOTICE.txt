@@ -1,0 +1,5 @@
+Copyright © Vincent Bengtsson & Contributors 2022
+https://github.com/Visual-Vincent/GuiStack
+
+See the LICENSE file for this project's copyright license.
+Third-party licenses can be found in the "Licenses" or "GuiStack/Licenses" folder.

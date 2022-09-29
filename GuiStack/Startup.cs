@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpsPolicy;
+using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -50,7 +51,15 @@ namespace GuiStack
             }
 
             app.UseHttpsRedirection();
-            app.UseStaticFiles();
+
+            var contentTypeProvider = new FileExtensionContentTypeProvider();
+
+            if(!contentTypeProvider.Mappings.ContainsKey(".apng"))
+                contentTypeProvider.Mappings.Add(".apng", "image/apng");
+
+            app.UseStaticFiles(new StaticFileOptions() {
+                ContentTypeProvider = contentTypeProvider
+            });
 
             app.UseRouting();
             app.UseAuthorization();

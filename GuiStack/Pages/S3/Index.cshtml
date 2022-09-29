@@ -145,10 +145,17 @@ else
             var files = element.files;
             var formData = new FormData();
 
+            var cleanup = function() {
+                document.getElementById("gs-upload-progress-overlay").classList.remove("visible");
+            };
+
             if(files.length <= 0)
                 return;
 
             formData.append("file", files[0]);
+
+            document.querySelector("#gs-upload-progress-overlay .upload-filename").innerText = files[0].name;
+            document.getElementById("gs-upload-progress-overlay").classList.add("visible");
 
             $.ajax({
                 type: "POST",
@@ -158,37 +165,59 @@ else
                 processData: false,
                 contentType: false,
                 error: function(request, status, errorThrown) {
+                    cleanup();
                     gsevent_AjaxError(request, status, errorThrown);
                 },
                 success: function(result) {
                     if(isNull(result))
                     {
+                        cleanup();
                         gs_DisplayError("Server response was empty");
                         return;
                     }
 
                     if(typeof result === "string")
                     {
+                        cleanup();
                         gs_DisplayError("Response was a string, expected JSON object. Value: " + result);
                         return;
                     }
 
                     if(!isNull(result.error))
                     {
+                        cleanup();
                         gs_DisplayError("An error occurred: " + result.error);
                         return;
                     }
 
                     if(isNull(result.success))
                     {
+                        cleanup();
                         gs_DisplayError("Unexpected response: " + JSON.stringify(result));
                         return;
                     }
 
                     if(!result.success)
+                    {
+                        cleanup();
                         gs_DisplayError("An unknown error occurred");
+                        return;
+                    }
 
                     window.location.reload(true);
+                },
+                xhr: function() {
+                    var xhr = $.ajaxSettings.xhr();
+
+                    xhr.upload.addEventListener("progress", function(event) {
+                        if(!event.lengthComputable)
+                            return;
+
+                        var progress = Math.round(event.loaded / event.total * 100);
+                        document.querySelector("#gs-upload-progress-overlay .upload-progress").innerText = progress.toFixed(0) + "%";
+                    });
+
+                    return xhr ;
                 }
             });
 

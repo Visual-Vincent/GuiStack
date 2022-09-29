@@ -356,12 +356,18 @@
 
         var cleanup = function() {
             navigator.sendBeacon("@Url.Action("ClearSession", "Proto")");
+            document.getElementById("gs-upload-progress-overlay").classList.remove("visible");
         };
+
+        if(files.length <= 0)
+            return;
 
         for(var i = 0; i < files.length; i++)
         {
             formData.append("files", files[i]);
         }
+
+        document.getElementById("gs-upload-progress-overlay").classList.add("visible");
 
         $.ajax({
             type: "POST",
@@ -491,6 +497,19 @@
                     cleanup();
                     gs_DisplayError("An error occurred while parsing Protobuf definitions: " + error);
                 }
+            },
+            xhr: function() {
+                var xhr = $.ajaxSettings.xhr();
+
+                xhr.upload.addEventListener("progress", function(event) {
+                    if(!event.lengthComputable)
+                        return;
+
+                    var progress = Math.round(event.loaded / event.total * 100);
+                    document.querySelector("#gs-upload-progress-overlay .upload-progress").innerText = progress.toFixed(0) + "%";
+                });
+
+                return xhr ;
             }
         });
 

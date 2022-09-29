@@ -473,6 +473,7 @@ ul.gs-tree > li:not([data-title])
     position: relative !important;
 }
 
+#gs-upload-progress-overlay,
 .gs-drop-container .gs-drop-overlay
 {
     position: absolute;
@@ -487,6 +488,38 @@ ul.gs-tree > li:not([data-title])
     align-items: center;
     justify-content: center;
     pointer-events: none;
+}
+
+#gs-upload-progress-overlay
+{
+    position: fixed;
+    opacity: 1;
+    color: #FFFFFF;
+    pointer-events: all;
+    font-size: 2em;
+    z-index: 998;
+}
+
+#gs-upload-progress-overlay:not(.visible)
+{
+    display: none;
+}
+
+#gs-upload-progress-overlay img.spinner
+{
+    width: 1em;
+    margin-right: 8px;
+}
+
+#gs-upload-progress-overlay .upload-filename
+{
+    color: #00FFAA;
+}
+
+#gs-upload-progress-overlay .upload-filename:not(:empty)::before,
+#gs-upload-progress-overlay .upload-progress:not(:empty)::before
+{
+    content: "\00A0";
 }
 
 body.is-dragging .gs-drop-container .gs-drop-overlay

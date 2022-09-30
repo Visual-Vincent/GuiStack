@@ -17,7 +17,7 @@ GuiStack can be configured by setting various environment variables before start
 | AWS_SQS_ENDPOINT_URL    | http://localhost:4566       |
 | AWS_S3_FORCE_PATH_STYLE | true                        |
 
-By default, GuiStack can be access via https://localhost:5001. To configure which port it should listen to, edit the accompanying `appsettings.json` file and add a property called `"Urls"`:
+By default, GuiStack can be accessed via https://localhost:5001. To configure which port it should listen to, edit the accompanying `appsettings.json` file and add a property called `"Urls"`:
 
 ```json
 {

@@ -30,7 +30,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="..\scripts\default-run-windows.bat" Link="run.bat" Condition="'$(RuntimeIdentifier)'=='win-x64'">
+    <None Include="..\scripts\default-run-windows.bat" Link="run.bat" Condition="$(RuntimeIdentifier.StartsWith('win'))">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\scripts\default-run-unix.sh" Link="run.sh" Condition="$(RuntimeIdentifier.StartsWith('linux')) OR $(RuntimeIdentifier.StartsWith('osx'))">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

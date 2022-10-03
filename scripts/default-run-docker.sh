@@ -14,4 +14,4 @@ docker run -p 5000:80 \
     -e AWS_S3_ENDPOINT_URL \
     -e AWS_SQS_ENDPOINT_URL \
     -e AWS_S3_FORCE_PATH_STYLE \
-  --name guistack -d guistack
+  --name guistack -d visualvincent/guistack:latest

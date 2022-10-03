@@ -1,4 +1,8 @@
 # GuiStack
+[![GitHub Downloads](https://img.shields.io/github/downloads/Visual-Vincent/GuiStack/total)](https://github.com/Visual-Vincent/GuiStack/releases)
+[![Docker Pulls](https://img.shields.io/docker/pulls/visualvincent/guistack)](https://hub.docker.com/r/visualvincent/guistack)
+[![License](https://img.shields.io/github/license/Visual-Vincent/GuiStack?color=green)](/LICENSE.txt)
+
 A web-based GUI for your AWS or LocalStack environment.
 
 ## System requirements

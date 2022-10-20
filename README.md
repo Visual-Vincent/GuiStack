@@ -5,6 +5,25 @@
 
 A web-based GUI for your AWS or LocalStack environment.
 
+## Features
+
+Contributions and feature requests are welcome!
+
+- **AWS S3**
+  - Create, view and delete buckets
+  - View, delete, upload and download objects
+
+- **AWS SQS**
+  - Create, view and delete queues
+  - Send, receive and peek messages
+  - Import Protobuf definitions and send Protobuf-formatted messages
+
+Also see planned features: #1
+
+## Download
+
+Download precompiled executables from [Releases](https://github.com/Visual-Vincent/GuiStack/releases), or pull the latest [Docker image](https://hub.docker.com/r/visualvincent/guistack).
+
 ## System requirements
 - ASP.NET Core Runtime for .NET 6.0 or newer ([Download](https://dotnet.microsoft.com/en-us/download/dotnet))
 - Any operating system supported by the above runtime
@@ -64,6 +83,9 @@ docker run -p 5000:80 \
 ## Building
 Requires:
 - .NET 6.0 SDK or newer ([Download](https://dotnet.microsoft.com/en-us/download/dotnet))
+- Git Bash (if building on Windows) ([Download](https://gitforwindows.org/))
 
 Optional:
 - Visual Studio 2022
+
+To build GuiStack, simply execute one of the `build-*.sh` scripts for the platform you wish to build for, located in the root of this repository.

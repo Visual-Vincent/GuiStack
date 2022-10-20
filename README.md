@@ -18,7 +18,7 @@ Contributions and feature requests are welcome!
   - Send, receive and peek messages
   - Import Protobuf definitions and send Protobuf-formatted messages
 
-Also see planned features: #1
+Also see the [checklist of upcoming features](https://github.com/Visual-Vincent/GuiStack/issues/1).
 
 ## Download
 

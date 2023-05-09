@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  * 
- * Copyright © Vincent Bengtsson & Contributors 2022
+ * Copyright © Vincent Bengtsson & Contributors 2022-2023
  * https://github.com/Visual-Vincent/GuiStack
  */
 
@@ -123,7 +123,9 @@ namespace GuiStack.Repositories
                 throw new ArgumentNullException(nameof(receiptHandle));
 
             using var sqs = authenticator.Authenticate();
-            await sqs.DeleteMessageAsync(queueUrl, receiptHandle);
+            var response = await sqs.DeleteMessageAsync(queueUrl, receiptHandle);
+
+            response.ThrowIfUnsuccessful("SQS");
         }
 
         public async Task DeleteQueueAsync(string queueUrl)
@@ -132,7 +134,9 @@ namespace GuiStack.Repositories
                 throw new ArgumentNullException(nameof(queueUrl));
 
             using var sqs = authenticator.Authenticate();
-            await sqs.DeleteQueueAsync(queueUrl);
+            var response = await sqs.DeleteQueueAsync(queueUrl);
+            
+            response.ThrowIfUnsuccessful("SQS");
         }
 
         public async Task<IEnumerable<SQSMessage>> ReceiveMessagesAsync(string queueUrl, int maxAmount, int waitTimeSeconds = 0)

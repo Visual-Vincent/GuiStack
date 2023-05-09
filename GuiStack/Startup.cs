@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  * 
- * Copyright © Vincent Bengtsson & Contributors 2022
+ * Copyright © Vincent Bengtsson & Contributors 2022-2023
  * https://github.com/Visual-Vincent/GuiStack
  */
 
@@ -42,6 +42,7 @@ namespace GuiStack
             services.AddDistributedMemoryCache();
             services.AddScoped<IS3Repository, S3Repository>();
             services.AddScoped<ISQSRepository, SQSRepository>();
+            services.AddScoped<ISNSRepository, SNSRepository>();
             services.AddSingleton<IS3UrlBuilder, S3UrlBuilder>();
         }
 

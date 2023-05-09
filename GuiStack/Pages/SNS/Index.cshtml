@@ -1,0 +1,138 @@
+﻿@*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ * 
+ * Copyright © Vincent Bengtsson & Contributors 2022-2023
+ * https://github.com/Visual-Vincent/GuiStack
+ *@
+
+@page "{topic?}"
+
+@using System.Net
+@using Amazon.SimpleNotificationService
+@model GuiStack.Pages.SNS.IndexModel
+
+@{
+    ViewData["Title"] = "SNS Topics";
+    ViewData["TopicArn"] = Model.Topic;
+
+    bool hasTopicArn = !string.IsNullOrWhiteSpace(Model.Topic);
+}
+
+@if(hasTopicArn)
+{
+    <h1>@Model.Topic</h1>
+}
+else
+{
+    <div id="new-sns-topic-modal" class="cssWindow dark backdropblur text-center">
+        <div class="closeWindowButton"><a no-href onclick="closeParentWindow(event)">×</a></div>
+
+        <h2 class="title">New SNS topic</h2>
+        <p>
+            <input type="text" class="name-textbox text-center" maxlength="80" style="width: 400px" />
+        </p>
+        <p>
+            <input type="checkbox" id="new-sns-topic-fifo-checkbox" class="fifo-checkbox" />
+            <label for="new-sns-topic-fifo-checkbox">FIFO</label>
+        </p>
+
+        <div class="modal-buttons text-center">
+            <button onclick="sns_CreateTopic()">Create</button>
+        </div>
+    </div>
+
+    <div style="display: flex; align-items: center">
+        <h1>SNS topics</h1>
+        <div style="text-align: right; font-size: 1.5em; flex-grow: 1">
+            <a no-href onclick="showWindow('new-sns-topic-modal')" class="gs-icon-stack initial-white neon-green">
+                <i class="fa-solid fa-square-envelope" style="margin-right: 4px"></i>
+                <i class="bi bi-plus-circle-fill gs-icon-overlay stroked" style="color: #000000"></i>
+            </a>
+        </div>
+    </div>
+}
+
+<div id="list-container">
+    @try
+    {
+        if(!hasTopicArn)
+        {
+            await Html.RenderPartialAsync("~/Pages/SNS/_TopicsTable.cshtml", await Model.SNSRepository.GetTopicsAsync());
+        }
+        else
+        {
+            // TODO:
+            //await Html.RenderPartialAsync("~/Pages/SNS/_TopicInfo.cshtml", await Model.SNSRepository.GetTopicAttributesAsync(Model.Topic));
+        }
+    }
+    catch(AmazonSimpleNotificationServiceException ex)
+    {
+        if(ex.StatusCode == HttpStatusCode.NotFound)
+        {
+            <h2 class="error-text">Topic not found</h2>
+        }
+        else
+        {
+            if(!hasTopicArn)
+            {
+                <h2 class="error-text">Failed to fetch topics:</h2>
+            }
+            else
+            {
+                <h2 class="error-text">Failed to fetch topics contents:</h2>
+            }
+
+            <p class="error-text">@ex.Message</p>
+        }
+    }
+    catch(Exception ex)
+    {
+        if(!hasTopicArn)
+        {
+            <h2 class="error-text">Failed to fetch topics:</h2>
+        }
+        else
+        {
+            <h2 class="error-text">Failed to fetch topic contents:</h2>
+        }
+
+        <p class="error-text">@ex.Message</p>
+    }
+</div>
+
+@if(!hasTopicArn)
+{
+    <script type="text/javascript">
+        async function sns_CreateTopic()
+        {
+            try
+            {
+                var topicName = document.querySelector("#new-sns-topic-modal .name-textbox").value;
+                var isFifo = document.getElementById("new-sns-topic-fifo-checkbox").checked;
+
+                var response = await fetch("@Url.Action("CreateTopic", "Topics")", {
+                    method: "PUT",
+                    headers: new Headers({ "Content-Type": "application/json" }),
+                    body: JSON.stringify({
+                        topicName: topicName,
+                        isFifo: isFifo
+                    })
+                });
+
+                if(!response.ok) {
+                    throw "Failed to create SNS topic: Server returned HTTP status " + response.status;
+                }
+
+                window.location.reload(true);
+            }
+            catch(error)
+            {
+                gs_DisplayError(error);
+            }
+
+            closeWindow("new-sns-topic-modal");
+        }
+    </script>
+}

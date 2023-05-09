@@ -1,0 +1,107 @@
+﻿@*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ * 
+ * Copyright © Vincent Bengtsson & Contributors 2022-2023
+ * https://github.com/Visual-Vincent/GuiStack
+ *@
+
+@using GuiStack.Models; 
+@model IEnumerable<SNSTopic>
+
+@{ await Html.RenderPartialAsync("~/Pages/Shared/_DeleteModal.cshtml", new DeleteModalModel("deleteSNSTopicModal")); }
+
+<table class="gs-list padded autosize-all-cols-but-first">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach(var topic in (Model ?? Enumerable.Empty<SNSTopic>()).OrderBy(m => m.Name))
+        {
+            <tr data-topic-name="@topic.Name" data-arn="@topic.Arn">
+                <td><a href="/SNS/@topic.Name">@topic.Name</a></td>
+                <td>
+                    <div class="gs-icons">
+                        <a no-href class="purple lnk-sns-copyarn" title="Copy ARN">
+                            <i class="fa-solid fa-link"></i>
+                        </a>
+                        <a no-href class="red lnk-sns-delete" title="Delete">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </a>
+                    </div>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<script type="text/javascript">
+    $(".lnk-sns-copyarn").click(sns_CopyArn);
+    $(".lnk-sns-delete").click(sns_DeleteTopicPrompt);
+    $("#deleteSNSTopicModal .yes-button").click(sns_DeleteTopic);
+
+    const SNS_URL_DELETE_TOPIC = "@Url.Action("DeleteTopic", "Topics", new { topicArn = "__TOPICARN__" })";
+
+    var prompt_TopicArn;
+
+    function sns_CopyArn(event)
+    {
+        try
+        {
+            var arn = gs_GetParentTableRow(event.currentTarget, true).getAttribute("data-arn");
+            navigator.clipboard.writeText(arn);
+        }
+        catch(error)
+        {
+            gs_DisplayError(error);
+        }
+    }
+
+    function sns_DeleteTopicPrompt(event)
+    {
+        try
+        {
+            var objNameElement = document.querySelector("#deleteSNSTopicModal .title .object-name");
+            var parentRow = gs_GetParentTableRow(event.currentTarget, true);
+            var topicName = parentRow.getAttribute("data-topic-name");
+
+            prompt_TopicArn = parentRow.getAttribute("data-arn");
+
+            objNameElement.innerText = topicName;
+            showWindow("deleteSNSTopicModal");
+        }
+        catch(error)
+        {
+            gs_DisplayError(error);
+        }
+    }
+
+    async function sns_DeleteTopic()
+    {
+        try
+        {
+            var topicArn = encodeURIComponent(prompt_TopicArn);
+
+            var url = SNS_URL_DELETE_TOPIC
+                .replace("__TOPICARN__", topicArn);
+
+            var response = await fetch(url, { method: "DELETE" });
+
+            if(!response.ok) {
+                throw "Failed to delete SNS topic: Server returned HTTP status " + response.status;
+            }
+
+            window.location.reload(true);
+        }
+        catch(error)
+        {
+            gs_DisplayError(error);
+        }
+
+        closeWindow("deleteSNSTopicModal");
+    }
+</script>

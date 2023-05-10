@@ -11,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Amazon;
 using Amazon.SimpleNotificationService.Model;
 using GuiStack.Authentication.AWS;
 using GuiStack.Extensions;
@@ -22,6 +23,7 @@ namespace GuiStack.Repositories
     {
         Task CreateTopicAsync(SNSCreateTopicModel model);
         Task<IEnumerable<SNSTopic>> GetTopicsAsync();
+        Task<SNSTopicInfo> GetTopicAttributesAsync(string topicArn);
         Task DeleteTopicAsync(string topicArn);
     }
 
@@ -43,7 +45,8 @@ namespace GuiStack.Repositories
             var response = await sns.CreateTopicAsync(new CreateTopicRequest() {
                 Name = topicName,
                 Attributes = new Dictionary<string, string>() {
-                    { "FifoTopic", model.IsFifo.ToString().ToLower() }
+                    { "FifoTopic", model.IsFifo.ToString().ToLower() },
+                    { "ContentBasedDeduplication", model.IsFifo ? model.ContentBasedDeduplication.ToString().ToLower() : "false" }
                 }
             });
 
@@ -58,6 +61,34 @@ namespace GuiStack.Repositories
             response.ThrowIfUnsuccessful("SNS");
 
             return response.Topics.Select(topic => new SNSTopic(topic.TopicArn));
+        }
+
+        public async Task<SNSTopicInfo> GetTopicAttributesAsync(string topicName)
+        {
+            using var sns = authenticator.Authenticate();
+            var topic = await sns.FindTopicAsync(topicName);
+            
+            if(topic == null)
+                throw new KeyNotFoundException($"Topic with name '{topicName}' was not found");
+
+            var response = await sns.GetTopicAttributesAsync(topic.TopicArn);
+
+            response.ThrowIfUnsuccessful("SNS");
+
+            var subscriptionsConfirmed    = response.Attributes.GetValueOrDefault("SubscriptionsConfirmed");
+            var subscriptionsDeleted      = response.Attributes.GetValueOrDefault("SubscriptionsDeleted");
+            var subscriptionsPending      = response.Attributes.GetValueOrDefault("SubscriptionsPending");
+            var fifoTopic                 = response.Attributes.GetValueOrDefault("FifoTopic") ?? "";
+            var contentBasedDeduplication = response.Attributes.GetValueOrDefault("ContentBasedDeduplication") ?? "";
+
+            return new SNSTopicInfo() {
+                TopicARN                  = Arn.Parse(topic.TopicArn),
+                SubscriptionsConfirmed    = int.TryParse(subscriptionsConfirmed ?? "", out var i) ? i : 0,
+                SubscriptionsDeleted      = int.TryParse(subscriptionsDeleted   ?? "", out i)     ? i : 0,
+                SubscriptionsPending      = int.TryParse(subscriptionsPending   ?? "", out i)     ? i : 0,
+                FifoTopic                 = fifoTopic.Equals("true", StringComparison.OrdinalIgnoreCase),
+                ContentBasedDeduplication = contentBasedDeduplication.Equals("true", StringComparison.OrdinalIgnoreCase)
+            };
         }
 
         public async Task DeleteTopicAsync(string topicArn)

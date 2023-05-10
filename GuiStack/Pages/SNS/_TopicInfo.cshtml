@@ -1,0 +1,59 @@
+﻿@*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright © Vincent Bengtsson & Contributors 2022-2023
+ * https://github.com/Visual-Vincent/GuiStack
+ *@
+
+@using GuiStack.Models
+@using GuiStack.Extensions
+@model SNSTopicInfo
+
+<table class="gs-info-table colored">
+    <tbody>
+        <tr>
+            <td>Type</td>
+            <td>@(Model.FifoTopic ? "FIFO" : "Standard")</td>
+        </tr>
+        <tr>
+            <td>ARN</td>
+            <td>@Model.TopicARN</td>
+        </tr>
+        <tr>
+            <td>Content-based deduplication</td>
+            <td>@(Model.FifoTopic ? (Model.ContentBasedDeduplication ? "Yes" : "No") : "N/A")</td>
+        </tr>
+        <tr>
+            <td>Active subscriptions</td>
+            <td>@Model.SubscriptionsConfirmed</td>
+        </tr>
+    </tbody>
+    <tbody class="additional-info">
+        <tr>
+            <td>Pending subscriptions</td>
+            <td>@Model.SubscriptionsPending</td>
+        </tr>
+        <tr>
+            <td>Deleted subscriptions</td>
+            <td>@Model.SubscriptionsDeleted</td>
+        </tr>
+    </tbody>
+    <tbody>
+        <tr class="expand-button text-center collapsed">
+            <td colspan="2">
+                <a no-href onclick="gsevent_InfoTable_ToggleButton_Click(event)">
+                    View more <i class="fa-solid fa-angles-down" style="font-size: 12px"></i>
+                </a>
+            </td>
+        </tr>
+        <tr class="expand-button text-center expanded">
+            <td colspan="2">
+                <a no-href onclick="gsevent_InfoTable_ToggleButton_Click(event)">
+                    View less <i class="fa-solid fa-angles-up" style="font-size: 12px"></i>
+                </a>
+            </td>
+        </tr>
+    </tbody>
+</table>

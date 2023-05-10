@@ -8,13 +8,17 @@
  */
 
 using System;
+using Amazon;
 
 namespace GuiStack.Models
 {
-    public class SNSCreateTopicModel
+    public class SNSTopicInfo
     {
-        public string TopicName { get; set; }
-        public bool IsFifo { get; set; }
+        public Arn TopicARN { get; set; }
+        public int SubscriptionsConfirmed { get; set; }
+        public int SubscriptionsDeleted { get; set; }
+        public int SubscriptionsPending { get; set; }
+        public bool FifoTopic { get; set; }
         public bool ContentBasedDeduplication { get; set; }
     }
 }

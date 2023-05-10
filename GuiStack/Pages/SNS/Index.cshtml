@@ -22,7 +22,7 @@
 
 @if(hasTopicArn)
 {
-    <h1>@Model.Topic</h1>
+    <h1>@Model.Topic.Split(':').Last()</h1>
 }
 else
 {
@@ -36,6 +36,10 @@ else
         <p>
             <input type="checkbox" id="new-sns-topic-fifo-checkbox" class="fifo-checkbox" />
             <label for="new-sns-topic-fifo-checkbox">FIFO</label>
+        </p>
+        <p id="new-sns-topic-dedupe-checkbox-container" style="display: none">
+            <input type="checkbox" id="new-sns-topic-dedupe-checkbox" class="fifo-checkbox" />
+            <label for="new-sns-topic-dedupe-checkbox">Content-based deduplication</label>
         </p>
 
         <div class="modal-buttons text-center">
@@ -63,8 +67,7 @@ else
         }
         else
         {
-            // TODO:
-            //await Html.RenderPartialAsync("~/Pages/SNS/_TopicInfo.cshtml", await Model.SNSRepository.GetTopicAttributesAsync(Model.Topic));
+            await Html.RenderPartialAsync("~/Pages/SNS/_TopicInfo.cshtml", await Model.SNSRepository.GetTopicAttributesAsync(Model.Topic));
         }
     }
     catch(AmazonSimpleNotificationServiceException ex)
@@ -105,19 +108,29 @@ else
 @if(!hasTopicArn)
 {
     <script type="text/javascript">
+        $("#new-sns-topic-fifo-checkbox").change(sns_NewTopicFifo_Change);
+
+        function sns_NewTopicFifo_Change(event)
+        {
+            var isFifo = event.currentTarget.checked;
+            document.getElementById("new-sns-topic-dedupe-checkbox-container").style.display = isFifo ? "block" : "none";
+        }
+
         async function sns_CreateTopic()
         {
             try
             {
                 var topicName = document.querySelector("#new-sns-topic-modal .name-textbox").value;
                 var isFifo = document.getElementById("new-sns-topic-fifo-checkbox").checked;
+                var dedupe = document.getElementById("new-sns-topic-dedupe-checkbox").checked;
 
                 var response = await fetch("@Url.Action("CreateTopic", "Topics")", {
                     method: "PUT",
                     headers: new Headers({ "Content-Type": "application/json" }),
                     body: JSON.stringify({
                         topicName: topicName,
-                        isFifo: isFifo
+                        isFifo: isFifo,
+                        contentBasedDeduplication: dedupe
                     })
                 });
 

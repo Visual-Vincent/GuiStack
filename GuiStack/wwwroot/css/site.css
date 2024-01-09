@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  * 
- * Copyright © Vincent Bengtsson & Contributors 2022
+ * Copyright © Vincent Bengtsson & Contributors 2022-2024
  * https://github.com/Visual-Vincent/GuiStack
  */
 
@@ -305,6 +305,34 @@ table.gs-info-table.expanded tr.collapsed,
 table.gs-info-table.expanded td.collapsed,
 table.gs-info-table:not(.expanded) tr.expanded,
 table.gs-info-table:not(.expanded) td.expanded
+{
+    display: none;
+}
+
+table.gs-selector-table > tr,
+table.gs-selector-table > tbody > tr
+{
+    position: relative;
+}
+
+table.gs-selector-table > tr:hover::after,
+table.gs-selector-table > tbody > tr:hover::after,
+table.gs-selector-table > tr.selected::after,
+table.gs-selector-table > tbody > tr.selected::after
+{
+    content: " ";
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #FFFFFF;
+    opacity: 0.2;
+}
+
+table.gs-selector-table > tr:not(.selected) .on-selected,
+table.gs-selector-table > tbody > tr:not(.selected) .on-selected
 {
     display: none;
 }

@@ -1,0 +1,30 @@
+﻿@*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright © Vincent Bengtsson & Contributors 2022-2024
+ * https://github.com/Visual-Vincent/GuiStack
+ *@
+
+@using GuiStack.Models;
+@model IEnumerable<SQSQueue>
+
+@try
+{
+    <table class="gs-selector-table gs-list padded autosize-all-cols-but-first">
+        <tbody>
+            @foreach(var queue in (Model ?? Enumerable.Empty<SQSQueue>()).OrderBy(m => m.Name))
+            {
+                <tr data-queue-name="@queue.Name" data-url="@queue.Url" onclick="gsevent_TableItem_Click(event)">
+                    <td><i class="fa-regular fa-circle-check on-selected"></i> @queue.Name</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+catch(Exception ex)
+{
+    <h2 class="error-text">Failed to fetch queues:</h2>
+    <p class="error-text">@ex.Message</p>
+}

@@ -3,41 +3,55 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * Copyright © Vincent Bengtsson & Contributors 2022-2023
+ * Copyright © Vincent Bengtsson & Contributors 2022-2024
  * https://github.com/Visual-Vincent/GuiStack
  *@
 
 @using GuiStack.Models
 @using GuiStack.Extensions
-@model SNSTopicInfo
+@using GuiStack.Repositories
+@model SNSTopicModel
+
+<div id="sns-subscribe-to-sqs-modal" class="cssWindow dark backdropblur text-center">
+    <div class="closeWindowButton"><a no-href onclick="closeParentWindow(event)">×</a></div>
+
+    <h2 class="title">Subscribe to SQS queue</h2>
+    <div class="queue-selector-container text-left" style="margin-top: 16px; margin-bottom: 16px">
+        Loading queues...
+    </div>
+
+    <div class="modal-buttons text-center">
+        <button onclick="sns_CreateSubscription_Click()">Create subscription</button>
+    </div>
+</div>
 
 <table class="gs-info-table colored">
     <tbody>
         <tr>
             <td>Type</td>
-            <td>@(Model.FifoTopic ? "FIFO" : "Standard")</td>
+            <td>@(Model.Topic.FifoTopic ? "FIFO" : "Standard")</td>
         </tr>
         <tr>
             <td>ARN</td>
-            <td>@Model.TopicARN</td>
+            <td>@Model.Topic.TopicARN</td>
         </tr>
         <tr>
             <td>Content-based deduplication</td>
-            <td>@(Model.FifoTopic ? (Model.ContentBasedDeduplication ? "Yes" : "No") : "N/A")</td>
+            <td>@(Model.Topic.FifoTopic ? (Model.Topic.ContentBasedDeduplication ? "Yes" : "No") : "N/A")</td>
         </tr>
         <tr>
             <td>Active subscriptions</td>
-            <td>@Model.SubscriptionsConfirmed</td>
+            <td>@Model.Topic.SubscriptionsConfirmed</td>
         </tr>
     </tbody>
     <tbody class="additional-info">
         <tr>
             <td>Pending subscriptions</td>
-            <td>@Model.SubscriptionsPending</td>
+            <td>@Model.Topic.SubscriptionsPending</td>
         </tr>
         <tr>
             <td>Deleted subscriptions</td>
-            <td>@Model.SubscriptionsDeleted</td>
+            <td>@Model.Topic.SubscriptionsDeleted</td>
         </tr>
     </tbody>
     <tbody>
@@ -57,3 +71,82 @@
         </tr>
     </tbody>
 </table>
+
+<div style="display: flex; align-items: center">
+    <h2>Subscriptions</h2>
+    <div style="text-align: right; font-size: 1.5em; flex-grow: 1">
+        <a no-href onclick="showWindow('sns-subscribe-to-sqs-modal')" class="gs-icon-stack initial-white neon-green">
+            <i class="fa-solid fa-list-check" style="margin-right: 4px"></i>
+            <i class="bi bi-plus-circle-fill gs-icon-overlay stroked" style="color: #000000"></i>
+        </a>
+    </div>
+</div>
+
+<table class="gs-list padded autosize-all-cols-but-first">
+    <thead>
+        <tr>
+            <th>Protocol</th>
+            <th>Endpoint</th>
+            <th>Owner</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach(var subscription in Model.Subscriptions)
+        {
+            <tr>
+                <td>@subscription.Protocol</td>
+                <td>@subscription.Endpoint</td>
+                <td>@subscription.Owner</td>
+                <td>
+                    <div class="gs-icons">
+                        <a no-href class="purple lnk-sns-sub-copyarn" title="Copy ARN">
+                            <i class="fa-solid fa-link"></i>
+                        </a>
+                        <a no-href class="red lnk-sns-sub-delete" title="Delete">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </a>
+                    </div>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<script type="text/javascript">
+    var subscribeToSqsModal = document.getElementById("sns-subscribe-to-sqs-modal");
+    var queueSelectorContainer = $("#sns-subscribe-to-sqs-modal .queue-selector-container");
+
+    subscribeToSqsModal.addEventListener("windowopened", function() {
+        $.ajax({
+            type: "GET",
+            url: "@Url.Page("/SQS/Index")",
+            data: {
+                handler: "QueueSelectorPartial"
+            },
+            cache: false,
+            error: gsevent_AjaxError,
+            success: function(result) {
+                queueSelectorContainer.html(result);
+            }
+        });
+    });
+
+    subscribeToSqsModal.addEventListener("windowclosed", function() {
+        queueSelectorContainer.html("Loading queues...");
+    });
+
+    function sns_CreateSubscription_Click()
+    {
+        var selectedItem = gs_GetSelectedTableItem(queueSelectorContainer[0]);
+
+        if(isNull(selectedItem))
+        {
+            alert("No queue selected");
+            return;
+        }
+
+        // TODO: Create subscription
+        alert(selectedItem.getAttribute("data-queue-name"));
+    }
+</script>

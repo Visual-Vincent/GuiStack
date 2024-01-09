@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  * 
- * Copyright © Vincent Bengtsson & Contributors 2022
+ * Copyright © Vincent Bengtsson & Contributors 2022-2024
  * https://github.com/Visual-Vincent/GuiStack
  */
 
@@ -192,6 +192,31 @@ function gs_GetProtobufRootDefinition(path)
     return localStorage.getItem("protoroot/" + root);
 }
 
+function gs_GetSelectedTableItem(element)
+{
+    if(isNull(element))
+        throw "'element' cannot be null";
+
+    if(!isElement(element) || (!(element instanceof HTMLDivElement) && !(element instanceof HTMLTableElement)))
+        throw "'element' must be a <table> element or a <div> element containing a <table class=\"gs-selector-table\"> element";
+
+    if(element instanceof HTMLDivElement)
+    {
+        element = element.querySelector(":scope > table.gs-selector-table");
+
+        if(isNull(element))
+            throw "'element' must contain a <table class=\"gs-selector-table\"> element";
+    }
+
+    var oldElement = element;
+    element = element.querySelector(":scope > tbody");
+
+    if(isNull(element))
+        element = oldElement;
+
+    return element.querySelector(":scope > tr.selected");
+}
+
 function gs_RefreshProtobufList(element)
 {
     if(isNull(element))
@@ -242,6 +267,28 @@ function gsevent_InfoTable_ToggleButton_Click(event)
 {
     var table = gs_GetParentTable(event.currentTarget, true);
     table.classList.toggle("expanded");
+}
+
+function gsevent_TableItem_Click(event)
+{
+    var table = gs_GetParentTable(event.currentTarget, true);
+    var body = table.querySelector(":scope > tbody");
+    var element = table;
+
+    if(!isNull(body))
+        element = body;
+
+    var items = element.querySelectorAll(":scope > tr");
+
+    for(var i = 0; i < items.length; i++)
+    {
+        var item = items[i];
+
+        if(event.currentTarget == item)
+            item.classList.add("selected")
+        else
+            item.classList.remove("selected");
+    }
 }
 
 function gsevent_TabItem_Click(event)
@@ -370,6 +417,9 @@ $(document).ready(function() {
 
         __gs_bodyDragCounter = 0;
     });
+
+    $("table.gs-selector-table > tr").click(gsevent_TableItem_Click);
+    $("table.gs-selector-table > tbody > tr").click(gsevent_TableItem_Click);
 });
 
 /*

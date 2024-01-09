@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  * 
- * Copyright © Vincent Bengtsson & Contributors 2022
+ * Copyright © Vincent Bengtsson & Contributors 2022-2024
  * https://github.com/Visual-Vincent/GuiStack
  */
 
@@ -24,7 +24,7 @@ namespace GuiStack.Authentication
         /// <param name="credentials">The credentials used to authenticated with the API or SDK.</param>
         public TAuthenticatedClient Authenticate()
         {
-           return  Authenticate(GetCredentials());
+           return Authenticate(GetCredentials());
         }
 
         /// <summary>

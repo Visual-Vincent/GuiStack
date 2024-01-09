@@ -82,5 +82,18 @@ namespace GuiStack.Pages.SQS
                 return HandleException(ex);
             }
         }
+
+        public async Task<IActionResult> OnGetQueueSelectorPartial()
+        {
+            try
+            {
+                var queues = await SQSRepository.GetQueuesAsync();
+                return Partial("_QueueSelectorPartial", queues);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
     }
 }

@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  * 
- * Copyright © Vincent Bengtsson & Contributors 2022-2023
+ * Copyright © Vincent Bengtsson & Contributors 2022-2024
  * https://github.com/Visual-Vincent/GuiStack
  */
 
@@ -22,14 +22,17 @@ namespace GuiStack.Repositories
     public interface ISNSRepository
     {
         Task CreateTopicAsync(SNSCreateTopicModel model);
+        Task CreateTopicSubscriptionAsync(string topicArn, string queueUrl);
         Task<IEnumerable<SNSTopic>> GetTopicsAsync();
         Task<SNSTopicInfo> GetTopicAttributesAsync(string topicArn);
+        Task<IEnumerable<SNSSubscription>> GetTopicSubscriptionsAsync(string topicArn);
         Task DeleteTopicAsync(string topicArn);
     }
 
     public class SNSRepository : ISNSRepository
     {
         private SNSAuthenticator authenticator = new SNSAuthenticator();
+        private SQSAuthenticator sqsAuthenticator = new SQSAuthenticator();
 
         public async Task CreateTopicAsync(SNSCreateTopicModel model)
         {
@@ -51,6 +54,14 @@ namespace GuiStack.Repositories
             });
 
             response.ThrowIfUnsuccessful("SNS");
+        }
+
+        public async Task CreateTopicSubscriptionAsync(string topicArn, string queueUrl)
+        {
+            using var sns = authenticator.Authenticate();
+            using var sqs = sqsAuthenticator.Authenticate();
+
+            await sns.SubscribeQueueAsync(topicArn, sqs, queueUrl);
         }
 
         public async Task<IEnumerable<SNSTopic>> GetTopicsAsync()
@@ -89,6 +100,16 @@ namespace GuiStack.Repositories
                 FifoTopic                 = fifoTopic.Equals("true", StringComparison.OrdinalIgnoreCase),
                 ContentBasedDeduplication = contentBasedDeduplication.Equals("true", StringComparison.OrdinalIgnoreCase)
             };
+        }
+
+        public async Task<IEnumerable<SNSSubscription>> GetTopicSubscriptionsAsync(string topicArn)
+        {
+            using var sns = authenticator.Authenticate();
+            var response = await sns.ListSubscriptionsByTopicAsync(new ListSubscriptionsByTopicRequest(topicArn));
+
+            response.ThrowIfUnsuccessful("SNS");
+
+            return response.Subscriptions.Select(s => new SNSSubscription(s.SubscriptionArn, s.TopicArn, s.Protocol, s.Endpoint, s.Owner));
         }
 
         public async Task DeleteTopicAsync(string topicArn)

@@ -18,6 +18,10 @@ Contributions and feature requests are welcome!
   - Send, receive and peek messages
   - Import Protobuf definitions and send Protobuf-formatted messages
 
+- **AWS SNS**
+  - Create, view and delete topics
+  - Create and delete subscriptions
+
 Also see the [checklist of upcoming features](https://github.com/Visual-Vincent/GuiStack/issues/1).
 
 ## Download
@@ -53,6 +57,7 @@ GuiStack can be configured by setting various environment variables before start
 | AWS_SECRET_ACCESS_KEY   | localstack                  |
 | AWS_REGION              | eu-central-1                |
 | AWS_S3_ENDPOINT_URL     | http://localhost:4566       |
+| AWS_SNS_ENDPOINT_URL    | http://localhost:4566       |
 | AWS_SQS_ENDPOINT_URL    | http://localhost:4566       |
 | AWS_S3_FORCE_PATH_STYLE | true                        |
 

@@ -240,6 +240,62 @@ a.gs-button:active { background: #005577; }
     background: #4d5054;
 }
 
+.gs-dashboard
+{
+    display: grid;
+    grid-auto-rows: 120px;
+    grid-template-columns: repeat(auto-fit, 120px);
+    grid-gap: 16px;
+}
+
+.gs-dashboard-item
+{
+    display: flex;
+    padding: 8px;
+    background: #404040;
+    box-shadow: #000000 0px 0px 4px 0px;
+    border: 1px solid #585858;
+    border-radius: 16px;
+    text-align: center;
+    align-items: center;
+    align-content: center;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.gs-dashboard-item,
+a.gs-dashboard-item,
+a.gs-dashboard-item:hover,
+a.gs-dashboard-item:active,
+a.gs-dashboard-item:visited
+{
+    color: #FFAA00;
+}
+
+.gs-dashboard-item:hover
+{
+    background: #606060;
+    border: 1px solid #787878;
+}
+
+.gs-dashboard-item > *
+{
+    flex: 1 1 100%;
+}
+
+.gs-dashboard-item > .image
+{
+    display: block;
+    height: 32px;
+    font-size: 32px;
+}
+
+.gs-dashboard-item > p.title
+{
+    margin-bottom: 0px;
+    font-weight: bold;
+}
+
 table.layout-fixed
 {
     table-layout: fixed;

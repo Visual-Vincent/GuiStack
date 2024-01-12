@@ -3,14 +3,16 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  * 
- * Copyright © Vincent Bengtsson & Contributors 2022-2023
+ * Copyright © Vincent Bengtsson & Contributors 2022-2024
  * https://github.com/Visual-Vincent/GuiStack
  *@
 
 @using GuiStack.Models; 
 @model IEnumerable<SNSTopic>
 
-@{ await Html.RenderPartialAsync("~/Pages/Shared/_DeleteModal.cshtml", new DeleteModalModel("deleteSNSTopicModal")); }
+@{
+    await Html.RenderPartialAsync("~/Pages/Shared/_DeleteModal.cshtml", new DeleteModalModel("deleteSNSTopicModal"));
+}
 
 <table class="gs-list padded autosize-all-cols-but-first">
     <thead>

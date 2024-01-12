@@ -20,11 +20,11 @@ namespace GuiStack.Controllers.SNS
 {
     [ApiController]
     [Route("api/" + nameof(SNS) + "/[controller]")]
-    public class TopicsController : Controller
+    public class SubscriptionsController : Controller
     {
         private ISNSRepository snsRepository;
 
-        public TopicsController(ISNSRepository snsRepository)
+        public SubscriptionsController(ISNSRepository snsRepository)
         {
             this.snsRepository = snsRepository;
         }
@@ -49,14 +49,24 @@ namespace GuiStack.Controllers.SNS
 
         [HttpPost]
         [Consumes("application/json")]
-        public async Task<ActionResult> CreateTopic([FromBody] SNSCreateTopicModel model)
+        [Produces("application/json")]
+        public async Task<ActionResult> CreateSubscription([FromBody] SNSCreateSubscriptionModel model)
         {
-            if(string.IsNullOrWhiteSpace(model.TopicName))
-                return StatusCode((int)HttpStatusCode.BadRequest);
+            if(string.IsNullOrWhiteSpace(model.TopicArn))
+                return StatusCode((int)HttpStatusCode.BadRequest, new { error = "'topicArn' cannot be empty" });
+
+            if(string.IsNullOrWhiteSpace(model.Protocol))
+                return StatusCode((int)HttpStatusCode.BadRequest, new { error = "'protocol' cannot be empty" });
+
+            if(string.IsNullOrWhiteSpace(model.Endpoint))
+                return StatusCode((int)HttpStatusCode.BadRequest, new { error = "'endpoint' cannot be empty" });
+
+            if(!model.Protocol.Equals("sqs", StringComparison.OrdinalIgnoreCase))
+                return StatusCode((int)HttpStatusCode.BadRequest, new { error = $"Protocol '{model.Protocol}' is not supported. Supported protocols are: sqs" });
 
             try
             {
-                await snsRepository.CreateTopicAsync(model);
+                await snsRepository.CreateTopicSubscriptionAsync(model.TopicArn, model.Endpoint);
                 return Ok();
             }
             catch(Exception ex)
@@ -65,17 +75,17 @@ namespace GuiStack.Controllers.SNS
             }
         }
 
-        [HttpDelete("{topicArn}")]
-        public async Task<ActionResult> DeleteTopic([FromRoute] string topicArn)
+        [HttpDelete("{subscriptionArn}")]
+        public async Task<ActionResult> DeleteSubscription(string subscriptionArn)
         {
-            if(string.IsNullOrWhiteSpace(topicArn))
+            if(string.IsNullOrWhiteSpace(subscriptionArn))
                 return StatusCode((int)HttpStatusCode.BadRequest);
 
-            topicArn = topicArn.DecodeRouteParameter();
+            subscriptionArn = subscriptionArn.DecodeRouteParameter();
 
             try
             {
-                await snsRepository.DeleteTopicAsync(topicArn);
+                await snsRepository.DeleteSubscriptionAsync(subscriptionArn);
                 return Ok();
             }
             catch(Exception ex)

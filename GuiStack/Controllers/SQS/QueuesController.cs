@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  * 
- * Copyright © Vincent Bengtsson & Contributors 2022
+ * Copyright © Vincent Bengtsson & Contributors 2022-2024
  * https://github.com/Visual-Vincent/GuiStack
  */
 
@@ -121,7 +121,7 @@ namespace GuiStack.Controllers.SQS
 
                     // This re-encoding to Base64 is intentional, as I want to rely on .NET's Base64 implementation to ensure that
                     // in the event that encoding isn't properly performed by the client, we don't send incorrectly encoded messages.
-                    // (Insead, the decoding above will likely throw an error)
+                    // (Instead, the decoding above will likely throw an error)
 
                     if(message.Base64Encode)
                         body = Convert.ToBase64String(protoData);

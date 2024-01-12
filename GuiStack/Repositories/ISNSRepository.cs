@@ -27,6 +27,7 @@ namespace GuiStack.Repositories
         Task<SNSTopicInfo> GetTopicAttributesAsync(string topicArn);
         Task<IEnumerable<SNSSubscription>> GetTopicSubscriptionsAsync(string topicArn);
         Task DeleteTopicAsync(string topicArn);
+        Task DeleteSubscriptionAsync(string subscriptionArn);
     }
 
     public class SNSRepository : ISNSRepository
@@ -119,6 +120,17 @@ namespace GuiStack.Repositories
 
             using var sns = authenticator.Authenticate();
             var response = await sns.DeleteTopicAsync(topicArn);
+
+            response.ThrowIfUnsuccessful("SNS");
+        }
+
+        public async Task DeleteSubscriptionAsync(string subscriptionArn)
+        {
+            if(string.IsNullOrWhiteSpace(subscriptionArn))
+                throw new ArgumentNullException(nameof(subscriptionArn));
+
+            using var sns = authenticator.Authenticate();
+            var response = await sns.UnsubscribeAsync(subscriptionArn);
 
             response.ThrowIfUnsuccessful("SNS");
         }

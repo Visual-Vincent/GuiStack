@@ -129,7 +129,7 @@ else
                 var dedupe = document.getElementById("new-sns-topic-dedupe-checkbox").checked;
 
                 var response = await fetch("@Url.Action("CreateTopic", "Topics")", {
-                    method: "PUT",
+                    method: "POST",
                     headers: new Headers({ "Content-Type": "application/json" }),
                     body: JSON.stringify({
                         topicName: topicName,

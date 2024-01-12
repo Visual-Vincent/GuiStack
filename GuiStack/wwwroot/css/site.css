@@ -313,12 +313,18 @@ table.gs-selector-table > tr,
 table.gs-selector-table > tbody > tr
 {
     position: relative;
+    cursor: pointer;
+}
+
+table.gs-selector-table > tr.selected,
+table.gs-selector-table > tbody > tr.selected
+{
+    color: #00FF00;
+    font-weight: bold;
 }
 
 table.gs-selector-table > tr:hover::after,
-table.gs-selector-table > tbody > tr:hover::after,
-table.gs-selector-table > tr.selected::after,
-table.gs-selector-table > tbody > tr.selected::after
+table.gs-selector-table > tbody > tr:hover::after
 {
     content: " ";
     display: block;

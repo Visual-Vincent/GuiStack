@@ -7,6 +7,7 @@
  * https://github.com/Visual-Vincent/GuiStack
  *@
 
+@using Amazon;
 @using GuiStack.Models
 @using GuiStack.Extensions
 @using GuiStack.Repositories
@@ -15,7 +16,7 @@
 <div id="sns-subscribe-to-sqs-modal" class="cssWindow dark backdropblur text-center">
     <div class="closeWindowButton"><a no-href onclick="closeParentWindow(event)">×</a></div>
 
-    <h2 class="title">Subscribe to SQS queue</h2>
+    <h2 class="title">Subscribe SQS queue to Topic</h2>
     <div class="queue-selector-container text-left" style="margin-top: 16px; margin-bottom: 16px">
         Loading queues...
     </div>
@@ -24,6 +25,10 @@
         <button onclick="sns_CreateSubscription_Click()">Create subscription</button>
     </div>
 </div>
+
+@{
+    await Html.RenderPartialAsync("~/Pages/Shared/_DeleteModal.cshtml", new DeleteModalModel("delete-sns-subscription-modal"));
+}
 
 <table class="gs-info-table colored">
     <tbody>
@@ -85,22 +90,45 @@
 <table class="gs-list padded autosize-all-cols-but-first">
     <thead>
         <tr>
-            <th>Protocol</th>
             <th>Endpoint</th>
+            <th>Protocol</th>
             <th>Owner</th>
             <th>Actions</th>
         </tr>
     </thead>
     <tbody>
-        @foreach(var subscription in Model.Subscriptions)
+        @foreach(var subscription in Model.Subscriptions.OrderBy(s => s.Protocol).ThenBy(s => s.Endpoint))
         {
-            <tr>
+            <tr data-arn="@subscription.Arn" data-endpoint="@subscription.Endpoint">
+                @if(subscription.Protocol == null)
+                {
+                    <td>@subscription.Endpoint</td>
+                }
+                else
+                {
+                    <td>
+                        @switch(subscription.Protocol.ToLower())
+                        {
+                            case "sqs":
+                            {
+                                if (Arn.TryParse(subscription.Endpoint, out var arn))
+                                {
+                                    <a href="/SQS/@arn.Resource"><i class="fa-solid fa-database gs-rotate-270" style="margin-right: 2px"></i> @arn.Resource</a>
+                                }
+                                else
+                                {
+                                    <td>@subscription.Endpoint</td>
+                                }
+                                break;
+                            }
+                        }
+                    </td>
+                }
                 <td>@subscription.Protocol</td>
-                <td>@subscription.Endpoint</td>
-                <td>@subscription.Owner</td>
+                <td>@(!string.IsNullOrWhiteSpace(subscription.Owner) ? subscription.Owner : "(unknown)")</td>
                 <td>
                     <div class="gs-icons">
-                        <a no-href class="purple lnk-sns-sub-copyarn" title="Copy ARN">
+                        <a no-href class="purple lnk-sns-sub-copyarn" title="Copy Endpoint address/ARN">
                             <i class="fa-solid fa-link"></i>
                         </a>
                         <a no-href class="red lnk-sns-sub-delete" title="Delete">
@@ -116,6 +144,14 @@
 <script type="text/javascript">
     var subscribeToSqsModal = document.getElementById("sns-subscribe-to-sqs-modal");
     var queueSelectorContainer = $("#sns-subscribe-to-sqs-modal .queue-selector-container");
+
+    $(".lnk-sns-sub-copyarn").click(sns_CopySubscriptionArn);
+    $(".lnk-sns-sub-delete").click(sns_DeleteSubscriptionPrompt);
+    $("#delete-sns-subscription-modal .yes-button").click(sns_DeleteSubscription);
+
+    const SNS_URL_DELETE_SUBSCRIPTION = "@Url.Action("DeleteSubscription", "Subscriptions", new { subscriptionArn = "__SUBSCRIPTIONARN__" })";
+
+    var prompt_SubscriptionArn;
 
     subscribeToSqsModal.addEventListener("windowopened", function() {
         $.ajax({
@@ -136,7 +172,7 @@
         queueSelectorContainer.html("Loading queues...");
     });
 
-    function sns_CreateSubscription_Click()
+    async function sns_CreateSubscription_Click()
     {
         var selectedItem = gs_GetSelectedTableItem(queueSelectorContainer[0]);
 
@@ -146,7 +182,88 @@
             return;
         }
 
-        // TODO: Create subscription
-        alert(selectedItem.getAttribute("data-queue-name"));
+        var queueUrl = selectedItem.getAttribute("data-url");
+
+        try
+        {
+            var response = await fetch("@Url.Action("CreateSubscription", "Subscriptions")", {
+                method: "POST",
+                headers: new Headers({ "Content-Type": "application/json" }),
+                body: JSON.stringify({
+                    topicArn: "@Model.Topic.TopicARN",
+                    protocol: "sqs",
+                    endpoint: queueUrl
+                })
+            });
+
+            if(!response.ok) {
+                throw "Failed to create SNS subscription: Server returned HTTP status " + response.status;
+            }
+
+            window.location.reload(true);
+        }
+        catch(error)
+        {
+            gs_DisplayError(error);
+        }
+
+        closeWindow("sns-subscribe-to-sqs-modal");
+    }
+
+    function sns_CopySubscriptionArn(event)
+    {
+        try
+        {
+            var arn = gs_GetParentTableRow(event.currentTarget, true).getAttribute("data-arn");
+            navigator.clipboard.writeText(arn);
+        }
+        catch(error)
+        {
+            gs_DisplayError(error);
+        }
+    }
+
+    function sns_DeleteSubscriptionPrompt(event)
+    {
+        try
+        {
+            var objNameElement = document.querySelector("#delete-sns-subscription-modal .title .object-name");
+            var parentRow = gs_GetParentTableRow(event.currentTarget, true);
+            var endpoint = parentRow.getAttribute("data-endpoint");
+
+            prompt_SubscriptionArn = parentRow.getAttribute("data-arn");
+
+            objNameElement.innerHTML = '<span style="color: #FFFFFF">the subscription</span> ' + endpoint;
+            showWindow("delete-sns-subscription-modal");
+        }
+        catch(error)
+        {
+            gs_DisplayError(error);
+        }
+    }
+
+    async function sns_DeleteSubscription()
+    {
+        try
+        {
+            var subscriptionArn = encodeURIComponent(prompt_SubscriptionArn);
+
+            var url = SNS_URL_DELETE_SUBSCRIPTION
+                .replace("__SUBSCRIPTIONARN__", subscriptionArn);
+
+            var response = await fetch(url, { method: "DELETE" });
+
+            if(!response.ok) {
+                throw "Failed to delete SNS subscription: Server returned HTTP status " + response.status;
+            }
+
+            window.location.reload(true);
+        }
+        catch(error)
+        {
+            gs_DisplayError(error);
+        }
+
+        closeWindow("delete-sns-subscription-modal");
     }
 </script>

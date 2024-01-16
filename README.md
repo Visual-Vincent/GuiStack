@@ -5,6 +5,8 @@
 
 A web-based GUI for your AWS or LocalStack environment.
 
+[![Screenshot](/screenshots/dashboard.png)](/screenshots/dashboard.png)
+
 ## Features
 
 Contributions and feature requests are welcome!

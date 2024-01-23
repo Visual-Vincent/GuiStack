@@ -1,0 +1,332 @@
+﻿@*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright © Vincent Bengtsson & Contributors 2022-2024
+ * https://github.com/Visual-Vincent/GuiStack
+ *@
+
+@using System.Text.RegularExpressions;
+@using GuiStack.Models
+
+@model SQSMessageEditorModel
+
+@{
+    string prefix = Regex.Replace(Model.ElementId, "[^A-Z0-9_]+", "_", RegexOptions.IgnoreCase);
+    string container = $"__sqs_{prefix}_editor_container";
+    string editor = $"__sqs_{prefix}_msg_editor";
+    string langlist = $"__sqs_{prefix}_lang_list";
+    string protolist = $"__sqs_{prefix}_protobuf_list";
+}
+
+<div id="@Model.ElementId">
+    <table class="gs-info-table">
+        <tbody>
+            <tr>
+                <td class="additional-info"></td>
+                <td></td>
+                <td class="text-right">
+                    <div>
+                        Syntax highlighting:
+                        <select class="lang-select">
+                            <option value="plaintext" selected>Plain Text</option>
+                            <option value="json">JSON</option>
+                            <option value="xml">XML</option>
+                            <option value="protojson">Protobuf (JSON)</option>
+                        </select>
+                    </div>
+                    <div class="definition-box hidden" style="margin-top: 4px">
+                        Selected definition: <span class="definition-label" style="color: #00E0FF"></span>
+                    </div>
+                </td>
+                <td></td>
+            </tr>
+            <tr>
+                <td class="additional-info" style="vertical-align: top; height: 1px">
+                    <div class="gs-drop-container" style="display: flex; flex-direction: column; height: 100%">
+                        <div class="gs-drop-overlay">
+                            Drop Protobuf file(s)
+                        </div>
+                        <form>
+                            <a no-href class="gs-upload-field">
+                                <i class="bi bi-plus-circle"></i> Add definition(s)...
+                                <input type="file" class="sqs-protobuf-fileupload" multiple />
+                            </a>
+                        </form>
+                        @*                                    calc(height - fontsize * lineheight - padding * 2 - border * 2 - scrollbar)*@
+                        <div style="width: 200px; max-height: calc(400px - 1em * 1.2 - 8px * 2 - 1px * 2 - 16px); overflow: auto">
+                            <partial name="~/Pages/_ProtobufListPartial.cshtml" />
+                        </div>
+                    </div>
+                </td>
+                <td class="collapsed">
+                    <a no-href class="vertical" onclick="sqs_MsgEditor_@(prefix)_ProtobufPanel_Toggle(event)">
+                        <i class="fa-solid fa-angles-down" style="font-size: 12px"></i> Protobuf <i class="fa-solid fa-angles-down" style="font-size: 12px"></i>
+                    </a>
+                </td>
+                <td class="expanded">
+                    <a no-href class="vertical" onclick="sqs_MsgEditor_@(prefix)_ProtobufPanel_Toggle(event)">
+                        <i class="fa-solid fa-angles-up" style="font-size: 12px"></i> Protobuf <i class="fa-solid fa-angles-up" style="font-size: 12px"></i>
+                    </a>
+                </td>
+                <td style="width: 100%">
+                    <div class="gs-sqs-message-contents" placeholder="Enter message"></div>
+                </td>
+                <td style="vertical-align: top">
+                    <a no-href class="gs-button lnk-sqs-send" style="display: block; margin-left: 8px; margin-bottom: 8px">Send</a>
+                    <input id="sqs-@prefix-send-as-base64" class="sqs-send-as-base64" type="checkbox" />
+                    <label for="sqs-@prefix-send-as-base64" title="Send message as a Base64-encoded string">Base64</label>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<script type="text/javascript">
+    var @editor = null;
+    var @container = document.getElementById("@Model.ElementId");
+    var @langlist = @(container).querySelector("select.lang-select");
+    var @protolist = @(container).querySelector(".gs-protobuf-list");
+
+    @if(!string.IsNullOrWhiteSpace(Model.ContainerVariable))
+    {
+        <text>@Model.ContainerVariable = @container;</text>
+    }
+
+    $("#@(Model.ElementId) select.lang-select").change(sqs_MsgEditor_@(prefix)_LanguageSelect);
+    $("#@(Model.ElementId) .sqs-protobuf-fileupload").change(sqs_MsgEditor_@(prefix)_ProtobufUpload_FilesSelected);
+
+    // jQuery does not work as expected with custom events
+    @(protolist).addEventListener("gs.protobuf.selected", sqs_MsgEditor_@(prefix)_ProtobufList_DefinitionSelected);
+
+    require(["vs/editor/editor.main"], function() {
+        @editor = monaco.editor.create(@(container).querySelector(".gs-sqs-message-contents"), {
+            value: "",
+            language: "plaintext",
+            theme: "vs-dark",
+            minimap: {
+                enabled: false
+            }
+        });
+
+        @if(!string.IsNullOrWhiteSpace(Model.EditorVariable))
+        {
+            <text>@Model.EditorVariable = @editor;</text>
+        }
+
+        @(editor).layout();
+    });
+
+    function sqs_MsgEditor_@(prefix)_LanguageSelect(event)
+    {
+        var lang = event.currentTarget.value;
+        var parentRow = gs_GetParentTableRow(event.currentTarget, true);
+        var definitionBox = parentRow.querySelector(".definition-box");
+
+        if(lang == "protojson")
+        {
+            lang = "json";
+            definitionBox.classList.remove("hidden");
+        }
+        else
+        {
+            definitionBox.classList.add("hidden");
+        }
+
+        monaco.editor.setModelLanguage(@(editor).getModel(), lang);
+    }
+
+    function sqs_MsgEditor_@(prefix)_ProtobufPanel_Toggle(event)
+    {
+        var editorElement = @(container).querySelector(".gs-sqs-message-contents");
+        gsevent_InfoTable_ToggleButton_Click(event);
+
+        // Force the editor to shrink before resizing
+        editorElement.style.width = "1px";
+        @(editor).layout();
+        editorElement.style.removeProperty("width");
+        @(editor).layout();
+    }
+
+    function sqs_MsgEditor_@(prefix)_ProtobufList_DefinitionSelected(event)
+    {
+        var protoPath = event.detail.protoPath;
+        var protoContents = gs_GetProtobufMessage(protoPath);
+
+        @(editor).setValue(protoContents);
+
+        @(container).setAttribute("data-selected-proto", event.detail.protoPath);
+        @(container).querySelector(".definition-label").innerText = event.detail.protoPath;
+
+        gs_SelectOption(@langlist, "protojson");
+    }
+
+    function sqs_MsgEditor_@(prefix)_ProtobufUpload_FilesSelected(event)
+    {
+        var element = event.currentTarget;
+        var files = element.files;
+        var formData = new FormData();
+
+        var cleanup = function() {
+            navigator.sendBeacon("@Url.Action("ClearSession", "Proto")");
+            document.getElementById("gs-upload-progress-overlay").classList.remove("visible");
+        };
+
+        if(files.length <= 0)
+            return;
+
+        for(var i = 0; i < files.length; i++)
+        {
+            formData.append("files", files[i]);
+        }
+
+        document.getElementById("gs-upload-progress-overlay").classList.add("visible");
+
+        $.ajax({
+            type: "POST",
+            url: "@Url.Action("Upload", "Proto")",
+            data: formData,
+            cache: false,
+            processData: false,
+            contentType: false,
+            error: function(request, status, errorThrown) {
+                cleanup();
+                gsevent_AjaxError(request, status, errorThrown);
+            },
+            success: function(result) {
+                if(isNull(result))
+                {
+                    cleanup();
+                    gs_DisplayError("Server response was empty");
+                    return;
+                }
+
+                if(typeof result === "string")
+                {
+                    cleanup();
+                    gs_DisplayError("Response was a string, expected JSON object. Value: " + result);
+                    return;
+                }
+
+                if(!isNull(result.error))
+                {
+                    cleanup();
+                    gs_DisplayError("An error occurred: " + result.error);
+                    return;
+                }
+
+                if(!Array.isArray(result))
+                {
+                    cleanup();
+                    gs_DisplayError("Unexpected response: " + JSON.stringify(result));
+                    return;
+                }
+
+                try
+                {
+                    var parsed = 0;
+
+                    for(var i = 0; i < result.length; i++)
+                    {
+                        var filename = result[i];
+
+                        if(typeof filename !== "string")
+                            continue;
+
+                        protobuf.load("/api/Proto/Download/" + filename, function(err, root) {
+                            if(err)
+                            {
+                                parsed++;
+
+                                if(parsed >= result.length)
+                                    cleanup();
+
+                                gs_DisplayError(
+                                    "An error occurred while parsing '" + filename + "'.\n\n" +
+                                    "Things to keep in mind if you receive error 404:\n" +
+                                    "* Make sure you include all Protobuf files that '" + filename + "' requires in the same request\n" +
+                                    "* GuiStack does not support special characters in filenames and thus will convert them to '_'. This will break the importing of such files\n\n" +
+                                    "Error message: " + err
+                                );
+                                return;
+                            }
+
+                            try
+                            {
+                                var packages = root.nested;
+
+                                for(var pkgName in packages)
+                                {
+                                    if(pkgName === "google")
+                                        continue;
+
+                                    var pkgRoot = packages[pkgName];
+                                    var rootJObj = pkgRoot.toJSON();
+                                    var rootJson = JSON.stringify(rootJObj);
+                                    var types = pkgRoot.nested;
+
+                                    localStorage.setItem("protoroot/" + pkgName, rootJson);
+
+                                    for(var typeName in types)
+                                    {
+                                        var type = types[typeName];
+
+                                        // TODO: How are we going to handle enums?
+                                        if(!(type instanceof protobuf.Message || type instanceof protobuf.Type))
+                                            continue;
+
+                                        var empty = type.create({});
+                                        var obj = type.toObject(empty, {
+                                            enums: String,
+                                            longs: String,
+                                            bytes: String,
+                                            defaults: true,
+                                            arrays: true,
+                                            objects: true
+                                        });
+
+                                        var json = JSON.stringify(obj, null, 4);
+                                        localStorage.setItem("proto/" + pkgName + "/" + typeName, json);
+                                    }
+                                }
+                            }
+                            catch(error)
+                            {
+                                gs_DisplayError("An error occurred while parsing '" + filename + "': " + error);
+                            }
+
+                            parsed++;
+
+                            if(parsed >= result.length)
+                            {
+                                cleanup();
+                                gs_RefreshProtobufList(@protolist);
+                            }
+                        });
+                    }
+                }
+                catch(error)
+                {
+                    cleanup();
+                    gs_DisplayError("An error occurred while parsing Protobuf definitions: " + error);
+                }
+            },
+            xhr: function() {
+                var xhr = $.ajaxSettings.xhr();
+
+                xhr.upload.addEventListener("progress", function(event) {
+                    if(!event.lengthComputable)
+                        return;
+
+                    var progress = Math.round(event.loaded / event.total * 100);
+                    document.querySelector("#gs-upload-progress-overlay .upload-progress").innerText = progress.toFixed(0) + "%";
+                });
+
+                return xhr ;
+            }
+        });
+
+        element.value = null;
+    }
+</script>

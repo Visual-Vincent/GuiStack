@@ -20,6 +20,11 @@
     <div class="queue-selector-container text-left" style="margin-top: 16px; margin-bottom: 16px">
         Loading queues...
     </div>
+    
+    <p>
+        <input type="checkbox" id="sns-subscribe-to-sqs-raw-delivery-checkbox" />
+        <label for="sns-subscribe-to-sqs-raw-delivery-checkbox">Raw message delivery</label>
+    </p>
 
     <div class="modal-buttons text-center">
         <button onclick="sns_CreateSubscription_Click()">Create subscription</button>
@@ -77,81 +82,101 @@
     </tbody>
 </table>
 
-<div style="display: flex; align-items: center">
-    <h2>Subscriptions</h2>
-    <div style="text-align: right; font-size: 1.5em; flex-grow: 1">
-        <a no-href onclick="showWindow('sns-subscribe-to-sqs-modal')" class="gs-icon-stack initial-white neon-green">
-            <i class="fa-solid fa-list-check" style="margin-right: 4px"></i>
-            <i class="bi bi-plus-circle-fill gs-icon-overlay stroked" style="color: #000000"></i>
-        </a>
+<div class="gs-tab-control">
+    <div class="gs-tab-container">
+        <div class="gs-tabitem selected" data-tabpage="sns-send">Send</div>
+        <div class="gs-tabitem" data-tabpage="sns-subscriptions">Subscriptions</div>
+    </div>
+
+    <div id="sns-send" class="gs-tabpage selected">
+        @{ await Html.RenderPartialAsync("~/Pages/SQS/_MessageEditorPartial.cshtml", new SQSMessageEditorModel("sns-send-message-editor", "__snsSendMessageEditor", "__snsSendMessageTextEditor")); }
+    </div>
+
+    <div id="sns-subscriptions" class="gs-tabpage">
+        <div style="display: flex; align-items: center">
+            <h2>Subscriptions</h2>
+            <div style="text-align: right; font-size: 1.5em; flex-grow: 1">
+                <a no-href onclick="showWindow('sns-subscribe-to-sqs-modal')" class="gs-icon-stack initial-white neon-green">
+                    <i class="fa-solid fa-list-check" style="margin-right: 4px"></i>
+                    <i class="bi bi-plus-circle-fill gs-icon-overlay stroked" style="color: #000000"></i>
+                </a>
+            </div>
+        </div>
+
+        @if(Model.Subscriptions != null && Model.Subscriptions.Any())
+        {
+            <table class="gs-list padded autosize-all-cols-but-first">
+                <thead>
+                    <tr>
+                        <th>Endpoint</th>
+                        <th>Protocol</th>
+                        <th>Raw Delivery</th>
+                        <th>Owner</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach(var subscription in Model.Subscriptions.OrderBy(s => s.Protocol).ThenBy(s => s.Endpoint))
+                    {
+                        <tr data-arn="@subscription.Arn" data-endpoint="@subscription.Endpoint">
+                            <td>
+                                @switch(subscription.Protocol?.ToLower() ?? "")
+                                {
+                                    case "sqs":
+                                    {
+                                        if(!Arn.TryParse(subscription.Endpoint, out var arn))
+                                            goto default;
+
+                                        <a href="/SQS/@arn.Resource"><i class="fa-solid fa-database gs-rotate-270" style="margin-right: 2px"></i> @arn.Resource</a>
+                                        break;
+                                    }
+
+                                    default:
+                                        @subscription.Endpoint
+                                        break;
+                                }
+                            </td>
+                            <td>@subscription.Protocol</td>
+                            <td>@(subscription.RawMessageDelivery ? "Yes" : "No")</td>
+                            <td>@(!string.IsNullOrWhiteSpace(subscription.Owner) ? subscription.Owner : "(unknown)")</td>
+                            <td>
+                                <div class="gs-icons">
+                                    <a no-href class="purple lnk-sns-sub-copyarn" title="Copy Endpoint address/ARN">
+                                        <i class="fa-solid fa-link"></i>
+                                    </a>
+                                    <a no-href class="red lnk-sns-sub-delete" title="Delete">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <text>No active subscriptions</text>
+        }
     </div>
 </div>
 
-<table class="gs-list padded autosize-all-cols-but-first">
-    <thead>
-        <tr>
-            <th>Endpoint</th>
-            <th>Protocol</th>
-            <th>Owner</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach(var subscription in Model.Subscriptions.OrderBy(s => s.Protocol).ThenBy(s => s.Endpoint))
-        {
-            <tr data-arn="@subscription.Arn" data-endpoint="@subscription.Endpoint">
-                @if(subscription.Protocol == null)
-                {
-                    <td>@subscription.Endpoint</td>
-                }
-                else
-                {
-                    <td>
-                        @switch(subscription.Protocol.ToLower())
-                        {
-                            case "sqs":
-                            {
-                                if (Arn.TryParse(subscription.Endpoint, out var arn))
-                                {
-                                    <a href="/SQS/@arn.Resource"><i class="fa-solid fa-database gs-rotate-270" style="margin-right: 2px"></i> @arn.Resource</a>
-                                }
-                                else
-                                {
-                                    <td>@subscription.Endpoint</td>
-                                }
-                                break;
-                            }
-                        }
-                    </td>
-                }
-                <td>@subscription.Protocol</td>
-                <td>@(!string.IsNullOrWhiteSpace(subscription.Owner) ? subscription.Owner : "(unknown)")</td>
-                <td>
-                    <div class="gs-icons">
-                        <a no-href class="purple lnk-sns-sub-copyarn" title="Copy Endpoint address/ARN">
-                            <i class="fa-solid fa-link"></i>
-                        </a>
-                        <a no-href class="red lnk-sns-sub-delete" title="Delete">
-                            <i class="fa-solid fa-trash-can"></i>
-                        </a>
-                    </div>
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
-
 <script type="text/javascript">
+    const SNS_URL_DELETE_SUBSCRIPTION = "@Url.Action("DeleteSubscription", "Subscriptions", new { subscriptionArn = "__SUBSCRIPTIONARN__" })";
+
+    var prompt_SubscriptionArn;
+
+    var __snsSendLanguageSelect = __snsSendMessageEditor.querySelector(".lang-select");
+    var __snsSendButton = __snsSendMessageEditor.querySelector(".lnk-sqs-send");
+
     var subscribeToSqsModal = document.getElementById("sns-subscribe-to-sqs-modal");
     var queueSelectorContainer = $("#sns-subscribe-to-sqs-modal .queue-selector-container");
+
+    __snsSendButton.addEventListener("click", sns_SendMessage_Click);
 
     $(".lnk-sns-sub-copyarn").click(sns_CopySubscriptionArn);
     $(".lnk-sns-sub-delete").click(sns_DeleteSubscriptionPrompt);
     $("#delete-sns-subscription-modal .yes-button").click(sns_DeleteSubscription);
-
-    const SNS_URL_DELETE_SUBSCRIPTION = "@Url.Action("DeleteSubscription", "Subscriptions", new { subscriptionArn = "__SUBSCRIPTIONARN__" })";
-
-    var prompt_SubscriptionArn;
 
     subscribeToSqsModal.addEventListener("windowopened", function() {
         $.ajax({
@@ -172,6 +197,63 @@
         queueSelectorContainer.html("Loading queues...");
     });
 
+    function sns_SendMessage_Click(event)
+    {
+        var lang = __snsSendLanguageSelect.value;
+        var data = __snsSendMessageTextEditor.getValue();
+        var isProtobuf = (lang == "protojson");
+        var base64Encode = __snsSendMessageEditor.querySelector(".sqs-send-as-base64").checked;
+
+        if(isProtobuf)
+        {
+            try
+            {
+                var protoPath = __snsSendMessageEditor.getAttribute("data-selected-proto");
+
+                if(isNull(protoPath) || protoPath.length <= 0)
+                {
+                    gs_DisplayError("No Protobuf definition selected");
+                    return;
+                }
+
+                var protoRoot = gs_GetProtobufRootDefinition(protoPath);
+                var protoType = protoPath
+                    .replace(/^proto\/[^\/]+\/?/, "")
+                    .replace("/", ".");
+
+                if(protoType.length <= 0)
+                    throw "'" + protoPath + "' is not a valid protobuf definition path: Path is too short";
+
+                var root = protobuf.Root.fromJSON(JSON.parse(protoRoot));
+                var type = root.lookupType(protoType);
+                var payload = JSON.parse(data);
+                var message = type.fromObject(payload);
+
+                data = gs_Uint8ArrayToBase64(type.encode(message).finish());
+            }
+            catch(error)
+            {
+                gs_DisplayError("An error occurred while constructing the Protobuf message: " + error);
+                return;
+            }
+        }
+
+        $.ajax({
+            type: "POST",
+            url: "@Url.Action("SendMessage", "Topics", new { topicArn = Model.Topic.TopicARN.ToString() ?? "" })",
+            contentType: "application/json",
+            data: JSON.stringify({
+                body: data,
+                isProtobuf: isProtobuf,
+                base64Encode: base64Encode
+            }),
+            error: gsevent_AjaxError,
+            success: function(result) {
+                __snsSendMessageTextEditor.setValue("");
+            }
+        });
+    }
+
     async function sns_CreateSubscription_Click()
     {
         var selectedItem = gs_GetSelectedTableItem(queueSelectorContainer[0]);
@@ -183,6 +265,7 @@
         }
 
         var queueUrl = selectedItem.getAttribute("data-url");
+        var rawMessageDelivery = document.getElementById("sns-subscribe-to-sqs-raw-delivery-checkbox").checked;
 
         try
         {
@@ -192,7 +275,8 @@
                 body: JSON.stringify({
                     topicArn: "@Model.Topic.TopicARN",
                     protocol: "sqs",
-                    endpoint: queueUrl
+                    endpoint: queueUrl,
+                    rawMessageDelivery: rawMessageDelivery
                 })
             });
 

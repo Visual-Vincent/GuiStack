@@ -9,6 +9,7 @@
 
 using System;
 using System.Net;
+using System.Text;
 using System.Threading.Tasks;
 using Amazon.SimpleNotificationService;
 using GuiStack.Extensions;
@@ -77,6 +78,47 @@ namespace GuiStack.Controllers.SNS
             {
                 await snsRepository.DeleteTopicAsync(topicArn);
                 return Ok();
+            }
+            catch(Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+        [HttpPost("{topicArn}")]
+        [Consumes("application/json")]
+        [Produces("application/json")]
+        public async Task<ActionResult> SendMessage([FromRoute] string topicArn, [FromBody] SQSSendMessageModel message)
+        {
+            if(message == null)
+                return StatusCode((int)HttpStatusCode.BadRequest);
+
+            try
+            {
+                string body = message.Body;
+
+                if(message.IsProtobuf)
+                {
+                    byte[] protoData = Convert.FromBase64String(body);
+
+                    // This re-encoding to Base64 is intentional, as I want to rely on .NET's Base64 implementation to ensure that
+                    // in the event that encoding isn't properly performed by the client, we don't send incorrectly encoded messages.
+                    // (Instead, the decoding above will likely throw an error)
+
+                    if(message.Base64Encode)
+                        body = Convert.ToBase64String(protoData);
+                    else
+                        body = protoData.ToRawString();
+                }
+                else if(message.Base64Encode)
+                {
+                    byte[] data = Encoding.UTF8.GetBytes(body);
+                    body = Convert.ToBase64String(data);
+                }
+
+                var messageId = await snsRepository.SendMessageAsync(topicArn, body);
+
+                return Json(new { messageId = messageId });
             }
             catch(Exception ex)
             {

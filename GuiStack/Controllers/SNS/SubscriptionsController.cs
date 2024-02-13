@@ -66,7 +66,7 @@ namespace GuiStack.Controllers.SNS
 
             try
             {
-                await snsRepository.CreateTopicSubscriptionAsync(model.TopicArn, model.Endpoint);
+                await snsRepository.CreateTopicSubscriptionAsync(model);
                 return Ok();
             }
             catch(Exception ex)

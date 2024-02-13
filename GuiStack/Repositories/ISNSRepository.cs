@@ -22,12 +22,13 @@ namespace GuiStack.Repositories
     public interface ISNSRepository
     {
         Task CreateTopicAsync(SNSCreateTopicModel model);
-        Task CreateTopicSubscriptionAsync(string topicArn, string queueUrl);
+        Task CreateTopicSubscriptionAsync(SNSCreateSubscriptionModel model);
         Task<IEnumerable<SNSTopic>> GetTopicsAsync();
         Task<SNSTopicInfo> GetTopicAttributesAsync(string topicArn);
         Task<IEnumerable<SNSSubscription>> GetTopicSubscriptionsAsync(string topicArn);
         Task DeleteTopicAsync(string topicArn);
         Task DeleteSubscriptionAsync(string subscriptionArn);
+        Task<string> SendMessageAsync(string topicArn, string messageBody);
     }
 
     public class SNSRepository : ISNSRepository
@@ -37,6 +38,9 @@ namespace GuiStack.Repositories
 
         public async Task CreateTopicAsync(SNSCreateTopicModel model)
         {
+            if(model == null)
+                throw new ArgumentNullException(nameof(model));
+
             using var sns = authenticator.Authenticate();
             string topicName = model.TopicName;
             
@@ -57,12 +61,21 @@ namespace GuiStack.Repositories
             response.ThrowIfUnsuccessful("SNS");
         }
 
-        public async Task CreateTopicSubscriptionAsync(string topicArn, string queueUrl)
+        public async Task CreateTopicSubscriptionAsync(SNSCreateSubscriptionModel model)
         {
+            if(model == null)
+                throw new ArgumentNullException(nameof(model));
+
+            if(!model.Protocol.Equals("sqs", StringComparison.OrdinalIgnoreCase))
+                throw new ArgumentException($"Protocol '{model.Protocol}' is not supported. Supported protocols are: sqs", nameof(model));
+
             using var sns = authenticator.Authenticate();
             using var sqs = sqsAuthenticator.Authenticate();
 
-            await sns.SubscribeQueueAsync(topicArn, sqs, queueUrl);
+            var subscriptionArn = await sns.SubscribeQueueAsync(model.TopicArn, sqs, model.Endpoint);
+            var response = await sns.SetSubscriptionAttributesAsync(subscriptionArn, "RawMessageDelivery", model.RawMessageDelivery.ToString().ToLower());
+
+            response.ThrowIfUnsuccessful("SNS");
         }
 
         public async Task<IEnumerable<SNSTopic>> GetTopicsAsync()
@@ -110,7 +123,26 @@ namespace GuiStack.Repositories
 
             response.ThrowIfUnsuccessful("SNS");
 
-            return response.Subscriptions.Select(s => new SNSSubscription(s.SubscriptionArn, s.TopicArn, s.Protocol, s.Endpoint, s.Owner));
+            var subscriptions = new List<SNSSubscription>();
+
+            foreach(var subscription in response.Subscriptions)
+            {
+                var attributesResponse = await sns.GetSubscriptionAttributesAsync(subscription.SubscriptionArn);
+                attributesResponse.ThrowIfUnsuccessful("SNS");
+
+                var rawMessageDelivery = attributesResponse.Attributes.GetValueOrDefault("RawMessageDelivery") ?? "";
+
+                subscriptions.Add(new SNSSubscription(
+                    subscription.SubscriptionArn,
+                    subscription.TopicArn,
+                    subscription.Protocol,
+                    subscription.Endpoint,
+                    subscription.Owner,
+                    rawMessageDelivery.Equals("true", StringComparison.OrdinalIgnoreCase)
+                ));
+            }
+
+            return subscriptions;
         }
 
         public async Task DeleteTopicAsync(string topicArn)
@@ -133,6 +165,22 @@ namespace GuiStack.Repositories
             var response = await sns.UnsubscribeAsync(subscriptionArn);
 
             response.ThrowIfUnsuccessful("SNS");
+        }
+
+        public async Task<string> SendMessageAsync(string topicArn, string messageBody)
+        {
+            if(string.IsNullOrWhiteSpace(topicArn))
+                throw new ArgumentNullException(nameof(topicArn));
+
+            if(string.IsNullOrWhiteSpace(messageBody))
+                throw new ArgumentNullException(nameof(messageBody));
+
+            using var sns = authenticator.Authenticate();
+            var response = await sns.PublishAsync(new PublishRequest(topicArn, messageBody));
+
+            response.ThrowIfUnsuccessful("SNS");
+
+            return response.MessageId;
         }
     }
 }

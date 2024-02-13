@@ -16,5 +16,6 @@ namespace GuiStack.Models
         public string TopicArn { get; set; }
         public string Protocol { get; set; }
         public string Endpoint { get; set; }
+        public bool RawMessageDelivery { get; set; }
     }
 }

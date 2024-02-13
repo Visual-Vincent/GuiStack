@@ -19,18 +19,20 @@ namespace GuiStack.Models
         public string Protocol { get; set; }
         public string Endpoint { get; set; }
         public string Owner { get; set; }
+        public bool RawMessageDelivery { get; set; }
 
         public SNSSubscription()
         {
         }
 
-        public SNSSubscription(string arn, string topicArn, string protocol, string endpoint, string owner)
+        public SNSSubscription(string arn, string topicArn, string protocol, string endpoint, string owner, bool rawMessageDelivery)
         {
             Arn = Arn.Parse(arn);
             TopicARN = Arn.Parse(topicArn);
             Protocol = protocol;
             Endpoint = endpoint;
             Owner = owner;
+            RawMessageDelivery = rawMessageDelivery;
         }
     }
 }

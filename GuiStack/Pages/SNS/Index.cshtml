@@ -23,7 +23,8 @@
 
 @if(hasTopicArn)
 {
-    <h1>@Model.Topic.Split(':').Last()</h1>
+    <p class="gs-object-type">SNS Topic</p>
+    <h1 class="gs-object-name">@Model.Topic.Split(':').Last()</h1>
 }
 else
 {

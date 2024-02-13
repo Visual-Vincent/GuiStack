@@ -240,6 +240,17 @@ a.gs-button:active { background: #005577; }
     background: #4d5054;
 }
 
+.gs-object-type
+{
+    color: #999999;
+    margin-bottom: 0px;
+}
+
+.gs-object-type + .gs-object-name
+{
+    margin-top: 0px;
+}
+
 .gs-dashboard
 {
     display: grid;

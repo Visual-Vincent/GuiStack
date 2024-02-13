@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  * 
- * Copyright © Vincent Bengtsson & Contributors 2022
+ * Copyright © Vincent Bengtsson & Contributors 2022-2024
  * https://github.com/Visual-Vincent/GuiStack
  *@
 
@@ -35,8 +35,9 @@
 
 @if(hasBucketName)
 {
+    <p class="gs-object-type">S3 Bucket</p>
     <div style="display: flex; align-items: center">
-        <h1>@Model.Bucket</h1>
+        <h1 style="margin-top: 0px">@Model.Bucket</h1>
         <div style="text-align: right; font-size: 1.5em; flex-grow: 1">
             <a no-href onclick="document.getElementById('s3-fileupload').click()" class="initial-white neon-green">
                 <i class="fa-solid fa-arrow-up-from-bracket"></i>

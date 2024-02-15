@@ -269,6 +269,12 @@ function gsevent_InfoTable_ToggleButton_Click(event)
     table.classList.toggle("expanded");
 }
 
+function gsevent_Expander_Click(event)
+{
+    var expander = event.currentTarget.parentElement;
+    expander.classList.toggle("expanded");
+}
+
 function gsevent_TableItem_Click(event)
 {
     var table = gs_GetParentTable(event.currentTarget, true);
@@ -420,6 +426,7 @@ $(document).ready(function() {
 
     $("table.gs-selector-table > tr").click(gsevent_TableItem_Click);
     $("table.gs-selector-table > tbody > tr").click(gsevent_TableItem_Click);
+    $(".gs-expander > .gs-expander-header").click(gsevent_Expander_Click)
 });
 
 /*

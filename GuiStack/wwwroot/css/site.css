@@ -15,6 +15,11 @@ body
     margin: 8px;
 }
 
+hr
+{
+    border: 1px inset #555555;
+}
+
 a, a:visited
 {
     color: #00E0FF;
@@ -215,7 +220,8 @@ a.gs-button:active { background: #005577; }
     width: 20%;
 }
 
-.gs-navbar > a
+.gs-navbar > a,
+.gs-expander > .gs-expander-header
 {
     display: block;
     background: linear-gradient(0deg, #373737, #52555A);
@@ -226,7 +232,8 @@ a.gs-button:active { background: #005577; }
     text-decoration: none;
 }
 
-.gs-navbar > a.selected
+.gs-navbar > a.selected,
+.gs-expander.expanded > .gs-expander-header
 {
     background: linear-gradient(180deg, #303030, #4d5054);
     box-shadow: inset rgba(0, 0, 0, 0.69) 0px 0px 4px 0px;
@@ -249,6 +256,69 @@ a.gs-button:active { background: #005577; }
 .gs-object-type + .gs-object-name
 {
     margin-top: 0px;
+}
+
+.gs-expander
+{
+    border: 1px solid rgba(0, 0, 0, 0.25);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.gs-expander > .gs-expander-header
+{
+    display: block;
+    position: relative;
+    padding: 10px 12px;
+    border-bottom: none;
+    cursor: pointer;
+}
+
+.gs-expander > .gs-expander-header::after
+{
+    display: block;
+    position: absolute;
+    content: "\25BC";
+    font-family: initial;
+    font-weight: normal;
+    top: calc(50% + 1px);
+    right: 12px;
+    transform: translateY(-50%);
+}
+
+.gs-expander.expanded > .gs-expander-header::after
+{
+    content: "\25B2";
+}
+
+.gs-expander > .gs-expander-body
+{
+    display: block;
+    overflow: auto;
+    transition: max-height 0.5s ease-out, padding-top 0.5s ease-out, padding-bottom 0.5s ease-out;
+    background: #35363A;
+    padding: 16px;
+    box-sizing: border-box;
+    box-shadow: inset 0px 3px 5px rgba(0, 0, 0, 0.6);
+}
+
+.gs-expander > .gs-expander-body > pre
+{
+    margin-top: 0px;
+    margin-bottom: 0px;
+}
+
+.gs-expander.expanded > .gs-expander-body
+{
+    max-height: 100vh;
+}
+
+.gs-expander:not(.expanded) > .gs-expander-body
+{
+    max-height: 0px !important;
+    padding-top: 0px !important;
+    padding-bottom: 0px !important;
+    overflow: hidden !important;
 }
 
 .gs-dashboard

@@ -16,15 +16,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Licenses\*">
+    <EmbeddedResource Include="Licenses\*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
+    </EmbeddedResource>
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="..\LICENSE.txt" Link="LICENSE.txt">
+    <EmbeddedResource Include="..\LICENSE.txt" Link="LICENSE.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+    </EmbeddedResource>
     <Content Include="..\NOTICE.txt" Link="NOTICE.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

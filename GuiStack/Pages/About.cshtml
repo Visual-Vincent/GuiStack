@@ -1,0 +1,50 @@
+﻿@*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright © Vincent Bengtsson & Contributors 2022-2024
+ * https://github.com/Visual-Vincent/GuiStack
+ *@
+
+@page
+@using GuiStack.Pages
+@model AboutModel
+@{
+    ViewData["Title"] = "About";
+}
+
+<h1 class="text-center" style="font-size: 30pt; margin-bottom: 0px">GuiStack</h1>
+
+<p class="text-center" style="font-size: 18pt; margin: 24px 0px">
+    @AboutModel.Description
+</p>
+
+<p class="text-center" style="margin-bottom: 0px">
+    @ApplicationInfo.Copyright
+</p>
+
+<p class="text-center" style="margin-top: 8px; margin-bottom: 40px">
+    <a href="@ApplicationInfo.ProjectUrl">@ApplicationInfo.ProjectUrl</a>
+</p>
+
+<div class="gs-expander">
+    <div class="gs-expander-header">Copyright License</div>
+    <div class="gs-expander-body">
+        <pre><code>@ApplicationInfo.License</code></pre>
+    </div>
+</div>
+
+<hr style="margin: 2em"/>
+
+<h2>Third-party content licenses</h2>
+
+@foreach(var license in ApplicationInfo.ThirdPartyLicenses)
+{
+    <div class="gs-expander">
+        <div class="gs-expander-header">@license.Name</div>
+        <div class="gs-expander-body">
+            <pre><code>@license.LicenseText</code></pre>
+        </div>
+    </div>
+}

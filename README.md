@@ -23,6 +23,7 @@ Contributions and feature requests are welcome!
 - **AWS SNS**
   - Create, view and delete topics
   - Create, view and delete subscriptions (only SQS subscriptions can be created at the moment)
+  - Send messages to topics
 
 Also see the [checklist of upcoming features](https://github.com/Visual-Vincent/GuiStack/issues/1).
 

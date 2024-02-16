@@ -49,7 +49,7 @@ $ chmod +x ./GuiStack ./run.sh
 Then you should be able to execute `run.sh` to start GuiStack.
 
 ### Through Docker
-Download the `scripts/default-run-docker.sh` script from the repository and execute it to start the Docker container.
+Download the [`default-run-docker.sh`](/scripts/default-run-docker.sh) script from the repository and execute it to start the Docker container.
 
 ## Configuration
 GuiStack can be configured by setting various environment variables before starting the application. Most of them are provided in the `run.sh` or `run.bat` file included within the release (or in `default-run-docker.sh`, if using the Docker image).

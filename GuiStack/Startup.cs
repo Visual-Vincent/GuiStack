@@ -10,6 +10,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Text.Json.Serialization;
 using Amazon;
 using GuiStack.Repositories;
 using GuiStack.Services;
@@ -37,12 +38,13 @@ namespace GuiStack
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddRazorPages();
-            services.AddControllers();
+            services.AddControllers().AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
             services.AddSession();
             services.AddDistributedMemoryCache();
+            services.AddScoped<IDynamoDBRepository, DynamoDBRepository>();
             services.AddScoped<IS3Repository, S3Repository>();
-            services.AddScoped<ISQSRepository, SQSRepository>();
             services.AddScoped<ISNSRepository, SNSRepository>();
+            services.AddScoped<ISQSRepository, SQSRepository>();
             services.AddSingleton<IS3UrlBuilder, S3UrlBuilder>();
         }
 

@@ -59,6 +59,11 @@ namespace GuiStack
         public static readonly string License = GetStringResource("LICENSE.txt");
 
         /// <summary>
+        /// The version number of the application.
+        /// </summary>
+        public static readonly Version Version = ProgramClass.Assembly.GetName().Version;
+
+        /// <summary>
         /// The collection of copyright licenses of third-party resources used by the application.
         /// </summary>
         public static readonly IReadOnlyCollection<ThirdPartyLicense> ThirdPartyLicenses = ((Func<IReadOnlyCollection<ThirdPartyLicense>>)(() => {

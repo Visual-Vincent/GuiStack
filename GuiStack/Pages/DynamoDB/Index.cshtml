@@ -1,0 +1,241 @@
+﻿@*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright © Vincent Bengtsson & Contributors 2022-2024
+ * https://github.com/Visual-Vincent/GuiStack
+ *@
+
+@page "{table?}"
+
+@using System.Net;
+@using Amazon.DynamoDBv2;
+@using GuiStack.Models;
+@model GuiStack.Pages.DynamoDB.IndexModel
+
+@{
+    ViewData["Title"] = "DynamoDB Tables";
+    ViewData["TableName"] = Model.Table;
+
+    bool hasTableName = !string.IsNullOrWhiteSpace(Model.Table);
+}
+
+@if(hasTableName)
+{
+    <p class="gs-object-type">DynamoDB Table</p>
+    <h1 class="gs-object-name">@Model.Table</h1>
+}
+else
+{
+    <div id="new-dynamodb-table-modal" class="cssWindow dark backdropblur text-center">
+        <div class="closeWindowButton"><a no-href onclick="closeParentWindow(event)">×</a></div>
+
+        <h2 class="title">New DynamoDB table</h2>
+        <table class="gs-info-table text-left">
+            <tbody>
+                <tr>
+                    <td>Name</td>
+                    <td><input type="text" class="name-textbox text-center" maxlength="255" style="width: 400px" /></td>
+                </tr>
+                <tr>
+                    <td>Partition key</td>
+                    <td><input type="text" class="partitionkey-textbox text-center" maxlength="255" style="width: 400px" /></td>
+                    <td>
+                        <select class="partitionkey-type-select">
+                            @foreach(var type in Enum.GetValues<DynamoDBAttributeType>())
+                            {
+                                <option value="@type.ToString()">@type.ToString()</option>
+                            }
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Sort key (optional)</td>
+                    <td><input type="text" class="sortkey-textbox text-center" maxlength="255" style="width: 400px" /></td>
+                    <td>
+                        <select class="sortkey-type-select">
+                            @foreach(var type in Enum.GetValues<DynamoDBAttributeType>())
+                            {
+                                <option value="@type.ToString()">@type.ToString()</option>
+                            }
+                        </select>
+                    </td>
+                </tr>
+            </tbody>
+            <tbody class="additional-info">
+                <tr>
+                    <td>Table class</td>
+                    <td>DynamoDB Standard</td>
+                </tr>
+                <tr>
+                    <td>Capacity mode</td>
+                    <td>Provisioned</td>
+                </tr>
+                <tr>
+                    <td>Provisioned read capacity</td>
+                    <td>5 RCU</td>
+                </tr>
+                <tr>
+                    <td>Provisioned write capacity</td>
+                    <td>5 WCU</td>
+                </tr>
+                <tr>
+                    <td>Deletion protection</td>
+                    <td>No</td>
+                </tr>
+                <tr>
+                    <td>DynamoDB Streams</td>
+                    <td>No</td>
+                </tr>
+                <tr>
+                    <td>Encryption key management</td>
+                    <td>Owned by Amazon DynamoDB</td>
+                </tr>
+            </tbody>
+            <tbody>
+                <tr class="expand-button text-center collapsed">
+                    <td colspan="3">
+                        <a no-href onclick="gsevent_InfoTable_ToggleButton_Click(event)">
+                            View more <i class="fa-solid fa-angles-down" style="font-size: 12px"></i>
+                        </a>
+                    </td>
+                </tr>
+                <tr class="expand-button text-center expanded">
+                    <td colspan="3">
+                        <a no-href onclick="gsevent_InfoTable_ToggleButton_Click(event)">
+                            View less <i class="fa-solid fa-angles-up" style="font-size: 12px"></i>
+                        </a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="modal-buttons text-center">
+            <button onclick="dynamodb_CreateTable()">Create</button>
+        </div>
+    </div>
+
+    <div style="display: flex; align-items: center">
+        <h1>DynamoDB tables</h1>
+        <div style="text-align: right; font-size: 1.5em; flex-grow: 1">
+            <a no-href onclick="showWindow('new-dynamodb-table-modal')" class="gs-icon-stack initial-white neon-green">
+                <i class="bi bi-table" style="margin-right: 2px"></i>
+                <i class="bi bi-plus-circle-fill gs-icon-overlay stroked" style="color: #000000"></i>
+            </a>
+        </div>
+    </div>
+}
+
+<div id="list-container">
+    @try
+    {
+        if(!hasTableName)
+        {
+            await Html.RenderPartialAsync("~/Pages/DynamoDB/_Tables.cshtml", await Model.DynamoDBRepository.GetTablesAsync());
+        }
+        else
+        {
+            await Html.RenderPartialAsync("~/Pages/DynamoDB/_TableInfo.cshtml", null);
+        }
+    }
+    catch(AmazonDynamoDBException ex)
+    {
+        if(ex.StatusCode == HttpStatusCode.NotFound)
+        {
+            <h2 class="error-text">Table not found</h2>
+        }
+        else
+        {
+            if(!hasTableName)
+            {
+                <h2 class="error-text">Failed to fetch tables:</h2>
+            }
+            else
+            {
+                <h2 class="error-text">Failed to fetch table information:</h2>
+            }
+
+            <p class="error-text">@ex.Message</p>
+        }
+    }
+    catch(Exception ex)
+    {
+        if(!hasTableName)
+        {
+            <h2 class="error-text">Failed to fetch tables:</h2>
+        }
+        else
+        {
+            <h2 class="error-text">Failed to fetch table information:</h2>
+        }
+
+        <p class="error-text">@ex.Message</p>
+    }
+</div>
+
+@if(!hasTableName)
+{
+    <script type="text/javascript">
+        async function dynamodb_CreateTable()
+        {
+            try
+            {
+                var tableName = document.querySelector("#new-dynamodb-table-modal .name-textbox").value;
+
+                var partitionKey = document.querySelector("#new-dynamodb-table-modal .partitionkey-textbox").value;
+                var partitionKeyType = document.querySelector("#new-dynamodb-table-modal .partitionkey-type-select").value;
+
+                var sortKey = document.querySelector("#new-dynamodb-table-modal .sortkey-textbox").value;
+                var sortKeyType = document.querySelector("#new-dynamodb-table-modal .sortkey-type-select").value;
+
+                if(isNull(tableName) || tableName.length <= 0)
+                {
+                    alert("No table name specified");
+                    return;
+                }
+
+                if(isNull(partitionKey) || partitionKey.length <= 0)
+                {
+                    alert("No partition key specified");
+                    return;
+                }
+
+                var sortKeyItem = null;
+
+                if(!isNull(sortKey) && sortKey.length > 0)
+                {
+                    sortKeyItem = {
+                        name: sortKey,
+                        type: sortKeyType
+                    };
+                }
+
+                var response = await fetch("@Url.Action("CreateTable", "Tables")", {
+                    method: "POST",
+                    headers: new Headers({ "Content-Type": "application/json" }),
+                    body: JSON.stringify({
+                        tableName: tableName,
+                        partitionKey: {
+                            name: partitionKey,
+                            type: partitionKeyType
+                        },
+                        sortKey: sortKeyItem
+                    })
+                });
+
+                if(!response.ok) {
+                    throw "Failed to create DynamoDB table: Server returned HTTP status " + response.status;
+                }
+
+                window.location.reload(true);
+            }
+            catch(error)
+            {
+                gs_DisplayError(error);
+            }
+
+            closeWindow("new-dynamodb-table-modal");
+        }
+    </script>
+}

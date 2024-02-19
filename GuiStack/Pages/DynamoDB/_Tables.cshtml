@@ -1,0 +1,92 @@
+﻿@*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright © Vincent Bengtsson & Contributors 2022-2024
+ * https://github.com/Visual-Vincent/GuiStack
+ *@
+
+@using GuiStack.Models;
+@model IEnumerable<string>
+
+@{
+    await Html.RenderPartialAsync("~/Pages/Shared/_DeleteModal.cshtml", new DeleteModalModel("delete-dynamodb-table-modal"));
+}
+
+<table class="gs-list padded autosize-all-cols-but-first">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach(var table in (Model ?? Enumerable.Empty<string>()).OrderBy(m => m))
+        {
+            <tr data-table-name="@table">
+                <td><a href="/DynamoDB/@table">@table</a></td>
+                <td>
+                    <div class="gs-icons">
+                        <a no-href class="red lnk-dynamodb-delete" title="Delete">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </a>
+                    </div>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<script type="text/javascript">
+    $(".lnk-dynamodb-delete").click(dynamodb_DeleteTablePrompt);
+    $("#delete-dynamodb-table-modal .yes-button").click(dynamodb_DeleteTable);
+
+    const DYNAMODB_URL_DELETE_TABLE = "@Url.Action("DeleteTable", "Tables", new { tableName = "__TABLENAME__" })";
+
+    var prompt_TableName;
+
+    function dynamodb_DeleteTablePrompt(event)
+    {
+        try
+        {
+            var objNameElement = document.querySelector("#delete-dynamodb-table-modal .title .object-name");
+            var parentRow = gs_GetParentTableRow(event.currentTarget, true);
+            var tableName = parentRow.getAttribute("data-table-name");
+
+            prompt_TableName = tableName;
+
+            objNameElement.innerText = tableName;
+            showWindow("delete-dynamodb-table-modal");
+        }
+        catch(error)
+        {
+            gs_DisplayError(error);
+        }
+    }
+
+    async function dynamodb_DeleteTable()
+    {
+        try
+        {
+            var tableName = encodeURIComponent(prompt_TableName);
+
+            var url = DYNAMODB_URL_DELETE_TABLE
+                .replace("__TABLENAME__", tableName);
+
+            var response = await fetch(url, { method: "DELETE" });
+
+            if(!response.ok) {
+                throw "Failed to delete DynamoDB table: Server returned HTTP status " + response.status;
+            }
+
+            window.location.reload(true);
+        }
+        catch(error)
+        {
+            gs_DisplayError(error);
+        }
+
+        closeWindow("delete-dynamodb-table-modal");
+    }
+</script>

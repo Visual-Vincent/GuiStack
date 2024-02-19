@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  * 
- * Copyright © Vincent Bengtsson & Contributors 2022
+ * Copyright © Vincent Bengtsson & Contributors 2022-2024
  * https://github.com/Visual-Vincent/GuiStack
  */
 
@@ -13,10 +13,18 @@ using System.Collections.Generic;
 using System.Linq;
 using GuiStack.Models;
 
+using ScalarAttributeType = Amazon.DynamoDBv2.ScalarAttributeType;
+
 namespace GuiStack.Extensions
 {
     public static class ModelExtensions
     {
+        private static readonly Dictionary<DynamoDBAttributeType, ScalarAttributeType> DynamoDBScalarAttributeMap = new Dictionary<DynamoDBAttributeType, ScalarAttributeType>() {
+            { DynamoDBAttributeType.String, ScalarAttributeType.S },
+            { DynamoDBAttributeType.Number, ScalarAttributeType.N },
+            { DynamoDBAttributeType.Binary, ScalarAttributeType.B }
+        };
+
         /// <summary>
         /// Converts the <see cref="IEnumerable"/>&lt;<see cref="S3Object"/>&gt; to <see cref="IEnumerable"/>&lt;<see cref="S3ObjectModel"/>&gt;.
         /// </summary>
@@ -28,6 +36,15 @@ namespace GuiStack.Extensions
                 BucketName = bucketName,
                 Object = obj
             });
+        }
+
+        /// <summary>
+        /// Converts the <see cref="DynamoDBAttributeType"/> to <see cref="ScalarAttributeType"/>.
+        /// </summary>
+        /// <param name="attributeType">The <see cref="DynamoDBAttributeType"/> to convert.</param>
+        public static ScalarAttributeType ToScalarAttributeType(this DynamoDBAttributeType attributeType)
+        {
+            return DynamoDBScalarAttributeMap.GetValueOrDefault(attributeType);
         }
     }
 }

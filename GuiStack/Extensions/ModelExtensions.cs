@@ -24,6 +24,12 @@ namespace GuiStack.Extensions
             { DynamoDBAttributeType.Number, ScalarAttributeType.N },
             { DynamoDBAttributeType.Binary, ScalarAttributeType.B }
         };
+        
+        private static readonly Dictionary<string, DynamoDBAttributeType> ScalarDynamoDBAttributeMap = new Dictionary<string, DynamoDBAttributeType>() {
+            { ScalarAttributeType.S.Value, DynamoDBAttributeType.String },
+            { ScalarAttributeType.N.Value, DynamoDBAttributeType.Number },
+            { ScalarAttributeType.B.Value, DynamoDBAttributeType.Binary }
+        };
 
         /// <summary>
         /// Converts the <see cref="IEnumerable"/>&lt;<see cref="S3Object"/>&gt; to <see cref="IEnumerable"/>&lt;<see cref="S3ObjectModel"/>&gt;.
@@ -36,6 +42,15 @@ namespace GuiStack.Extensions
                 BucketName = bucketName,
                 Object = obj
             });
+        }
+
+        /// <summary>
+        /// Converts the <see cref="ScalarAttributeType"/> to <see cref="DynamoDBAttributeType"/>.
+        /// </summary>
+        /// <param name="attributeType">The <see cref="ScalarAttributeType"/> to convert.</param>
+        public static DynamoDBAttributeType ToDynamoDBAttributeType(this ScalarAttributeType attributeType)
+        {
+            return ScalarDynamoDBAttributeMap.GetValueOrDefault(attributeType.Value);
         }
 
         /// <summary>

@@ -1,0 +1,109 @@
+﻿@*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright © Vincent Bengtsson & Contributors 2022-2024
+ * https://github.com/Visual-Vincent/GuiStack
+ *@
+
+@using GuiStack.Extensions;
+@using GuiStack.Models;
+@model DynamoDBTableModel
+
+@{
+    await Html.RenderPartialAsync("~/Pages/Shared/_DeleteModal.cshtml", new DeleteModalModel("delete-dynamodb-row-modal"));
+}
+
+<table class="gs-info-table colored">
+    <tbody>
+        <tr>
+            <td>Status</td>
+            <td>@Model.Status</td>
+        </tr>
+        <tr>
+            <td>ARN</td>
+            <td>@Model.Arn</td>
+        </tr>
+        <tr>
+            <td>Partition key</td>
+            <td>@Model.PartitionKey.Name (@Model.PartitionKey.Type)</td>
+        </tr>
+        <tr>
+            <td>Sort key</td>
+            <td>
+                @if(Model.SortKey != null)
+                {
+                    <text>@Model.SortKey.Name (@Model.SortKey.Type)</text>
+                }
+                else
+                {
+                    <text>(none)</text>
+                }
+            </td>
+        </tr>
+        <tr>
+            <td>Item count</td>
+            <td>@Model.ItemCount <span class="gs-object-type">(updated every ~6 hours)</span></td>
+        </tr>
+        <tr>
+            <td>Table size</td>
+            <td>@Model.TableSizeBytes.ToFormattedFileSize() <span class="gs-object-type">(updated every ~6 hours)</span></td>
+        </tr>
+    </tbody>
+    <tbody class="additional-info">
+        <tr>
+            <td>Table class</td>
+            <td>@Model.TableClass</td>
+        </tr>
+        <tr>
+            <td>Capacity mode</td>
+            <td>@Model.BillingMode</td>
+        </tr>
+        <tr>
+            <td>Provisioned read capacity</td>
+            <td>@(Model.ReadCapacityUnits > 0 ? $"{Model.ReadCapacityUnits} RCU" : "N/A")</td>
+        </tr>
+        <tr>
+            <td>Provisioned write capacity</td>
+            <td>@(Model.WriteCapacityUnits > 0 ? $"{Model.WriteCapacityUnits} WCU" : "N/A")</td>
+        </tr>
+        <tr>
+            <td>Deletion protection</td>
+            <td>@(Model.DeletionProtectionEnabled ? "Yes" : "No")</td>
+        </tr>
+    </tbody>
+    <tbody>
+        <tr class="expand-button text-center collapsed">
+            <td colspan="2">
+                <a no-href onclick="gsevent_InfoTable_ToggleButton_Click(event)">
+                    View more <i class="fa-solid fa-angles-down" style="font-size: 12px"></i>
+                </a>
+            </td>
+        </tr>
+        <tr class="expand-button text-center expanded">
+            <td colspan="2">
+                <a no-href onclick="gsevent_InfoTable_ToggleButton_Click(event)">
+                    View less <i class="fa-solid fa-angles-up" style="font-size: 12px"></i>
+                </a>
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+<hr/>
+
+<table class="gs-list padded autosize-all-cols-but-2nd-last">
+    <thead>
+        <tr>
+            @foreach(var column in Model.Attributes)
+            {
+                <th>@column.Name</th>
+            }
+            <th>(Actions)</th>
+        </tr>
+    </thead>
+    <tbody>
+        @* TODO *@
+    </tbody>
+</table>

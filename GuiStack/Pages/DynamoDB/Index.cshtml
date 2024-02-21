@@ -45,6 +45,9 @@ else
                         <select class="partitionkey-type-select">
                             @foreach(var type in Enum.GetValues<DynamoDBAttributeType>())
                             {
+                                if(type == DynamoDBAttributeType.Unknown)
+                                    continue;
+                                
                                 <option value="@type.ToString()">@type.ToString()</option>
                             }
                         </select>
@@ -57,6 +60,9 @@ else
                         <select class="sortkey-type-select">
                             @foreach(var type in Enum.GetValues<DynamoDBAttributeType>())
                             {
+                                if(type == DynamoDBAttributeType.Unknown)
+                                    continue;
+                                
                                 <option value="@type.ToString()">@type.ToString()</option>
                             }
                         </select>
@@ -136,7 +142,7 @@ else
         }
         else
         {
-            await Html.RenderPartialAsync("~/Pages/DynamoDB/_TableInfo.cshtml", null);
+            await Html.RenderPartialAsync("~/Pages/DynamoDB/_TableInfo.cshtml", await Model.DynamoDBRepository.GetTableInfoAsync(Model.Table));
         }
     }
     catch(AmazonDynamoDBException ex)

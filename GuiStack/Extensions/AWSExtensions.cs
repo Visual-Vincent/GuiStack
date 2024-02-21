@@ -11,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Runtime.CompilerServices;
+using Amazon.DynamoDBv2;
 using Amazon.Runtime;
 using Amazon.SQS.Model;
 
@@ -18,6 +19,16 @@ namespace GuiStack.Extensions
 {
     public static class AWSExtensions
     {
+        private static readonly Dictionary<string, string> DynamoDBBillingModeMap = new Dictionary<string, string>() {
+            { BillingMode.PAY_PER_REQUEST.Value, "On-demand" },
+            { BillingMode.PROVISIONED.Value, "Provisioned" }
+        };
+
+        private static readonly Dictionary<string, string> DynamoDBTableClassMap = new Dictionary<string, string>() {
+            { TableClass.STANDARD.Value, "Standard" },
+            { TableClass.STANDARD_INFREQUENT_ACCESS.Value, "Standard-IA" }
+        };
+
         /// <summary>
         /// Throws a <see cref="WebException"/> if the response returns a non-successful status code (includes 3xx redirects, since they are unusable by the caller).
         /// </summary>
@@ -35,6 +46,30 @@ namespace GuiStack.Extensions
 
                 throw new WebException($"Amazon {serviceName} returned status code {(int)response.HttpStatusCode}");
             }
+        }
+
+        /// <summary>
+        /// Converts the <see cref="BillingMode"/> into a human-readable string.
+        /// </summary>
+        /// <param name="entity">The <see cref="BillingMode"/> to convert.</param>
+        public static string ToHumanReadableString(this BillingMode entity)
+        {
+            if(entity == null)
+                return "(Unknown)";
+
+            return DynamoDBBillingModeMap.GetValueOrDefault(entity?.Value) ?? "(Unknown)";
+        }
+
+        /// <summary>
+        /// Converts the <see cref="TableClass"/> into a human-readable string.
+        /// </summary>
+        /// <param name="entity">The <see cref="TableClass"/> to convert.</param>
+        public static string ToHumanReadableString(this TableClass entity)
+        {
+            if(entity == null)
+                return "(Unknown)";
+
+            return DynamoDBTableClassMap.GetValueOrDefault(entity?.Value) ?? "(Unknown)";
         }
 
         public static Dictionary<string, string> ToStringAttributes(this Dictionary<string, MessageAttributeValue> attributes)

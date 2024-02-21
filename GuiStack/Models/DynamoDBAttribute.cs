@@ -15,11 +15,22 @@ namespace GuiStack.Models
     {
         public string Name { get; set; }
         public DynamoDBAttributeType Type { get; set; }
+
+        public DynamoDBAttribute()
+        {
+        }
+
+        public DynamoDBAttribute(string name, DynamoDBAttributeType type)
+        {
+            Name = name;
+            Type = type;
+        }
     }
 
     public enum DynamoDBAttributeType
     {
-        String = 0,
+        Unknown = 0,
+        String,
         Number,
         Binary
     }

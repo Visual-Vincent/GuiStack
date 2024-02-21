@@ -9,7 +9,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
+using Amazon;
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.Model;
 using GuiStack.Authentication.AWS;
@@ -23,6 +25,7 @@ namespace GuiStack.Repositories
         Task CreateTableAsync(DynamoDBCreateTableModel model);
         Task DeleteTableAsync(string tableName);
         Task<string[]> GetTablesAsync();
+        Task<DynamoDBTableModel> GetTableInfoAsync(string tableName);
     }
 
     public class DynamoDBRepository : IDynamoDBRepository
@@ -72,6 +75,47 @@ namespace GuiStack.Repositories
             response.ThrowIfUnsuccessful("DynamoDB");
 
             return response.TableNames.ToArray();
+        }
+
+        public async Task<DynamoDBTableModel> GetTableInfoAsync(string tableName)
+        {
+            if(string.IsNullOrWhiteSpace(tableName))
+                throw new ArgumentNullException(nameof(tableName));
+
+            using var dynamodb = authenticator.Authenticate();
+            var response = await dynamodb.DescribeTableAsync(tableName);
+
+            response.ThrowIfUnsuccessful("DynamoDB");
+
+            var table = response.Table;
+            var partitionKey = table.KeySchema.Find(k => k.KeyType == KeyType.HASH);
+            var sortKey      = table.KeySchema.Find(k => k.KeyType == KeyType.RANGE);
+
+            var partitionKeyAttribute = table.AttributeDefinitions.Find(k => k.AttributeName == partitionKey.AttributeName);
+            var sortKeyAttribute      = sortKey != null ? table.AttributeDefinitions.Find(k => k.AttributeName == sortKey.AttributeName) : null;
+
+            var status = table.TableStatus?.Value;
+
+            status = !string.IsNullOrEmpty(status)
+                ? char.ToUpper(status[0]) + status?.ToLower()[1..]
+                : "(Unknown)";
+
+            return new DynamoDBTableModel() {
+                Name = table.TableName,
+                Arn = Arn.Parse(table.TableArn),
+                ItemCount = table.ItemCount,
+                TableSizeBytes = table.TableSizeBytes,
+                TableClass = AWSExtensions.ToHumanReadableString(table.TableClassSummary?.TableClass),
+                BillingMode = AWSExtensions.ToHumanReadableString(table.BillingModeSummary?.BillingMode),
+                ReadCapacityUnits = table.ProvisionedThroughput?.ReadCapacityUnits ?? 0,
+                WriteCapacityUnits = table.ProvisionedThroughput?.WriteCapacityUnits ?? 0,
+                DeletionProtectionEnabled = table.DeletionProtectionEnabled,
+                Status = status,
+
+                PartitionKey = new DynamoDBAttribute(partitionKeyAttribute.AttributeName, partitionKeyAttribute.AttributeType.ToDynamoDBAttributeType()),
+                SortKey = sortKeyAttribute != null ? new DynamoDBAttribute(sortKeyAttribute.AttributeName, sortKeyAttribute.AttributeType.ToDynamoDBAttributeType()) : null,
+                Attributes = table.AttributeDefinitions.Select(a => new DynamoDBAttribute(a.AttributeName, a.AttributeType.ToDynamoDBAttributeType())).ToList()
+            };
         }
 
         public async Task DeleteTableAsync(string tableName)

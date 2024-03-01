@@ -19,7 +19,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace GuiStack.Controllers.DynamoDB
 {
     [ApiController]
-    [Route("api/" + nameof(DynamoDB) + "/[controller]")]
+    [Route("api/" + nameof(DynamoDB))]
     public class TablesController : Controller
     {
         private IDynamoDBRepository dynamodbRepository;
@@ -37,6 +37,9 @@ namespace GuiStack.Controllers.DynamoDB
             if(ex is AmazonDynamoDBException dynamodbEx)
             {
                 if(dynamodbEx.StatusCode == HttpStatusCode.NotFound)
+                    return StatusCode((int)dynamodbEx.StatusCode, new { error = dynamodbEx.Message });
+
+                if(dynamodbEx.StatusCode == HttpStatusCode.BadRequest && dynamodbEx.ErrorCode == "GuiStack_InvalidField")
                     return StatusCode((int)dynamodbEx.StatusCode, new { error = dynamodbEx.Message });
 
                 Console.Error.WriteLine(dynamodbEx);
@@ -71,11 +74,27 @@ namespace GuiStack.Controllers.DynamoDB
             if(string.IsNullOrWhiteSpace(tableName))
                 return StatusCode((int)HttpStatusCode.BadRequest);
 
-            tableName = tableName.DecodeRouteParameter();
-
             try
             {
                 await dynamodbRepository.DeleteTableAsync(tableName);
+                return Ok();
+            }
+            catch(Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+        [HttpPut("{tableName}")]
+        [Consumes("application/json")]
+        public async Task<ActionResult> PutItem([FromRoute] string tableName, [FromBody] DynamoDBItemModel model)
+        {
+            if(string.IsNullOrWhiteSpace(tableName))
+                return StatusCode((int)HttpStatusCode.BadRequest);
+
+            try
+            {
+                await dynamodbRepository.PutItemAsync(tableName, model);
                 return Ok();
             }
             catch(Exception ex)

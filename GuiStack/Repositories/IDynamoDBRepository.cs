@@ -1,4 +1,4 @@
-﻿/*
+/*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
@@ -26,6 +26,7 @@ namespace GuiStack.Repositories
         Task DeleteTableAsync(string tableName);
         Task<string[]> GetTablesAsync();
         Task<DynamoDBTableModel> GetTableInfoAsync(string tableName);
+        Task PutItemAsync(string tableName, IDictionary<string, DynamoDBFieldModel> itemData);
     }
 
     public class DynamoDBRepository : IDynamoDBRepository
@@ -105,16 +106,15 @@ namespace GuiStack.Repositories
                 Arn = Arn.Parse(table.TableArn),
                 ItemCount = table.ItemCount,
                 TableSizeBytes = table.TableSizeBytes,
-                TableClass = AWSExtensions.ToHumanReadableString(table.TableClassSummary?.TableClass),
-                BillingMode = AWSExtensions.ToHumanReadableString(table.BillingModeSummary?.BillingMode),
+                TableClass = (table.TableClassSummary?.TableClass ?? null).ToHumanReadableString(),
+                BillingMode = (table.BillingModeSummary?.BillingMode ?? null).ToHumanReadableString(),
                 ReadCapacityUnits = table.ProvisionedThroughput?.ReadCapacityUnits ?? 0,
                 WriteCapacityUnits = table.ProvisionedThroughput?.WriteCapacityUnits ?? 0,
                 DeletionProtectionEnabled = table.DeletionProtectionEnabled,
                 Status = status,
 
                 PartitionKey = new DynamoDBAttribute(partitionKeyAttribute.AttributeName, partitionKeyAttribute.AttributeType.ToDynamoDBAttributeType()),
-                SortKey = sortKeyAttribute != null ? new DynamoDBAttribute(sortKeyAttribute.AttributeName, sortKeyAttribute.AttributeType.ToDynamoDBAttributeType()) : null,
-                Attributes = table.AttributeDefinitions.Select(a => new DynamoDBAttribute(a.AttributeName, a.AttributeType.ToDynamoDBAttributeType())).ToList()
+                SortKey = sortKeyAttribute != null ? new DynamoDBAttribute(sortKeyAttribute.AttributeName, sortKeyAttribute.AttributeType.ToDynamoDBAttributeType()) : null
             };
         }
 
@@ -125,6 +125,22 @@ namespace GuiStack.Repositories
 
             using var dynamodb = authenticator.Authenticate();
             var response = await dynamodb.DeleteTableAsync(tableName);
+
+            response.ThrowIfUnsuccessful("DynamoDB");
+        }
+
+        public async Task PutItemAsync(string tableName, IDictionary<string, DynamoDBFieldModel> itemData)
+        {
+            if(string.IsNullOrWhiteSpace(tableName))
+                throw new ArgumentNullException(nameof(tableName));
+
+            using var dynamodb = authenticator.Authenticate();
+            using var item = itemData.ToDynamoDBItem();
+
+            var response = await dynamodb.PutItemAsync(new PutItemRequest() {
+                TableName = tableName,
+                Item = item.Attributes
+            });
 
             response.ThrowIfUnsuccessful("DynamoDB");
         }

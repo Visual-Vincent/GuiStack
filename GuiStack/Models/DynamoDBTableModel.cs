@@ -8,7 +8,6 @@
  */
 
 using System;
-using System.Collections.Generic;
 using Amazon;
 
 namespace GuiStack.Models
@@ -28,6 +27,5 @@ namespace GuiStack.Models
 
         public DynamoDBAttribute PartitionKey { get; set; }
         public DynamoDBAttribute SortKey { get; set; }
-        public IEnumerable<DynamoDBAttribute> Attributes { get; set; }
     }
 }

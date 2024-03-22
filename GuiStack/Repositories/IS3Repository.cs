@@ -37,7 +37,7 @@ namespace GuiStack.Repositories
     public class S3Repository : IS3Repository
     {
         // https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-keys.html
-        private static readonly Regex InvalidObjectCharsRegex = new Regex("[^A-Z0-9!._*'()-]", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        private static readonly Regex InvalidObjectCharsRegex = new Regex("[^A-Z0-9!._*'()/-]", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
         private S3Authenticator authenticator = new S3Authenticator();
         private IS3UrlBuilder urlBuilder;

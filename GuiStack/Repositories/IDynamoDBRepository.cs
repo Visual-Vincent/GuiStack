@@ -1,4 +1,4 @@
-/*
+﻿/*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
@@ -27,6 +27,7 @@ namespace GuiStack.Repositories
         Task<string[]> GetTablesAsync();
         Task<DynamoDBTableModel> GetTableInfoAsync(string tableName);
         Task PutItemAsync(string tableName, IDictionary<string, DynamoDBFieldModel> itemData);
+        Task<IEnumerable<DynamoDBItemModel>> ScanAsync(string tableName, int limit);
     }
 
     public class DynamoDBRepository : IDynamoDBRepository
@@ -143,6 +144,43 @@ namespace GuiStack.Repositories
             });
 
             response.ThrowIfUnsuccessful("DynamoDB");
+        }
+
+        public async Task<IEnumerable<DynamoDBItemModel>> ScanAsync(string tableName, int limit)
+        {
+            if(string.IsNullOrWhiteSpace(tableName))
+                throw new ArgumentNullException(nameof(tableName));
+
+            if(limit <= 0 || limit > 500)
+                throw new ArgumentOutOfRangeException(nameof(limit), limit, "Item limit must be between 1 and 500");
+
+            using var dynamodb = authenticator.Authenticate();
+
+            List<Dictionary<string, AttributeValue>> items = new();
+            Dictionary<string, AttributeValue> lastEvaluatedKey;
+
+            while(items.Count < limit)
+            {
+                var result = await dynamodb.ScanAsync(new ScanRequest() {
+                    TableName = tableName,
+                    ConsistentRead = true,
+                    Select = Select.ALL_ATTRIBUTES,
+                    ReturnConsumedCapacity = ReturnConsumedCapacity.NONE,
+                    Limit = limit
+                });
+
+                result.ThrowIfUnsuccessful("DynamoDB");
+                result.Items.ForEach(item => items.Add(item));
+
+                lastEvaluatedKey = result.LastEvaluatedKey;
+
+                if(lastEvaluatedKey == null || lastEvaluatedKey.Count <= 0)
+                    break; // No more items in result
+
+                // TODO: Need to include lastEvaluatedKey in return value somehow (for pagination/continuing where we left off)
+            }
+
+            return items.Select(item => item.ToDynamoDBItemModel());
         }
     }
 }

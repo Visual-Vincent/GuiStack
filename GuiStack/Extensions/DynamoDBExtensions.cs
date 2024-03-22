@@ -10,6 +10,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -57,16 +58,15 @@ namespace GuiStack.Extensions
         private static readonly Dictionary<string, DynamoDBFieldType> DynamoDBFieldTypeMap =
             FieldTypeDynamoDBMap.ToDictionary(kvp => kvp.Value, kvp => kvp.Key);
 
-        private static AttributeValue GetDynamoDBAttributeValue(KeyValuePair<string, DynamoDBFieldModel> field)
+        private static AttributeValue GetDynamoDBAttributeValue(string name, DynamoDBFieldModel field)
         {
-            if(field.Value?.Value == null || field.Value.Type == DynamoDBFieldType.Null)
+            if(field.Value == null || field.Type == DynamoDBFieldType.Null)
                 return new AttributeValue() { NULL = true };
 
-            var name = field.Key;
-            var value = field.Value.Value;
+            var value = field.Value;
             var attributeValue = new AttributeValue();
 
-            switch(field.Value.Type)
+            switch(field.Type)
             {
                 case DynamoDBFieldType.String:
                     if(value is not string str)
@@ -157,13 +157,129 @@ namespace GuiStack.Extensions
                     attributeValue.BOOL = boolVal;
                     break;
 
-                case DynamoDBFieldType.List: // TODO: Add support in the future?
-                case DynamoDBFieldType.Map: // TODO: Add support in the future?
+                case DynamoDBFieldType.List:
+                    if(value is not IEnumerable<DynamoDBFieldModel> list)
+                        throw new AmazonDynamoDBException($"Field '{name}' was expected to be a list of values", ErrorType.Sender, "GuiStack_InvalidField", null, HttpStatusCode.BadRequest);
+
+                    attributeValue.L = new List<AttributeValue>();
+
+                    int listIndex = -1;
+                    foreach(var item in list)
+                    {
+                        listIndex++;
+
+                        if(item == null)
+                            continue;
+
+                        var attributeItem = GetDynamoDBAttributeValue($"{name}[{listIndex}]", item);
+                        attributeValue.L.Add(attributeItem);
+                    }
+                    break;
+
+                case DynamoDBFieldType.Map:
+                    if(value is not IDictionary<string, DynamoDBFieldModel> map)
+                        throw new AmazonDynamoDBException($"Field '{name}' was expected to be a map of values", ErrorType.Sender, "GuiStack_InvalidField", null, HttpStatusCode.BadRequest);
+
+                    attributeValue.M = new Dictionary<string, AttributeValue>();
+
+                    foreach(var kvp in map)
+                    {
+                        if(string.IsNullOrWhiteSpace(kvp.Key) || kvp.Value == null)
+                            continue;
+
+                        var attributeItem = GetDynamoDBAttributeValue($"{name}[{kvp.Key}]", kvp.Value);
+                        attributeValue.M.Add(kvp.Key, attributeItem);
+                    }
+                    break;
+
                 default:
-                    throw new AmazonDynamoDBException($"Unexpected field type '{field.Value.Type}'", ErrorType.Sender, "GuiStack_InvalidField", null, HttpStatusCode.BadRequest);
+                    throw new AmazonDynamoDBException($"Unknown type '{field.Type}' of field '{name}'", ErrorType.Sender, "GuiStack_InvalidField", null, HttpStatusCode.BadRequest);
             }
 
             return attributeValue;
+        }
+
+        private static DynamoDBFieldModel GetDynamoDBFieldModel(string name, AttributeValue attribute)
+        {
+            if(attribute == null || attribute.NULL)
+                return new DynamoDBFieldModel() { Type = DynamoDBFieldType.Null };
+
+            switch(GetDynamoDBFieldType(attribute))
+            {
+                case DynamoDBFieldType.Null:
+                    return DynamoDBFieldModel.Null();
+
+                case DynamoDBFieldType.Bool:
+                    return DynamoDBFieldModel.Bool(attribute.BOOL);
+
+                case DynamoDBFieldType.Binary:
+                    return DynamoDBFieldModel.Binary(attribute.B.ToArray());
+
+                case DynamoDBFieldType.BinarySet:
+                    return DynamoDBFieldModel.BinarySet(
+                        attribute.BS
+                            .Where(stream => stream != null)
+                            .Select(stream => stream.ToArray())
+                    );
+
+                case DynamoDBFieldType.List:
+                    return DynamoDBFieldModel.List(
+                        attribute.L
+                            .Where(item => item != null)
+                            .Select((item, index) => GetDynamoDBFieldModel($"{name}[{index}]", item))
+                    );
+
+                case DynamoDBFieldType.Map:
+                    return DynamoDBFieldModel.Map(
+                        attribute.M
+                            .Where(kvp => !string.IsNullOrWhiteSpace(kvp.Key) && kvp.Value != null)
+                            .ToDictionary(kvp => kvp.Key, kvp => GetDynamoDBFieldModel($"{name}[{kvp.Key}]", kvp.Value))
+                    );
+
+                case DynamoDBFieldType.Number:
+                    return DynamoDBFieldModel.Number(decimal.Parse(attribute.N, CultureInfo.InvariantCulture));
+
+                case DynamoDBFieldType.NumberSet:
+                    return DynamoDBFieldModel.NumberSet(
+                        attribute.NS
+                            .Where(s => !string.IsNullOrWhiteSpace(s))
+                            .Select(s => decimal.Parse(s, CultureInfo.InvariantCulture))
+                    );
+
+                case DynamoDBFieldType.String:
+                    return DynamoDBFieldModel.String(attribute.S);
+
+                case DynamoDBFieldType.StringSet:
+                    return DynamoDBFieldModel.StringSet(attribute.SS);
+            }
+
+            throw new AmazonDynamoDBException($"Unable to determine type of DynamoDB attribute '{name}'", ErrorType.Sender, "GuiStack_InvalidField", null, HttpStatusCode.BadRequest);
+        }
+
+        private static DynamoDBFieldType GetDynamoDBFieldType(AttributeValue attribute)
+        {
+            if(attribute.NULL)
+                return DynamoDBFieldType.Null;
+            if(attribute.IsBOOLSet)
+                return DynamoDBFieldType.Bool;
+            if(attribute.IsLSet)
+                return DynamoDBFieldType.List;
+            if(attribute.IsMSet)
+                return DynamoDBFieldType.Map;
+            if(attribute.B != null)
+                return DynamoDBFieldType.Binary;
+            if(attribute.BS != null && attribute.BS.Count > 0)
+                return DynamoDBFieldType.BinarySet;
+            if(!string.IsNullOrWhiteSpace(attribute.N))
+                return DynamoDBFieldType.Number;
+            if(attribute.NS != null && attribute.NS.Count > 0)
+                return DynamoDBFieldType.NumberSet;
+            if(attribute.S != null)
+                return DynamoDBFieldType.String;
+            if(attribute.SS != null && attribute.SS.Count > 0)
+                return DynamoDBFieldType.StringSet;
+
+            return DynamoDBFieldType.Unknown;
         }
 
         /// <summary>
@@ -240,9 +356,28 @@ namespace GuiStack.Extensions
                     throw new AmazonDynamoDBException($"DynamoDB field name cannot be empty", ErrorType.Sender, "GuiStack_InvalidField", null, HttpStatusCode.BadRequest);
 
                 var name = field.Key;
-                var attributeValue = GetDynamoDBAttributeValue(field);
+                var attributeValue = GetDynamoDBAttributeValue(field.Key, field.Value);
 
                 result.Attributes.Add(name, attributeValue);
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Converts the item data into a DynamoDB item model.
+        /// </summary>
+        /// <param name="itemData">The item data to convert.</param>
+        public static DynamoDBItemModel ToDynamoDBItemModel(this IDictionary<string, AttributeValue> itemData)
+        {
+            var result = new DynamoDBItemModel();
+
+            foreach(var field in itemData)
+            {
+                if(string.IsNullOrWhiteSpace(field.Key) || field.Value == null)
+                    continue;
+
+                result.Add(field.Key, GetDynamoDBFieldModel(field.Key, field.Value));
             }
 
             return result;

@@ -393,6 +393,7 @@ table.autosize-col-8                 tr > td:nth-child(8),
 table.autosize-col-9                 tr > td:nth-child(9),
 table.autosize-last-col              tr > td:last-child,
 table.autosize-all-cols-but-first    tr > td:not(:first-child),
+table.autosize-all-cols-but-last     tr > td:not(:last-child),
 table.autosize-all-cols-but-2nd-last tr > td:not(:nth-last-child(2))
 {
     width: 1px;
@@ -683,6 +684,7 @@ ul.gs-tree > li:not([data-title])
     display: none;
 }
 
+.gs-loading-box img.spinner,
 #gs-upload-progress-overlay img.spinner
 {
     width: 1em;
@@ -703,6 +705,13 @@ ul.gs-tree > li:not([data-title])
 body.is-dragging .gs-drop-container .gs-drop-overlay
 {
     opacity: 1;
+}
+
+.gs-loading-box
+{
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .gs-icon-stack

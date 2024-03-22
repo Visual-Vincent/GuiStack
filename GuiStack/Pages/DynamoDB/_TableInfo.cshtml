@@ -93,11 +93,33 @@
 
 <hr/>
 
-<table class="gs-list padded autosize-all-cols-but-2nd-last">
-    <thead>
-        @* TODO *@
-    </thead>
-    <tbody>
-        @* TODO *@
-    </tbody>
-</table>
+<div style="text-align: right; font-size: 1.5em; margin: 10px 8px 8px 8px">
+    <a no-href class="initial-white neon-green" title="Add new item" style="margin-right: 4px">
+        <i class="fa-solid fa-plus"></i>
+    </a>
+    <a no-href onclick="dynamodb_UpdateItems()" class="initial-white neon-green" title="Refresh">
+        <i class="fa-solid fa-rotate"></i>
+    </a>
+</div>
+
+<div id="gs-dynamodb-items-list"></div>
+
+<script type="text/javascript">
+    const DynamoDB_LoadingTemplate =
+        `<div class="gs-loading-box" style="font-size: 1.5em">
+            <img class="spinner" src="/img/loading_wheel.apng"/>Loading...
+        </div>`;
+
+    async function dynamodb_UpdateItems()
+    {
+        var itemsList = document.getElementById("gs-dynamodb-items-list");
+        itemsList.innerHTML = DynamoDB_LoadingTemplate;
+
+        var response = await fetch("/DynamoDB/@Model.Name?handler=RenderTableContentsPartial");
+        var contents = await response.text();
+
+        itemsList.innerHTML = contents;
+    }
+
+    dynamodb_UpdateItems();
+</script>

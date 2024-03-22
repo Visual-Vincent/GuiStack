@@ -1,0 +1,52 @@
+﻿@*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright © Vincent Bengtsson & Contributors 2022-2024
+ * https://github.com/Visual-Vincent/GuiStack
+ *@
+
+@using GuiStack.Extensions;
+@using GuiStack.Models;
+@model IEnumerable<DynamoDBItemModel>
+
+@{
+    var attributeNames = Model
+        .SelectMany(item => item.Select(kvp => kvp.Key))
+        .Distinct()
+        .ToArray();
+}
+
+<table class="gs-list padded autosize-last-col">
+    <thead>
+        <tr>
+            @foreach(var name in attributeNames)
+            {
+                <th>@name</th>
+            }
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach(var item in Model)
+        {
+            <tr>
+                @foreach(var field in item.OrderBy(kvp => Array.IndexOf(attributeNames, kvp.Key)))
+                {
+                    <td>@field.Value.Value</td> @* TODO: Type checking *@
+                }
+                <td>
+                    <div class="gs-icons">
+                        <a no-href class="neon-green" title="Edit">
+                            <i class="fa-regular fa-pen-to-square"></i>
+                        </a>
+                        <a no-href class="red" title="Delete">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </a>
+                    </div>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

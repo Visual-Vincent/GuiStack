@@ -1,0 +1,16 @@
+﻿@*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ * 
+ * Copyright © Vincent Bengtsson & Contributors 2022-2024
+ * https://github.com/Visual-Vincent/GuiStack
+ *@
+
+@using GuiStack.Models;
+@model ErrorPageModel
+
+<div class="error-container">
+    <h2 class="error-text">@(!string.IsNullOrWhiteSpace(Model.Title) ? Model.Title : "An error occurred:")</h2>
+    <p class="error-text">@Model.Message</p>
+</div>

@@ -361,6 +361,30 @@ function gsevent_AjaxError(request, status, errorThrown)
         gs_DisplayError("An unknown error occurred");
 }
 
+function gsevent_FetchError(response)
+{
+    if(isNull(request))
+        gs_DisplayError("An unknown error occurred");
+
+    var responseText = request.text();
+
+    if(isNull(responseText) || responseText == "")
+        gs_DisplayError("Server returned HTTP status " + request.status);
+
+    if(!(response.headers.get("Content-Type") || "").includes("application/json"))
+    {
+        gs_DisplayError("Server returned HTTP status " + request.status + " with contents: " + responseText);
+        return;
+    }
+
+    var obj = JSON.parse(responseText);
+
+    if(!isNull(obj.error))
+        gs_DisplayError(obj.error);
+    else
+        gs_DisplayError("Server returned HTTP status " + request.status + " with contents: " + responseText);
+}
+
 function __gs_RefreshTreeHandlers()
 {
     $("ul.gs-tree > li[data-title]").unbind("click", gsevent_TreeNode_Click);

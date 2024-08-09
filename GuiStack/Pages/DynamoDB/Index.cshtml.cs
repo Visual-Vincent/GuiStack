@@ -8,7 +8,6 @@
  */
 
 using System;
-using System.Threading.Tasks;
 using GuiStack.Repositories;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -29,12 +28,6 @@ namespace GuiStack.Pages.DynamoDB
 
         public void OnGet()
         {
-        }
-
-        public async Task<IActionResult> OnGetRenderTableContentsPartial([FromQuery] int limit = 50)
-        {
-            var items = await DynamoDBRepository.ScanAsync(Table, limit);
-            return Partial("~/Pages/DynamoDB/_TableContentsPartial.cshtml", items);
         }
     }
 }

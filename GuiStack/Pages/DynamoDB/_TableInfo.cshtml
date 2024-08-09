@@ -105,20 +105,254 @@
 <div id="gs-dynamodb-items-list"></div>
 
 <script type="text/javascript">
+    const DYNAMODB_URL_GET_ITEMS = "@Url.Action("GetItems", "Tables", new { tableName = Model.Name })?limit=__LIMIT__&lastEvaluatedKey=__LASTKEY__";
+
     const DynamoDB_LoadingTemplate =
         `<div class="gs-loading-box" style="font-size: 1.5em">
             <img class="spinner" src="/img/loading_wheel.apng"/>Loading...
         </div>`;
+
+    const DynamoDB_TableTemplate =
+        `<table class="gs-list padded autosize-last-col dynamodb-table-contents" data-lastevaluatedkey="{{LASTKEY}}">
+            <thead>
+                <tr>
+                    {{HEADERS_HTML}}
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{BODY_HTML}}
+            </tbody>
+        </table>
+        {{ADDITIONAL_HTML}}`;
+
+    const DynamoDB_ItemTemplate =
+        `<tr class="dynamodb-row" data-partitionkey="{{PARTITIONKEY}}" data-sortkey="{{SORTKEY}}">
+            {{FIELDS_HTML}}
+            <td>
+                <div class="gs-icons">
+                    <a href="javascript:void(0)" class="neon-green lnk-dynamodb-edit" title="Edit">
+                        <i class="fa-regular fa-pen-to-square"></i>
+                    </a>
+                    <a href="javascript:void(0)" class="red lnk-dynamodb-delete" title="Delete">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </a>
+                </div>
+            </td>
+        </tr>`;
+
+    const DynamoDB_ItemFieldTemplate =
+        `<td class="dynamodb-field" data-type="{{TYPE}}" data-value="{{VALUE}}">{{VALUE}}</td>`;
+
+    const DynamoDB_FetchMoreButtonTemplate =
+        `<div class="gs-loading-box">
+            <a href="javascript:void(0)" onclick="dynamodb_FetchMoreItems()" class="gs-button lnk-dynamo-fetchmore" style="display: inline-block; margin: 8px">Load more</a>
+        </div>`;
+
+    var dynamodb_TableData = null;
 
     async function dynamodb_UpdateItems()
     {
         var itemsList = document.getElementById("gs-dynamodb-items-list");
         itemsList.innerHTML = DynamoDB_LoadingTemplate;
 
-        var response = await fetch("/DynamoDB/@Model.Name?handler=RenderTableContentsPartial");
-        var contents = await response.text();
+        var url = DYNAMODB_URL_GET_ITEMS
+            .replace("__LIMIT__", 50)
+            .replace("__LASTKEY__", "");
 
-        itemsList.innerHTML = contents;
+        var response = await fetch(url);
+
+        if(!response.ok)
+        {
+            gsevent_FetchError(response);
+            return;
+        }
+
+        var data = await response.json();
+
+        if(!dynamodb_ValidateTableData(data))
+        {
+            itemsList.innerHTML = 
+                `<div class="error-container">
+                    <h2 class="error-text">An error occurred:</h2>
+                    <p class="error-text">Invalid data received from server</p>
+                </div>`;
+            return;
+        }
+
+        dynamodb_TableData = data;
+        dynamodb_RebuildItemsTable(dynamodb_TableData);
+    }
+
+    async function dynamodb_FetchMoreItems()
+    {
+        var itemsList = document.getElementById("gs-dynamodb-items-list");
+        var fetchMoreButton = itemsList.querySelector(".lnk-dynamo-fetchmore");
+
+        if(!isNull(fetchMoreButton))
+        {
+            fetchMoreButton.removeAttribute("onclick");
+            fetchMoreButton.innerHTML = `<img class="spinner" style="margin-top: 2px; margin-bottom: -2px" src="/img/loading_wheel.apng"/>Loading...`;
+        }
+
+        var url = DYNAMODB_URL_GET_ITEMS
+            .replace("__LIMIT__", 50)
+            .replace("__LASTKEY__", dynamodb_TableData?.lastEvaluatedKey ?? "");
+
+        var response = await fetch(url);
+
+        if(!response.ok)
+        {
+            gsevent_FetchError(response);
+            return;
+        }
+
+        var data = await response.json();
+
+        if(!dynamodb_ValidateTableData(data))
+        {
+            gs_DisplayError("Invalid data received from server");
+            return;
+        }
+
+        if(data.partitionKey.name != dynamodb_TableData.partitionKey.name
+            || data.partitionKey.type != dynamodb_TableData.partitionKey.type
+            || data.sortKey?.name != dynamodb_TableData.sortKey?.name
+            || data.sortKey?.type != dynamodb_TableData.sortKey?.type)
+        {
+            // Base table structure has changed, reload page
+            window.location.reload(true);
+            return;
+        }
+
+        if(data.items.length <= 0)
+            return;
+
+        // Merge data
+        data.items = dynamodb_TableData.items.concat(data.items);
+        dynamodb_TableData = data;
+
+        dynamodb_RebuildItemsTable(dynamodb_TableData);
+    }
+
+    function dynamodb_RebuildItemsTable(data)
+    {
+        if(!dynamodb_ValidateTableData(data))
+            throw "Invalid table data";
+
+        var partitionKey = data.partitionKey.name;
+        var sortKey = data.sortKey?.name;
+
+        var headersHTML = "";
+
+        for(var i in data.attributeNames)
+        {
+            var attribute = data.attributeNames[i];
+
+            if(isNull(attribute))
+                continue;
+
+            headersHTML += `<th>${dynamodb_Sanitize(attribute)}</th>\n`;
+        }
+
+        var itemsHTML = "";
+
+        for(var i in data.items)
+        {
+            var item = data.items[i];
+
+            if(isNull(item))
+                continue;
+
+            var fieldsHTML = "";
+
+            for(var j in data.attributeNames)
+            {
+                var attribute = data.attributeNames[j];
+                var field = item[attribute];
+
+                if(isNull(field))
+                    continue;
+
+                // TODO: Type checking and value formatting
+                fieldsHTML += dynamodb_BuildTemplate(DynamoDB_ItemFieldTemplate, [
+                    { name: "TYPE",  value: field.type },
+                    { name: "VALUE", value: field.value }
+                ]);
+            }
+
+            itemsHTML += dynamodb_BuildTemplate(DynamoDB_ItemTemplate, [
+                { name: "PARTITIONKEY", value: item[partitionKey].value },
+                { name: "SORTKEY",      value: item[sortKey]?.value },
+                { name: "FIELDS_HTML",  value: fieldsHTML }
+            ]);
+        }
+
+        var additionalHTML = "";
+
+        if(!isNull(data.lastEvaluatedKey) && data.lastEvaluatedKey != "")
+            additionalHTML += DynamoDB_FetchMoreButtonTemplate;
+
+        var tableHTML = dynamodb_BuildTemplate(DynamoDB_TableTemplate, [
+            { name: "LASTKEY",         value: data.lastEvaluatedKey ?? "" },
+            { name: "HEADERS_HTML",    value: headersHTML },
+            { name: "BODY_HTML",       value: itemsHTML },
+            { name: "ADDITIONAL_HTML", value: additionalHTML },
+        ]);
+
+        document.getElementById("gs-dynamodb-items-list").innerHTML = tableHTML;
+    }
+
+    function dynamodb_BuildTemplate(template, parameters)
+    {
+        var result = template;
+
+        for(var i in parameters)
+        {
+            var parameter = parameters[i];
+
+            // No sanitization for *_HTML parameters
+            if(parameter.name.endsWith("_HTML"))
+            {
+                result = result.replaceAll(`{{${parameter.name}}}`, parameter.value);
+                continue;
+            }
+            
+            var value = !isNull(parameter.value)
+                ? dynamodb_Sanitize(parameter.value)
+                : "";
+
+            result = result.replaceAll(`{{${parameter.name}}}`, value);
+        }
+
+        return result + "\n";
+    }
+
+    function dynamodb_Sanitize(value)
+    {
+        if(isNull(value))
+            return null;
+
+        value = value.toString();
+
+        // Crude sanitization
+        return value
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&apos;");
+    }
+
+    function dynamodb_ValidateTableData(data)
+    {
+        return !isNull(data.partitionKey?.name)
+            && !isNull(data.partitionKey?.type)
+            && (isNull(data.sortKey) || (!isNull(data.sortKey.name) && !isNull(data.sortKey.type)))
+            && !isNull(data.attributeNames)
+            && Array.isArray(data.attributeNames)
+            && !isNull(data.items)
+            && Array.isArray(data.items);
     }
 
     dynamodb_UpdateItems();

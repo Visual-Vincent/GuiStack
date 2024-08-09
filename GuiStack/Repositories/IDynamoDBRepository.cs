@@ -27,7 +27,7 @@ namespace GuiStack.Repositories
         Task<string[]> GetTablesAsync();
         Task<DynamoDBTableModel> GetTableInfoAsync(string tableName);
         Task PutItemAsync(string tableName, IDictionary<string, DynamoDBFieldModel> itemData);
-        Task<IEnumerable<DynamoDBItemModel>> ScanAsync(string tableName, int limit);
+        Task<DynamoDBTableScanResults> ScanAsync(string tableName, int limit, DynamoDBItemModel lastEvaluatedKey = null);
     }
 
     public class DynamoDBRepository : IDynamoDBRepository
@@ -146,18 +146,18 @@ namespace GuiStack.Repositories
             response.ThrowIfUnsuccessful("DynamoDB");
         }
 
-        public async Task<IEnumerable<DynamoDBItemModel>> ScanAsync(string tableName, int limit)
+        public async Task<DynamoDBTableScanResults> ScanAsync(string tableName, int limit, DynamoDBItemModel lastEvaluatedKey = null)
         {
             if(string.IsNullOrWhiteSpace(tableName))
                 throw new ArgumentNullException(nameof(tableName));
 
-            if(limit <= 0 || limit > 500)
+            if(limit < 1 || limit > 500)
                 throw new ArgumentOutOfRangeException(nameof(limit), limit, "Item limit must be between 1 and 500");
 
             using var dynamodb = authenticator.Authenticate();
 
             List<Dictionary<string, AttributeValue>> items = new();
-            Dictionary<string, AttributeValue> lastEvaluatedKey;
+            Dictionary<string, AttributeValue> lastEvalKey = lastEvaluatedKey?.ToDynamoDBItem().Attributes;
 
             while(items.Count < limit)
             {
@@ -166,21 +166,25 @@ namespace GuiStack.Repositories
                     ConsistentRead = true,
                     Select = Select.ALL_ATTRIBUTES,
                     ReturnConsumedCapacity = ReturnConsumedCapacity.NONE,
+                    ExclusiveStartKey = lastEvalKey,
                     Limit = limit
                 });
 
                 result.ThrowIfUnsuccessful("DynamoDB");
                 result.Items.ForEach(item => items.Add(item));
 
-                lastEvaluatedKey = result.LastEvaluatedKey;
+                lastEvalKey = result.LastEvaluatedKey;
 
-                if(lastEvaluatedKey == null || lastEvaluatedKey.Count <= 0)
+                if(lastEvalKey == null || lastEvalKey.Count <= 0)
                     break; // No more items in result
-
-                // TODO: Need to include lastEvaluatedKey in return value somehow (for pagination/continuing where we left off)
             }
 
-            return items.Select(item => item.ToDynamoDBItemModel());
+            return new DynamoDBTableScanResults() {
+                Items = items.Select(item => item.ToDynamoDBItemModel()).ToArray(),
+                LastEvaluatedKey = lastEvalKey != null && lastEvalKey.Count > 0
+                    ? lastEvalKey.ToDynamoDBItemModel()
+                    : null
+            };
         }
     }
 }

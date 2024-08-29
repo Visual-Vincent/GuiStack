@@ -86,6 +86,7 @@ namespace GuiStack.Models
 
                 // Free unmanaged resources
                 // Set large fields to null
+                Attributes = null;
 
                 disposedValue = true;
             }

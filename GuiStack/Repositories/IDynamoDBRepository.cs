@@ -1,4 +1,4 @@
-﻿/*
+/*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
@@ -82,7 +82,7 @@ namespace GuiStack.Repositories
         public async Task<DynamoDBTableModel> GetTableInfoAsync(string tableName)
         {
             if(string.IsNullOrWhiteSpace(tableName))
-                throw new ArgumentNullException(nameof(tableName));
+                throw new ArgumentException("Table name cannot be empty", nameof(tableName));
 
             using var dynamodb = authenticator.Authenticate();
             var response = await dynamodb.DescribeTableAsync(tableName);
@@ -122,7 +122,7 @@ namespace GuiStack.Repositories
         public async Task DeleteTableAsync(string tableName)
         {
             if(string.IsNullOrWhiteSpace(tableName))
-                throw new ArgumentNullException(nameof(tableName));
+                throw new ArgumentException("Table name cannot be empty", nameof(tableName));
 
             using var dynamodb = authenticator.Authenticate();
             var response = await dynamodb.DeleteTableAsync(tableName);
@@ -133,7 +133,10 @@ namespace GuiStack.Repositories
         public async Task PutItemAsync(string tableName, IDictionary<string, DynamoDBFieldModel> itemData)
         {
             if(string.IsNullOrWhiteSpace(tableName))
-                throw new ArgumentNullException(nameof(tableName));
+                throw new ArgumentException("Table name cannot be empty", nameof(tableName));
+
+            if(itemData == null)
+                throw new ArgumentNullException(nameof(itemData));
 
             using var dynamodb = authenticator.Authenticate();
             using var item = itemData.ToDynamoDBItem();
@@ -149,7 +152,7 @@ namespace GuiStack.Repositories
         public async Task<DynamoDBTableScanResults> ScanAsync(string tableName, int limit, DynamoDBItemModel lastEvaluatedKey = null)
         {
             if(string.IsNullOrWhiteSpace(tableName))
-                throw new ArgumentNullException(nameof(tableName));
+                throw new ArgumentException("Table name cannot be empty", nameof(tableName));
 
             if(limit < 1 || limit > 500)
                 throw new ArgumentOutOfRangeException(nameof(limit), limit, "Item limit must be between 1 and 500");
@@ -157,34 +160,49 @@ namespace GuiStack.Repositories
             using var dynamodb = authenticator.Authenticate();
 
             List<Dictionary<string, AttributeValue>> items = new();
-            Dictionary<string, AttributeValue> lastEvalKey = lastEvaluatedKey?.ToDynamoDBItem().Attributes;
+            DynamoDBItem lastEvalKey = lastEvaluatedKey?.ToDynamoDBItem();
 
-            while(items.Count < limit)
+            try
             {
-                var result = await dynamodb.ScanAsync(new ScanRequest() {
-                    TableName = tableName,
-                    ConsistentRead = true,
-                    Select = Select.ALL_ATTRIBUTES,
-                    ReturnConsumedCapacity = ReturnConsumedCapacity.NONE,
-                    ExclusiveStartKey = lastEvalKey,
-                    Limit = limit
-                });
+                while(items.Count < limit)
+                {
+                    var result = await dynamodb.ScanAsync(new ScanRequest() {
+                        TableName = tableName,
+                        ConsistentRead = true,
+                        Select = Select.ALL_ATTRIBUTES,
+                        ReturnConsumedCapacity = ReturnConsumedCapacity.NONE,
+                        ExclusiveStartKey = lastEvalKey?.Attributes,
+                        Limit = limit
+                    });
 
-                result.ThrowIfUnsuccessful("DynamoDB");
-                result.Items.ForEach(item => items.Add(item));
+                    result.ThrowIfUnsuccessful("DynamoDB");
+                    result.Items.ForEach(item => items.Add(item));
 
-                lastEvalKey = result.LastEvaluatedKey;
+                    lastEvalKey?.Dispose();
+                    lastEvalKey = result.LastEvaluatedKey != null
+                        ? new DynamoDBItem() { Attributes = result.LastEvaluatedKey }
+                        : null;
 
-                if(lastEvalKey == null || lastEvalKey.Count <= 0)
-                    break; // No more items in result
+                    if(lastEvalKey == null || lastEvalKey.Attributes.Count <= 0)
+                        break; // No more items in result
+                }
+
+                return new DynamoDBTableScanResults() {
+                    Items = items.Select(item => item.ToDynamoDBItemModel()).ToArray(),
+                    LastEvaluatedKey = lastEvalKey != null && lastEvalKey.Attributes.Count > 0
+                        ? lastEvalKey.Attributes.ToDynamoDBItemModel()
+                        : null
+                };
             }
+            finally
+            {
+                lastEvalKey?.Dispose();
 
-            return new DynamoDBTableScanResults() {
-                Items = items.Select(item => item.ToDynamoDBItemModel()).ToArray(),
-                LastEvaluatedKey = lastEvalKey != null && lastEvalKey.Count > 0
-                    ? lastEvalKey.ToDynamoDBItemModel()
-                    : null
-            };
+                foreach (var item in items)
+                {
+                    new DynamoDBItem() { Attributes = item }.Dispose();
+                }
+            }
         }
     }
 }

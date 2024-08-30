@@ -11,10 +11,10 @@ using System;
 
 namespace GuiStack.Models
 {
-    public class DynamoDBCreateTableModel
+    public class DynamoDBUpdateItemModel
     {
-        public string TableName { get; set; }
-        public DynamoDBKeyAttribute PartitionKey { get; set; }
-        public DynamoDBKeyAttribute SortKey { get; set; }
+        public DynamoDBAttributeValue PartitionKey { get; set; }
+        public DynamoDBAttributeValue SortKey { get; set; }
+        public DynamoDBItemModel Item { get; set; }
     }
 }

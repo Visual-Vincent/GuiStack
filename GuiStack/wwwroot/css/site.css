@@ -400,6 +400,11 @@ table.autosize-all-cols-but-2nd-last tr > td:not(:nth-last-child(2))
     white-space: nowrap;
 }
 
+table tr > td input
+{
+    box-sizing: border-box;
+}
+
 table.gs-list
 {
     width: 100%;

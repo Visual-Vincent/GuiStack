@@ -44,6 +44,19 @@ namespace GuiStack.Models
             Attributes = new Dictionary<string, AttributeValue>(attributes);
         }
 
+        /// <summary>
+        /// Initializes a new instance of <see cref="DynamoDBItem"/> and sets the collection of attributes.
+        /// </summary>
+        /// <param name="attributes">The collection of attributes that the <see cref="DynamoDBItem"/> should contain.</param>
+        /// <remarks>
+        /// The difference between initializing an instance using this method versus the <see cref="DynamoDBItem(IDictionary{string, AttributeValue})"/> constructor, 
+        /// is that the constructor creates a shallow copy of the dictionary, whereas this method uses the exact same dictionary reference.
+        /// </remarks>
+        public static DynamoDBItem FromAttributes(Dictionary<string, AttributeValue> attributes)
+        {
+            return new DynamoDBItem() { Attributes = attributes };
+        }
+
         #region IDisposable Support
         private bool disposedValue;
 

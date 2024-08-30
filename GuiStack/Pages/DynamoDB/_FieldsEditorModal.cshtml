@@ -1,0 +1,225 @@
+﻿@*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ * 
+ * Copyright © Vincent Bengtsson & Contributors 2024
+ * https://github.com/Visual-Vincent/GuiStack
+ *@
+
+@using GuiStack.Models;
+@model FieldsEditorModalModel
+
+<div id="@Model.ElementId" class="cssWindow dark backdropblur text-center">
+    <div class="closeWindowButton"><a no-href onclick="closeParentWindow(event)">×</a></div>
+
+    <h2 class="title">@Model.ModalTitle</h2>
+
+    <div class="object-fields"></div>
+
+    <div class="modal-buttons text-center" style="margin-top: 8px">
+        <button class="save-button">@Model.SaveButtonText</button>
+    </div>
+</div>
+
+<script type="text/javascript">
+    function show@(Model.FunctionName)Modal(fields, partitionKey, sortKey, onSaveClicked)
+    {
+        if(isNull(fields))
+            throw "'fields' cannot be null";
+
+        if(isNull(partitionKey))
+            throw "'partitionKey' cannot be null";
+
+        if(isNull(partitionKey.name))
+            throw "'partitionKey.name' cannot be null";
+
+        if(isNull(partitionKey.type))
+            throw "'partitionKey.type' cannot be null";
+
+        if(isNull(partitionKey.value))
+            throw "'partitionKey.value' cannot be null";
+
+        if(!isNull(sortKey))
+        {
+            if(isNull(sortKey.name))
+                throw "'sortKey.name' cannot be null";
+
+            if(isNull(sortKey.type))
+                throw "'sortKey.type' cannot be null";
+
+            if(isNull(sortKey.value))
+                throw "'sortKey.value' cannot be null";
+        }
+
+        if(isNull(onSaveClicked))
+            throw "'onSaveClicked' cannot be null";
+
+        if(!Array.isArray(fields))
+            throw "'fields' must be an array";
+
+        if(typeof onSaveClicked !== "function")
+            throw "'onSaveClicked' must be a function";
+
+        const TableTemplate =
+            `<table class="gs-list padded autosize-last-col">
+                <thead>
+                    <th>Attribute name</th>
+                    <th>Value</th>
+                    <th>Type</th>
+                    <th></th>
+                </thead>
+                <tbody>
+                    {{BODY_HTML}}
+                </tbody>
+            </table>`;
+
+        const ItemTemplate =
+            `<tr class="text-left" data-type="{{TYPE}}" data-keytype="{{KEY_TYPE}}">
+                <td class="name-column">{{NAME_HTML}}</td>
+                <td class="value-column">{{VALUE_HTML}}</td>
+                <td>{{TYPE}}</td>
+                <td>{{ACTIONS_HTML}}</td>
+            </tr>`;
+
+        const PartitionKeyTemplate =
+            `<i style="display: inline-block; padding: 4px 0px">Partition key</i>`;
+
+        const SortKeyTemplate =
+            `<i style="display: inline-block; padding: 4px 0px">Sort key</i>`;
+
+        var modal = document.getElementById("@Model.ElementId");
+        var fieldsList = modal.querySelector(".object-fields");
+        var saveButton = modal.querySelector("button.save-button");
+
+        var fieldsHTML = "";
+
+        for(var i = 0; i < fields.length; i++)
+        {
+            var field = fields[i];
+            
+            if(isNull(field))
+                continue;
+
+            var nameHTML = `<input type="text" value="${gs_SanitizeHtml(field.name)}" style="width: 100%" {{DISABLED}}/>`;
+            var valueHTML = null;
+            var actionsHTML = `<a href="javascript:void(0)" class="gs-button">Remove</a>`;
+            var keyType = "";
+
+            if(field.name == partitionKey.name)
+            {
+                keyType = "PartitionKey";
+                actionsHTML = PartitionKeyTemplate;
+                nameHTML = nameHTML.replace("{{DISABLED}}", "disabled");
+            }
+            else if(!isNull(sortKey) && field.name == sortKey.name)
+            {
+                keyType = "SortKey";
+                actionsHTML = SortKeyTemplate;
+                nameHTML = nameHTML.replace("{{DISABLED}}", "disabled");
+            }
+            else
+            {
+                nameHTML = nameHTML.replace("{{DISABLED}}", "");
+            }
+            
+            switch(field.type)
+            {
+                case "String":
+                    valueHTML = `<input type="text" value="${gs_SanitizeHtml(field.value)}" style="width: 100%; min-width: 400px" />`;
+                    break;
+
+                default:
+                    valueHTML = `(unknown type '${field.type}')`;
+                    break;
+            }
+
+            fieldsHTML += gs_BuildTemplate(ItemTemplate, [
+                { name: "KEY_TYPE",     value: keyType },
+                { name: "NAME_HTML",    value: nameHTML },
+                { name: "VALUE_HTML",   value: valueHTML },
+                { name: "TYPE",         value: field.type },
+                { name: "ACTIONS_HTML", value: actionsHTML }
+            ]);
+        }
+
+        var tableHTML = gs_BuildTemplate(TableTemplate, [
+            { name: "BODY_HTML", value: fieldsHTML }
+        ]);
+
+        fieldsList.innerHTML = tableHTML;
+
+        var onSaveClickHandler = async function()
+        {
+            saveButton.removeEventListener("click", onSaveClickHandler);
+
+            var fieldRows = fieldsList.querySelectorAll(":scope > table > tbody > tr");
+            var partitionKeyRow = null;
+            var sortKeyRow = null;
+            var fieldValues = [];
+
+            for(var i = 0; i < fieldRows.length; i++)
+            {
+                var row = fieldRows[i];
+                var keyType = row.getAttribute("data-keytype");
+                var type = row.getAttribute("data-type");
+
+                if(keyType == "PartitionKey")
+                {
+                    if(!isNull(partitionKeyRow)) // Should never happen
+                    {
+                        gs_DisplayError("Multiple partition keys found in editor! Expected only one");
+                        closeWindow(modal);
+                        return;
+                    }
+
+                    partitionKeyRow = row;
+                }
+                else if(keyType == "SortKey")
+                {
+                    if(!isNull(sortKeyRow)) // Should never happen
+                    {
+                        gs_DisplayError("Multiple sort keys found in editor! Expected only one");
+                        closeWindow(modal);
+                        return;
+                    }
+
+                    sortKeyRow = row;
+                }
+
+                var type = row.getAttribute("data-type");
+                var name = gs_GetFieldEditorName(row);
+                var value = gs_GetFieldEditorValue(row);
+
+                fieldValues.push({ name, type, value });
+            }
+
+            if(isNull(partitionKeyRow))
+            {
+                gs_DisplayError("No partition key row found in editor");
+                closeWindow(modal);
+                return;
+            }
+
+            var data = {
+                currentPartitionKey: partitionKey,
+                currentSortKey:      sortKey,
+                newPartitionKey:     gs_GetFieldEditorValue(partitionKeyRow),
+                newSortKey:          gs_GetFieldEditorValue(sortKeyRow),
+                fields:              fieldValues
+            };
+
+            var result = await onSaveClicked(data); // onSaveClicked doesn't have to be an async function
+
+            // This was intentional.
+            // If no result was returned (undefined), treat it as the caller having forgotten to return a value and assume
+            // that saving was successful. Caller is only expected to return false on an error, which should keep the window open.
+            if(result === undefined || result)
+                closeWindow(modal);
+        };
+
+        saveButton.addEventListener("click", onSaveClickHandler);
+
+        showWindow(modal);
+    }
+</script>

@@ -1,4 +1,4 @@
-/*
+﻿/*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
@@ -26,6 +26,8 @@ namespace GuiStack.Repositories
         Task DeleteTableAsync(string tableName);
         Task<string[]> GetTablesAsync();
         Task<DynamoDBTableModel> GetTableInfoAsync(string tableName);
+        Task DeleteItemAsync(string tableName, DynamoDBAttributeValue partitionKey, DynamoDBAttributeValue sortKey);
+        Task<DynamoDBItemModel> GetItemAsync(string tableName, DynamoDBAttributeValue partitionKey, DynamoDBAttributeValue sortKey);
         Task PutItemAsync(string tableName, IDictionary<string, DynamoDBFieldModel> itemData);
         Task<DynamoDBTableScanResults> ScanAsync(string tableName, int limit, DynamoDBItemModel lastEvaluatedKey = null);
     }
@@ -65,6 +67,17 @@ namespace GuiStack.Repositories
                 StreamSpecification = new StreamSpecification() { StreamEnabled = false },
                 DeletionProtectionEnabled = false // AWS defaults
             });
+
+            response.ThrowIfUnsuccessful("DynamoDB");
+        }
+
+        public async Task DeleteTableAsync(string tableName)
+        {
+            if(string.IsNullOrWhiteSpace(tableName))
+                throw new ArgumentException("Table name cannot be empty", nameof(tableName));
+
+            using var dynamodb = authenticator.Authenticate();
+            var response = await dynamodb.DeleteTableAsync(tableName);
 
             response.ThrowIfUnsuccessful("DynamoDB");
         }
@@ -114,20 +127,101 @@ namespace GuiStack.Repositories
                 DeletionProtectionEnabled = table.DeletionProtectionEnabled,
                 Status = status,
 
-                PartitionKey = new DynamoDBAttribute(partitionKeyAttribute.AttributeName, partitionKeyAttribute.AttributeType.ToDynamoDBAttributeType()),
-                SortKey = sortKeyAttribute != null ? new DynamoDBAttribute(sortKeyAttribute.AttributeName, sortKeyAttribute.AttributeType.ToDynamoDBAttributeType()) : null
+                PartitionKey = new DynamoDBKeyAttribute(partitionKeyAttribute.AttributeName, partitionKeyAttribute.AttributeType.ToDynamoDBAttributeType()),
+                SortKey = sortKeyAttribute != null ? new DynamoDBKeyAttribute(sortKeyAttribute.AttributeName, sortKeyAttribute.AttributeType.ToDynamoDBAttributeType()) : null
             };
         }
 
-        public async Task DeleteTableAsync(string tableName)
+        public async Task DeleteItemAsync(string tableName, DynamoDBAttributeValue partitionKey, DynamoDBAttributeValue sortKey)
         {
             if(string.IsNullOrWhiteSpace(tableName))
                 throw new ArgumentException("Table name cannot be empty", nameof(tableName));
 
+            if(partitionKey == null)
+                throw new ArgumentNullException(nameof(partitionKey));
+
+            if(partitionKey.Value == null)
+                throw new ArgumentException("partitionKey.Value cannot be null", nameof(partitionKey));
+
+            if(sortKey != null && sortKey.Value == null)
+                throw new ArgumentException("sortKey.Value cannot be null", nameof(sortKey));
+
+            if(partitionKey.Value.Type != DynamoDBFieldType.String 
+                && partitionKey.Value.Type != DynamoDBFieldType.Number 
+                && partitionKey.Value.Type != DynamoDBFieldType.Binary)
+                throw new ArgumentException($"'{partitionKey.Value.Type}' is not a valid data type for the partition key", nameof(partitionKey));
+
+            if(sortKey != null
+                && sortKey.Value.Type != DynamoDBFieldType.String
+                && sortKey.Value.Type != DynamoDBFieldType.Number
+                && sortKey.Value.Type != DynamoDBFieldType.Binary)
+                throw new ArgumentException($"'{sortKey.Value.Type}' is not a valid data type for the sort key", nameof(sortKey));
+
             using var dynamodb = authenticator.Authenticate();
-            var response = await dynamodb.DeleteTableAsync(tableName);
+
+            var key = new Dictionary<string, AttributeValue>() {
+                { partitionKey.Name, partitionKey.ToDynamoDBAttributeValue() }
+            };
+
+            if (sortKey != null)
+                key.Add(sortKey.Name, sortKey.ToDynamoDBAttributeValue());
+
+            var response = await dynamodb.DeleteItemAsync(new DeleteItemRequest() {
+                TableName = tableName,
+                Key = key
+            });
+            
+            response.ThrowIfUnsuccessful("DynamoDB");
+        }
+
+        public async Task<DynamoDBItemModel> GetItemAsync(string tableName, DynamoDBAttributeValue partitionKey, DynamoDBAttributeValue sortKey)
+        {
+            if(string.IsNullOrWhiteSpace(tableName))
+                throw new ArgumentException("Table name cannot be empty", nameof(tableName));
+
+            if(partitionKey == null)
+                throw new ArgumentNullException(nameof(partitionKey));
+
+            if(partitionKey.Value == null)
+                throw new ArgumentException("partitionKey.Value cannot be null", nameof(partitionKey));
+
+            if(sortKey != null && sortKey.Value == null)
+                throw new ArgumentException("sortKey.Value cannot be null", nameof(sortKey));
+
+            if(partitionKey.Value.Type != DynamoDBFieldType.String 
+                && partitionKey.Value.Type != DynamoDBFieldType.Number 
+                && partitionKey.Value.Type != DynamoDBFieldType.Binary)
+                throw new ArgumentException($"'{partitionKey.Value.Type}' is not a valid data type for the partition key", nameof(partitionKey));
+
+            if(sortKey != null
+                && sortKey.Value.Type != DynamoDBFieldType.String
+                && sortKey.Value.Type != DynamoDBFieldType.Number
+                && sortKey.Value.Type != DynamoDBFieldType.Binary)
+                throw new ArgumentException($"'{sortKey.Value.Type}' is not a valid data type for the sort key", nameof(sortKey));
+
+            using var dynamodb = authenticator.Authenticate();
+
+            var key = new Dictionary<string, AttributeValue>() {
+                { partitionKey.Name, partitionKey.ToDynamoDBAttributeValue() }
+            };
+
+            if (sortKey != null)
+                key.Add(sortKey.Name, sortKey.ToDynamoDBAttributeValue());
+            
+            var response = await dynamodb.GetItemAsync(new GetItemRequest() {
+                TableName = tableName,
+                Key = key,
+                ConsistentRead = true
+            });
 
             response.ThrowIfUnsuccessful("DynamoDB");
+
+            var item = response.Item?.ToDynamoDBItemModel();
+
+            if(response.Item != null)
+                DynamoDBItem.FromAttributes(response.Item).Dispose();
+
+            return item;
         }
 
         public async Task PutItemAsync(string tableName, IDictionary<string, DynamoDBFieldModel> itemData)
@@ -180,7 +274,7 @@ namespace GuiStack.Repositories
 
                     lastEvalKey?.Dispose();
                     lastEvalKey = result.LastEvaluatedKey != null
-                        ? new DynamoDBItem() { Attributes = result.LastEvaluatedKey }
+                        ? DynamoDBItem.FromAttributes(result.LastEvaluatedKey)
                         : null;
 
                     if(lastEvalKey == null || lastEvalKey.Attributes.Count <= 0)
@@ -200,7 +294,7 @@ namespace GuiStack.Repositories
 
                 foreach (var item in items)
                 {
-                    new DynamoDBItem() { Attributes = item }.Dispose();
+                    DynamoDBItem.FromAttributes(item).Dispose();
                 }
             }
         }

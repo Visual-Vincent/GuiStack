@@ -14,8 +14,8 @@ namespace GuiStack.Models
 {
     public class DynamoDBTableContentsModel
     {
-        public DynamoDBAttribute PartitionKey { get; set; }
-        public DynamoDBAttribute SortKey { get; set; }
+        public DynamoDBKeyAttribute PartitionKey { get; set; }
+        public DynamoDBKeyAttribute SortKey { get; set; }
         public string[] AttributeNames { get; set; }
         public string LastEvaluatedKey { get; set; }
 

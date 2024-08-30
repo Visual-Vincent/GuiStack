@@ -1,4 +1,4 @@
-/*
+﻿/*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
@@ -8,6 +8,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -66,6 +67,26 @@ namespace GuiStack.Controllers.DynamoDB
             }
 
             return WebEncoders.Base64UrlEncode(stream.ToArray());
+        }
+
+        private static bool IsPrimaryKeyModified(DynamoDBUpdateItemModel model)
+        {
+            var pkName = model.PartitionKey.Name;
+            var skName = model.SortKey?.Name;
+
+            var pkValue = model.PartitionKey.Value.Value;
+            var skValue = model.SortKey?.Value.Value;
+
+            if(model.Item.TryGetValue(pkName, out var newPk) && (!newPk?.Value?.Equals(pkValue) ?? false))
+                return true;
+
+            if(model.SortKey != null)
+            {
+                if(model.Item.TryGetValue(skName, out var newSk) && (!newSk?.Value?.Equals(skValue) ?? false))
+                    return true;
+            }
+
+            return false;
         }
 
         private ActionResult HandleException(Exception ex)
@@ -171,13 +192,16 @@ namespace GuiStack.Controllers.DynamoDB
 
         [HttpPut("{tableName}")]
         [Consumes("application/json")]
-        public async Task<ActionResult> PutItem([FromRoute] string tableName, [FromBody] DynamoDBItemModel model)
+        public async Task<ActionResult> PutItem([FromRoute] string tableName)
         {
             if(string.IsNullOrWhiteSpace(tableName))
                 return StatusCode((int)HttpStatusCode.BadRequest);
 
             try
             {
+                using var reader = new StreamReader(HttpContext.Request.Body);
+                var model = JsonConvert.DeserializeObject<DynamoDBItemModel>(await reader.ReadToEndAsync());
+
                 await dynamodbRepository.PutItemAsync(tableName, model);
                 return Ok();
             }
@@ -185,6 +209,58 @@ namespace GuiStack.Controllers.DynamoDB
             {
                 return HandleException(ex);
             }
+        }
+
+        [HttpPatch("{tableName}")]
+        [Consumes("application/json")]
+        public async Task<ActionResult> UpdateItem([FromRoute] string tableName)
+        {
+            if(string.IsNullOrWhiteSpace(tableName))
+                return StatusCode((int)HttpStatusCode.BadRequest);
+
+            using var reader = new StreamReader(HttpContext.Request.Body);
+
+            DynamoDBUpdateItemModel model = null;
+            bool isKeyModified = false;
+
+            try
+            {
+                model = JsonConvert.DeserializeObject<DynamoDBUpdateItemModel>(await reader.ReadToEndAsync());
+
+                if(model == null || model.Item == null || model.Item.Count <= 0 || model.PartitionKey?.Value == null || model.SortKey?.Value == null)
+                    return StatusCode((int)HttpStatusCode.BadRequest);
+
+                isKeyModified = IsPrimaryKeyModified(model);
+
+                var oldItem = await dynamodbRepository.GetItemAsync(tableName, model.PartitionKey, model.SortKey);
+                if(oldItem == null)
+                {
+                    return NotFound(new {
+                        error = $"Item with Partition Key '{model.PartitionKey.Value?.Value}'{(model.SortKey != null ? $" and Sort Key '{model.SortKey.Value?.Value}'" : "")} not found"
+                    });
+                }
+
+                await dynamodbRepository.PutItemAsync(tableName, model.Item);
+            }
+            catch(Exception ex)
+            {
+                return HandleException(ex);
+            }
+
+            // If the primary key has been modified, a completely new item is created. Thus, delete the old one
+            if(isKeyModified)
+            {
+                try
+                {
+                    await dynamodbRepository.DeleteItemAsync(tableName, model.PartitionKey, model.SortKey);
+                }
+                catch(Exception ex)
+                {
+                    return HandleException(new AmazonDynamoDBException($"Failed to delete old item after creating new one. Both items may be present in the DB. Error message: {ex.Message}", ex));
+                }
+            }
+
+            return Ok();
         }
     }
 }

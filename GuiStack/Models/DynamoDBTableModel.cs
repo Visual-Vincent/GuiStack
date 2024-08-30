@@ -25,7 +25,7 @@ namespace GuiStack.Models
         public bool DeletionProtectionEnabled { get; set; }
         public string Status { get; set; }
 
-        public DynamoDBAttribute PartitionKey { get; set; }
-        public DynamoDBAttribute SortKey { get; set; }
+        public DynamoDBKeyAttribute PartitionKey { get; set; }
+        public DynamoDBKeyAttribute SortKey { get; set; }
     }
 }

@@ -13,6 +13,7 @@
 
 @{
     await Html.RenderPartialAsync("~/Pages/Shared/_DeleteModal.cshtml", new DeleteModalModel("delete-dynamodb-row-modal"));
+    await Html.RenderPartialAsync("~/Pages/DynamoDB/_FieldsEditorModal.cshtml", new FieldsEditorModalModel("dynamodb-update-item-modal", "UpdateItem", "Update item", "Save"));
 }
 
 <table class="gs-info-table colored">
@@ -106,6 +107,7 @@
 
 <script type="text/javascript">
     const DYNAMODB_URL_GET_ITEMS = "@Url.Action("GetItems", "Tables", new { tableName = Model.Name })?limit=__LIMIT__&lastEvaluatedKey=__LASTKEY__";
+    const DYNAMODB_URL_UPDATE_ITEM = "@Url.Action("UpdateItem", "Tables", new { tableName = Model.Name })";
 
     const DynamoDB_LoadingTemplate =
         `<div class="gs-loading-box" style="font-size: 1.5em">
@@ -113,7 +115,7 @@
         </div>`;
 
     const DynamoDB_TableTemplate =
-        `<table class="gs-list padded autosize-last-col dynamodb-table-contents" data-lastevaluatedkey="{{LASTKEY}}">
+        `<table class="gs-list padded autosize-last-col dynamodb-table-contents">
             <thead>
                 <tr>
                     {{HEADERS_HTML}}
@@ -131,7 +133,7 @@
             {{FIELDS_HTML}}
             <td>
                 <div class="gs-icons">
-                    <a href="javascript:void(0)" class="neon-green lnk-dynamodb-edit" title="Edit">
+                        <a href="javascript:void(0)" onclick="dynamodb_EditItem(event)" class="neon-green lnk-dynamodb-edit" title="Edit">
                         <i class="fa-regular fa-pen-to-square"></i>
                     </a>
                     <a href="javascript:void(0)" class="red lnk-dynamodb-delete" title="Delete">
@@ -142,7 +144,7 @@
         </tr>`;
 
     const DynamoDB_ItemFieldTemplate =
-        `<td class="dynamodb-field" data-type="{{TYPE}}" data-value="{{VALUE}}">{{VALUE}}</td>`;
+        `<td class="dynamodb-field" data-name="{{NAME}}" data-type="{{TYPE}}" data-value="{{VALUE}}">{{VALUE}}</td>`;
 
     const DynamoDB_FetchMoreButtonTemplate =
         `<div class="gs-loading-box">
@@ -150,6 +152,123 @@
         </div>`;
 
     var dynamodb_TableData = null;
+
+    function dynamodb_EditItem(event)
+    {
+        var row = gs_GetParentTableRow(event.currentTarget, true);
+
+        var partitionKey = dynamodb_TableData.partitionKey;
+        var partitionKeyValue = row.getAttribute("data-partitionkey");
+        var sortKey = dynamodb_TableData.sortKey;
+        var sortKeyValue = row.getAttribute("data-sortkey");
+
+        var item = dynamodb_TableData.items.find((item) => {
+            var pk = item[partitionKey.name].value;
+            var sk = !isNull(sortKey) ? item[sortKey.name].value : null;
+
+            return pk == partitionKeyValue && (isNull(sortKey) || sk == sortKeyValue);
+        });
+
+        if(isNull(item))
+        {
+            gs_DisplayError(`Unable to find the item to edit (PartitionKey: "${partitionKeyValue}", SortKey: "${sortKeyValue}")`);
+            return;
+        }
+
+        var fields = [];
+
+        for(var i in dynamodb_TableData.attributeNames)
+        {
+            var name = dynamodb_TableData.attributeNames[i];
+            var field = item[name];
+
+            if(isNull(field))
+                continue;
+
+            var type = field.type;
+            var value = field.value;
+
+            fields.push({ name, type, value });
+        }
+
+        // Add value to keys
+        partitionKey = {
+            name: partitionKey.name,
+            type: partitionKey.type,
+            value: item[partitionKey.name].value
+        };
+
+        if(!isNull(sortKey))
+        {
+            sortKey = {
+                name: sortKey.name,
+                type: sortKey.type,
+                value: item[sortKey.name].value
+            };
+        }
+
+        showUpdateItemModal(fields, partitionKey, sortKey, async function(data) {
+            var newItem = {};
+
+            for(var i in data.fields)
+            {
+                var field = data.fields[i];
+
+                if(isNull(field))
+                    continue;
+
+                newItem[field.name] = {
+                    type: field.type,
+                    value: field.value
+                };
+            }
+
+            var response = await fetch(DYNAMODB_URL_UPDATE_ITEM, {
+                method: "PATCH",
+                headers: new Headers({ "Content-Type": "application/json" }),
+                body: JSON.stringify({
+                    partitionKey: {
+                        name: data.currentPartitionKey.name,
+                        value: {
+                            type: data.currentPartitionKey.type,
+                            value: data.currentPartitionKey.value
+                        }
+                    },
+                    sortKey: isNull(sortKey) ? null : {
+                        name: data.currentSortKey.name,
+                        value: {
+                            type: data.currentSortKey.type,
+                            value: data.currentSortKey.value
+                        }
+                    },
+                    item: newItem
+                })
+            });
+
+            if(!response.ok)
+            {
+                await gsevent_FetchError(response);
+                return;
+            }
+
+            // Update item in the displayed table
+            for(var i in dynamodb_TableData.items)
+            {
+                var tableItem = dynamodb_TableData.items[i];
+                
+                if(isNull(tableItem))
+                    continue;
+
+                if(tableItem != item)
+                    continue;
+
+                dynamodb_TableData.items[i] = newItem;
+                break;
+            }
+
+            dynamodb_RebuildItemsTable(dynamodb_TableData)
+        });
+    }
 
     async function dynamodb_UpdateItems()
     {
@@ -164,7 +283,7 @@
 
         if(!response.ok)
         {
-            gsevent_FetchError(response);
+            await gsevent_FetchError(response);
             return;
         }
 
@@ -203,7 +322,7 @@
 
         if(!response.ok)
         {
-            gsevent_FetchError(response);
+            await gsevent_FetchError(response);
             return;
         }
 
@@ -252,7 +371,7 @@
             if(isNull(attribute))
                 continue;
 
-            headersHTML += `<th>${dynamodb_Sanitize(attribute)}</th>\n`;
+            headersHTML += `<th>${gs_SanitizeHtml(attribute)}</th>\n`;
         }
 
         var itemsHTML = "";
@@ -275,13 +394,14 @@
                     continue;
 
                 // TODO: Type checking and value formatting
-                fieldsHTML += dynamodb_BuildTemplate(DynamoDB_ItemFieldTemplate, [
+                fieldsHTML += gs_BuildTemplate(DynamoDB_ItemFieldTemplate, [
+                    { name: "NAME", value: attribute },
                     { name: "TYPE",  value: field.type },
                     { name: "VALUE", value: field.value }
                 ]);
             }
 
-            itemsHTML += dynamodb_BuildTemplate(DynamoDB_ItemTemplate, [
+            itemsHTML += gs_BuildTemplate(DynamoDB_ItemTemplate, [
                 { name: "PARTITIONKEY", value: item[partitionKey].value },
                 { name: "SORTKEY",      value: item[sortKey]?.value },
                 { name: "FIELDS_HTML",  value: fieldsHTML }
@@ -293,7 +413,7 @@
         if(!isNull(data.lastEvaluatedKey) && data.lastEvaluatedKey != "")
             additionalHTML += DynamoDB_FetchMoreButtonTemplate;
 
-        var tableHTML = dynamodb_BuildTemplate(DynamoDB_TableTemplate, [
+        var tableHTML = gs_BuildTemplate(DynamoDB_TableTemplate, [
             { name: "LASTKEY",         value: data.lastEvaluatedKey ?? "" },
             { name: "HEADERS_HTML",    value: headersHTML },
             { name: "BODY_HTML",       value: itemsHTML },
@@ -301,47 +421,6 @@
         ]);
 
         document.getElementById("gs-dynamodb-items-list").innerHTML = tableHTML;
-    }
-
-    function dynamodb_BuildTemplate(template, parameters)
-    {
-        var result = template;
-
-        for(var i in parameters)
-        {
-            var parameter = parameters[i];
-
-            // No sanitization for *_HTML parameters
-            if(parameter.name.endsWith("_HTML"))
-            {
-                result = result.replaceAll(`{{${parameter.name}}}`, parameter.value);
-                continue;
-            }
-            
-            var value = !isNull(parameter.value)
-                ? dynamodb_Sanitize(parameter.value)
-                : "";
-
-            result = result.replaceAll(`{{${parameter.name}}}`, value);
-        }
-
-        return result + "\n";
-    }
-
-    function dynamodb_Sanitize(value)
-    {
-        if(isNull(value))
-            return null;
-
-        value = value.toString();
-
-        // Crude sanitization
-        return value
-            .replaceAll("&", "&amp;")
-            .replaceAll("<", "&lt;")
-            .replaceAll(">", "&gt;")
-            .replaceAll('"', "&quot;")
-            .replaceAll("'", "&apos;");
     }
 
     function dynamodb_ValidateTableData(data)

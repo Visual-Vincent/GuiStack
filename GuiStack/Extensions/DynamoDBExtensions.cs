@@ -33,13 +33,13 @@ namespace GuiStack.Extensions
             { TableClass.STANDARD_INFREQUENT_ACCESS.Value, "Standard-IA" }
         };
 
-        private static readonly Dictionary<DynamoDBAttributeType, ScalarAttributeType> DynamoDBScalarAttributeMap = new Dictionary<DynamoDBAttributeType, ScalarAttributeType>() {
-            { DynamoDBAttributeType.String, ScalarAttributeType.S },
-            { DynamoDBAttributeType.Number, ScalarAttributeType.N },
-            { DynamoDBAttributeType.Binary, ScalarAttributeType.B }
+        private static readonly Dictionary<DynamoDBKeyAttributeType, ScalarAttributeType> DynamoDBScalarAttributeMap = new Dictionary<DynamoDBKeyAttributeType, ScalarAttributeType>() {
+            { DynamoDBKeyAttributeType.String, ScalarAttributeType.S },
+            { DynamoDBKeyAttributeType.Number, ScalarAttributeType.N },
+            { DynamoDBKeyAttributeType.Binary, ScalarAttributeType.B }
         };
 
-        private static readonly Dictionary<string, DynamoDBAttributeType> ScalarDynamoDBAttributeMap =
+        private static readonly Dictionary<string, DynamoDBKeyAttributeType> ScalarDynamoDBAttributeMap =
             DynamoDBScalarAttributeMap.ToDictionary(kvp => kvp.Value.Value, kvp => kvp.Key);
 
         private static readonly Dictionary<DynamoDBFieldType, string> FieldTypeDynamoDBMap = new Dictionary<DynamoDBFieldType, string>() {
@@ -307,19 +307,19 @@ namespace GuiStack.Extensions
         }
 
         /// <summary>
-        /// Converts the <see cref="ScalarAttributeType"/> to <see cref="DynamoDBAttributeType"/>.
+        /// Converts the <see cref="ScalarAttributeType"/> to <see cref="DynamoDBKeyAttributeType"/>.
         /// </summary>
         /// <param name="attributeType">The <see cref="ScalarAttributeType"/> to convert.</param>
-        public static DynamoDBAttributeType ToDynamoDBAttributeType(this ScalarAttributeType attributeType)
+        public static DynamoDBKeyAttributeType ToDynamoDBAttributeType(this ScalarAttributeType attributeType)
         {
             return ScalarDynamoDBAttributeMap.GetValueOrDefault(attributeType.Value);
         }
 
         /// <summary>
-        /// Converts the <see cref="DynamoDBAttributeType"/> to <see cref="ScalarAttributeType"/>.
+        /// Converts the <see cref="DynamoDBKeyAttributeType"/> to <see cref="ScalarAttributeType"/>.
         /// </summary>
-        /// <param name="attributeType">The <see cref="DynamoDBAttributeType"/> to convert.</param>
-        public static ScalarAttributeType ToScalarAttributeType(this DynamoDBAttributeType attributeType)
+        /// <param name="attributeType">The <see cref="DynamoDBKeyAttributeType"/> to convert.</param>
+        public static ScalarAttributeType ToScalarAttributeType(this DynamoDBKeyAttributeType attributeType)
         {
             return DynamoDBScalarAttributeMap.GetValueOrDefault(attributeType);
         }
@@ -340,6 +340,18 @@ namespace GuiStack.Extensions
         public static DynamoDBFieldType StringToDynamoDBFieldType(string dynamoDbType)
         {
             return DynamoDBFieldTypeMap.GetValueOrDefault(dynamoDbType);
+        }
+
+        /// <summary>
+        /// Converts the <see cref="DynamoDBAttributeValue"/> to an <see cref="AttributeValue"/>.
+        /// </summary>
+        /// <param name="attributeValue">The attribute value to convert.</param>
+        public static AttributeValue ToDynamoDBAttributeValue(this DynamoDBAttributeValue attributeValue)
+        {
+            if(string.IsNullOrWhiteSpace(attributeValue.Name))
+                throw new AmazonDynamoDBException($"DynamoDB attribute name cannot be empty", ErrorType.Sender, "GuiStack_InvalidField", null, HttpStatusCode.BadRequest);
+
+            return GetDynamoDBAttributeValue(attributeValue.Name, attributeValue.Value);
         }
 
         /// <summary>

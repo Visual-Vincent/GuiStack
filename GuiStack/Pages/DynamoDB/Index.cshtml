@@ -43,9 +43,9 @@ else
                     <td><input type="text" class="partitionkey-textbox text-center" maxlength="255" style="width: 400px" /></td>
                     <td>
                         <select class="partitionkey-type-select">
-                            @foreach(var type in Enum.GetValues<DynamoDBAttributeType>())
+                            @foreach(var type in Enum.GetValues<DynamoDBKeyAttributeType>())
                             {
-                                if(type == DynamoDBAttributeType.Unknown)
+                                if(type == DynamoDBKeyAttributeType.Unknown)
                                     continue;
                                 
                                 <option value="@type.ToString()">@type.ToString()</option>
@@ -58,9 +58,9 @@ else
                     <td><input type="text" class="sortkey-textbox text-center" maxlength="255" style="width: 400px" /></td>
                     <td>
                         <select class="sortkey-type-select">
-                            @foreach(var type in Enum.GetValues<DynamoDBAttributeType>())
+                            @foreach(var type in Enum.GetValues<DynamoDBKeyAttributeType>())
                             {
-                                if(type == DynamoDBAttributeType.Unknown)
+                                if(type == DynamoDBKeyAttributeType.Unknown)
                                     continue;
                                 
                                 <option value="@type.ToString()">@type.ToString()</option>

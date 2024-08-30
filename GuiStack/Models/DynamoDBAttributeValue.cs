@@ -11,27 +11,19 @@ using System;
 
 namespace GuiStack.Models
 {
-    public class DynamoDBAttribute
+    public class DynamoDBAttributeValue
     {
         public string Name { get; set; }
-        public DynamoDBAttributeType Type { get; set; }
+        public DynamoDBFieldModel Value { get; set; }
 
-        public DynamoDBAttribute()
+        public DynamoDBAttributeValue()
         {
         }
 
-        public DynamoDBAttribute(string name, DynamoDBAttributeType type)
+        public DynamoDBAttributeValue(string name, DynamoDBFieldModel value)
         {
             Name = name;
-            Type = type;
+            Value = value;
         }
-    }
-
-    public enum DynamoDBAttributeType
-    {
-        Unknown = 0,
-        String,
-        Number,
-        Binary
     }
 }

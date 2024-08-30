@@ -30,6 +30,59 @@ function gs_CloseError()
     document.getElementById("gs-error-banner").classList.remove("visible");
 }
 
+function gs_BuildTemplate(template, parameters)
+{
+    if(isNull(template))
+        throw "'template' cannot be null";
+
+    if(isNull(parameters))
+        throw "'parameters' cannot be null";
+
+    if(typeof template !== "string")
+        throw "'template' must be a string";
+
+    if(!Array.isArray(parameters))
+        throw "'parameters' must be an array";
+
+    var result = template;
+
+    for(var i in parameters)
+    {
+        var parameter = parameters[i];
+
+        // No sanitization for *_HTML parameters
+        if(parameter.name.endsWith("_HTML"))
+        {
+            result = result.replaceAll(`{{${parameter.name}}}`, parameter.value ?? "");
+            continue;
+        }
+        
+        var value = !isNull(parameter.value)
+            ? gs_SanitizeHtml(parameter.value)
+            : "";
+
+        result = result.replaceAll(`{{${parameter.name}}}`, value);
+    }
+
+    return result + "\n";
+}
+
+function gs_SanitizeHtml(value)
+{
+    if(isNull(value))
+        return null;
+
+    value = value.toString();
+
+    // Crude sanitization
+    return value
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&apos;");
+}
+
 function gs_GetParentTable(element, throwNotFound)
 {
     if(typeof element === "string")
@@ -157,6 +210,68 @@ function gs_FindParent(element, selector, throwNotFound)
             return null;
 
     return parent;
+}
+
+function gs_GetFieldEditorName(element)
+{
+    if(isNull(element))
+        throw "'element' cannot be null";
+
+    if(!isElement(element) || !(element instanceof HTMLTableRowElement))
+        throw "'element' must be a <tr> element";
+
+    var type = element.getAttribute("data-type");
+
+    if(isNull(type))
+        return null;
+
+    var nameColumn = element.querySelector(":scope > td.name-column");
+
+    if(isNull(nameColumn))
+        throw "Element is not a valid Field Editor field: Missing name column";
+
+    var nameElement = nameColumn.querySelector(`:scope > input[type="text"]`);
+
+    if(isNull(nameElement))
+        throw "Element is not a valid Field Editor field: Missing name input field";
+
+    return nameElement.value;
+}
+
+function gs_GetFieldEditorValue(element)
+{
+    if(isNull(element))
+        throw "'element' cannot be null";
+
+    if(!isElement(element) || !(element instanceof HTMLTableRowElement))
+        throw "'element' must be a <tr> element";
+
+    var type = element.getAttribute("data-type");
+
+    if(isNull(type))
+        return null;
+
+    var valueColumn = element.querySelector(":scope > td.value-column");
+
+    if(isNull(valueColumn))
+        throw "Element is not a valid Field Editor field: Missing value column";
+
+    var valueElement = null;
+
+    switch(type)
+    {
+        case "String":
+            valueElement = valueColumn.querySelector(`:scope > input[type="text"]`) ?? valueColumn.querySelector(":scope > textarea");
+
+            if(isNull(valueElement))
+                throw "Element is not a valid Field Editor field: Missing value input field";
+
+            return valueElement.value;
+        
+        // TODO: Add support for more types
+    }
+
+    throw "Failed to get field value: Unknown data type '" + type + "'";
 }
 
 function gs_GetProtobufMessage(path)
@@ -361,19 +476,19 @@ function gsevent_AjaxError(request, status, errorThrown)
         gs_DisplayError("An unknown error occurred");
 }
 
-function gsevent_FetchError(response)
+async function gsevent_FetchError(response)
 {
-    if(isNull(request))
+    if(isNull(response))
         gs_DisplayError("An unknown error occurred");
 
-    var responseText = request.text();
+    var responseText = await response.text();
 
     if(isNull(responseText) || responseText == "")
-        gs_DisplayError("Server returned HTTP status " + request.status);
+        gs_DisplayError("Server returned HTTP status " + response.status);
 
     if(!(response.headers.get("Content-Type") || "").includes("application/json"))
     {
-        gs_DisplayError("Server returned HTTP status " + request.status + " with contents: " + responseText);
+        gs_DisplayError("Server returned HTTP status " + response.status + " with contents: " + responseText);
         return;
     }
 
@@ -382,7 +497,7 @@ function gsevent_FetchError(response)
     if(!isNull(obj.error))
         gs_DisplayError(obj.error);
     else
-        gs_DisplayError("Server returned HTTP status " + request.status + " with contents: " + responseText);
+        gs_DisplayError("Server returned HTTP status " + response.status + " with contents: " + responseText);
 }
 
 function __gs_RefreshTreeHandlers()

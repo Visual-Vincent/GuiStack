@@ -227,7 +227,7 @@ namespace GuiStack.Controllers.DynamoDB
             {
                 model = JsonConvert.DeserializeObject<DynamoDBUpdateItemModel>(await reader.ReadToEndAsync());
 
-                if(model == null || model.Item == null || model.Item.Count <= 0 || model.PartitionKey?.Value == null || model.SortKey?.Value == null)
+                if(model == null || model.Item == null || model.Item.Count <= 0 || model.PartitionKey?.Value == null || (model.SortKey != null && model.SortKey.Value == null))
                     return StatusCode((int)HttpStatusCode.BadRequest);
 
                 isKeyModified = IsPrimaryKeyModified(model);

@@ -45,12 +45,14 @@ namespace GuiStack.Repositories
                 else
                     queueName = $"{queueName}.fifo";
 
-            var response = await sqs.CreateQueueAsync(new CreateQueueRequest() {
-                QueueName = queueName,
-                Attributes = new Dictionary<string, string>() {
-                    { "FifoQueue", model.IsFifo.ToString().ToLower() }
-                }
-            });
+            var request = new CreateQueueRequest() {
+                QueueName = queueName
+            };
+
+            if(model.IsFifo)
+                request.Attributes = new Dictionary<string, string>() {{ "FifoQueue", "true" }};
+
+            var response = await sqs.CreateQueueAsync(request);
 
             response.ThrowIfUnsuccessful("SQS");
         }

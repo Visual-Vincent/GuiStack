@@ -205,7 +205,7 @@
                 currentPartitionKey: partitionKey,
                 currentSortKey:      sortKey,
                 newPartitionKey:     gs_GetFieldEditorValue(partitionKeyRow),
-                newSortKey:          gs_GetFieldEditorValue(sortKeyRow),
+                newSortKey:          !isNull(sortKeyRow) ? gs_GetFieldEditorValue(sortKeyRow) : null,
                 fields:              fieldValues
             };
 

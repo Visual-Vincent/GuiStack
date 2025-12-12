@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  * 
- * Copyright © Vincent Bengtsson & Contributors 2024
+ * Copyright © Vincent Bengtsson & Contributors 2024-2025
  * https://github.com/Visual-Vincent/GuiStack
  *@
 
@@ -125,8 +125,21 @@
             
             switch(field.type)
             {
+                case "Null":
+                    valueHTML = "(null)";
+                    break;
+
                 case "String":
-                    valueHTML = `<input type="text" value="${gs_SanitizeHtml(field.value)}" style="width: 100%; min-width: 400px" />`;
+                    // valueHTML = `<input type="text" value="${gs_SanitizeHtml(field.value)}" style="width: 100%; min-width: 400px" />`;
+                    valueHTML = `<textarea rows="1" cols="50" style="width: 100%">${gs_SanitizeHtml(field.value)}</textarea>`;
+                    break;
+
+                case "Number":
+                    valueHTML = `<input type="number" value="${gs_SanitizeHtml(field.value)}" step="any" style="width: 100%; min-width: 400px" />`;
+                    break;
+
+                case "Bool":
+                    valueHTML = `<input type="checkbox" ${field.value ? "checked" : ""} />`
                     break;
 
                 default:

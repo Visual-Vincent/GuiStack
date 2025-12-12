@@ -1,4 +1,4 @@
-Copyright © Vincent Bengtsson & Contributors 2022-2024
+Copyright © Vincent Bengtsson & Contributors 2022-2025
 https://github.com/Visual-Vincent/GuiStack
 
 See the LICENSE file for this project's copyright license.

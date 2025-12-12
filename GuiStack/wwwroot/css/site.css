@@ -418,7 +418,7 @@ table.gs-list th, table.gs-list td
     border-collapse: collapse;
 }
 
-table.gs-list.padded th, table.gs-list td
+table.gs-list.padded th, table.gs-list.padded td
 {
     padding: 4px 8px;
 }

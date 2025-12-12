@@ -260,6 +260,9 @@ function gs_GetFieldEditorValue(element)
 
     switch(type)
     {
+        case "Null":
+            return null;
+
         case "String":
             valueElement = valueColumn.querySelector(`:scope > input[type="text"]`) ?? valueColumn.querySelector(":scope > textarea");
 
@@ -267,7 +270,23 @@ function gs_GetFieldEditorValue(element)
                 throw "Element is not a valid Field Editor field: Missing value input field";
 
             return valueElement.value;
-        
+
+        case "Number":
+            valueElement = valueColumn.querySelector(`:scope > input[type="number"]`);
+
+            if(isNull(valueElement))
+                throw "Element is not a valid Field Editor field: Missing value input field";
+
+            return valueElement.value;
+
+        case "Bool":
+            valueElement = valueColumn.querySelector(`:scope > input[type="checkbox"]`);
+
+            if(isNull(valueElement))
+                throw "Element is not a valid Field Editor field: Missing checkbox";
+
+            return valueElement.checked;
+
         // TODO: Add support for more types
     }
 

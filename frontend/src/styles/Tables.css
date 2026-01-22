@@ -1,0 +1,44 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ * 
+ * Copyright © Vincent Bengtsson & Contributors 2022-2026
+ * https://github.com/Visual-Vincent/GuiStack
+ */
+
+table.autosize-col-1                 tr > td:nth-child(1),
+table.autosize-col-2                 tr > td:nth-child(2),
+table.autosize-col-3                 tr > td:nth-child(3),
+table.autosize-col-4                 tr > td:nth-child(4),
+table.autosize-col-5                 tr > td:nth-child(5),
+table.autosize-col-6                 tr > td:nth-child(6),
+table.autosize-col-7                 tr > td:nth-child(7),
+table.autosize-col-8                 tr > td:nth-child(8),
+table.autosize-col-9                 tr > td:nth-child(9),
+table.autosize-last-col              tr > td:last-child,
+table.autosize-all-cols-but-first    tr > td:not(:first-child),
+table.autosize-all-cols-but-last     tr > td:not(:last-child),
+table.autosize-all-cols-but-2nd-last tr > td:not(:nth-last-child(2))
+{
+    width: 1px;
+    white-space: nowrap;
+}
+
+table.gs-list
+{
+    width: 100%;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-collapse: collapse;
+}
+
+table.gs-list th, table.gs-list td
+{
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-collapse: collapse;
+}
+
+table.gs-list.padded th, table.gs-list.padded td
+{
+    padding: 4px 8px;
+}

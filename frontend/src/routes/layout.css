@@ -1,0 +1,185 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ * 
+ * Copyright © Vincent Bengtsson & Contributors 2022-2026
+ * https://github.com/Visual-Vincent/GuiStack
+ */
+
+@import 'tailwindcss';
+@import '$styles/index.css';
+
+body
+{
+    background: rgb(32, 32, 32);
+    background: linear-gradient(0deg, rgb(80, 80, 80), rgb(32, 32, 32));
+    min-height: calc(100vh - 8px * 2);
+    margin: 8px;
+}
+
+hr
+{
+    border: 1px inset #555555;
+}
+
+a, a:visited
+{
+    color: #00E0FF;
+    text-decoration: none;
+}
+
+a         .gs-icon-overlay.stroked,
+a:visited .gs-icon-overlay.stroked
+{
+    -webkit-text-stroke-color: #00E0FF;
+}
+
+a:hover  { color: #BBF7FF; }
+a:active { color: #0090A4; }
+a:hover  .gs-icon-overlay.stroked { -webkit-text-stroke-color: #BBF7FF; }
+a:active .gs-icon-overlay.stroked { -webkit-text-stroke-color: #0090A4; }
+
+a.glowy:hover,
+a.glowy:active
+{
+    text-shadow: 0 0 8px #00E0FF;
+}
+
+a.initial-white,
+a.initial-white:visited
+{
+    color: #FFFFFF;
+}
+
+a.red:hover  { color: #FF7F7F; }
+a.red:active { color: #FF0000; }
+a.red:hover  .gs-icon-overlay.stroked { -webkit-text-stroke-color: #FF7F7F; }
+a.red:active .gs-icon-overlay.stroked { -webkit-text-stroke-color: #FF0000; }
+a.red        .gs-icon-overlay.stroked { -webkit-text-stroke-color: #FFFFFF; }
+
+a.blue:hover  { color: #7FBFFF; }
+a.blue:active { color: #007FFF; }
+a.blue:hover  .gs-icon-overlay.stroked { -webkit-text-stroke-color: #7FBFFF; }
+a.blue:active .gs-icon-overlay.stroked { -webkit-text-stroke-color: #007FFF; }
+a.blue        .gs-icon-overlay.stroked { -webkit-text-stroke-color: #FFFFFF; }
+
+a.green:hover  { color: #80DFA3; }
+a.green:active { color: #00C048; }
+a.green:hover  .gs-icon-overlay.stroked { -webkit-text-stroke-color: #80DFA3; }
+a.green:active .gs-icon-overlay.stroked { -webkit-text-stroke-color: #00C048; }
+a.green        .gs-icon-overlay.stroked { -webkit-text-stroke-color: #FFFFFF; }
+
+a.neon-green:hover  { color: #00FF00; }
+a.neon-green:active { color: #00BB00; }
+a.neon-green:hover  .gs-icon-overlay.stroked { -webkit-text-stroke-color: #00FF00; }
+a.neon-green:active .gs-icon-overlay.stroked { -webkit-text-stroke-color: #00BB00; }
+a.neon-green        .gs-icon-overlay.stroked { -webkit-text-stroke-color: #FFFFFF; }
+
+a.purple:hover  { color: #CE7FFF; }
+a.purple:active { color: #A000FF; }
+a.purple:hover  .gs-icon-overlay.stroked { -webkit-text-stroke-color: #CE7FFF; }
+a.purple:active .gs-icon-overlay.stroked { -webkit-text-stroke-color: #A000FF; }
+a.purple        .gs-icon-overlay.stroked { -webkit-text-stroke-color: #FFFFFF; }
+
+a.vertical
+{
+    display: block;
+    writing-mode: vertical-lr;
+    text-orientation: sideways;
+    transform: rotate(180deg);
+}
+
+h1
+{
+    font-weight: bold;
+    font-size: 2em;
+    margin-block-start: 0.5em;
+    margin-block-end: 0.5em;
+}
+
+h2
+{
+    font-weight: bold;
+    font-size: 1.5em;
+    margin-block-start: 0.83em;
+    margin-block-end: 0.83em;
+}
+
+h3
+{
+    font-weight: bold;
+    font-size: 1.17em;
+    margin-block-start: 1em;
+    margin-block-end: 1em;
+}
+
+p
+{
+    margin-block-start: 1em;
+    margin-block-end: 1em;
+}
+
+dialog
+{
+    margin: auto;
+}
+
+.gs-icon-overlay.stroked
+{
+    -webkit-text-stroke: 1.5px #FFFFFF;
+}
+
+input[type="text"]
+{
+    background: #2F2F2F;
+    border: 1px solid #555555;
+    border-radius: 4px;
+    color: #FFFFFF;
+    padding: 4px 6px;
+}
+
+.gs-object-type
+{
+    color: #999999;
+}
+
+.gs-object-type:has(+ h1),
+.gs-object-type:has(+ h2),
+.gs-object-type:has(+ h3),
+.gs-object-type:has(+ h4),
+.gs-object-type:has(+ h5),
+.gs-object-type:has(+ h6)
+{
+    margin-bottom: 0px;
+}
+
+.gs-object-type + h1,
+.gs-object-type + h2,
+.gs-object-type + h3,
+.gs-object-type + h4,
+.gs-object-type + h5,
+.gs-object-type + h6
+{
+    margin-top: 0px;
+}
+
+h1 + .gs-object-type,
+h2 + .gs-object-type,
+h3 + .gs-object-type,
+h4 + .gs-object-type,
+h5 + .gs-object-type,
+h6 + .gs-object-type
+{
+    margin-top: 0px;
+}
+
+h1:has(+ .gs-object-type),
+h2:has(+ .gs-object-type),
+h3:has(+ .gs-object-type),
+h4:has(+ .gs-object-type),
+h5:has(+ .gs-object-type),
+h6:has(+ .gs-object-type)
+{
+    margin-bottom: 0px;
+}

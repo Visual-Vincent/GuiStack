@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  * 
- * Copyright © Vincent Bengtsson & Contributors 2022-2024
+ * Copyright © Vincent Bengtsson & Contributors 2022-2026
  * https://github.com/Visual-Vincent/GuiStack
  */
 
@@ -41,6 +41,13 @@ namespace GuiStack
             services.AddControllers().AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
             services.AddSession();
             services.AddDistributedMemoryCache();
+            services.AddCors(options => {
+                options.AddPolicy("AllowAll", policy => {
+                    policy.AllowAnyOrigin()
+                        .AllowAnyMethod()
+                        .AllowAnyHeader();
+                });
+            });
             services.AddScoped<IDynamoDBRepository, DynamoDBRepository>();
             services.AddScoped<IS3Repository, S3Repository>();
             services.AddScoped<ISNSRepository, SNSRepository>();
@@ -75,6 +82,7 @@ namespace GuiStack
 
             app.UseRouting();
             app.UseAuthorization();
+            app.UseCors("AllowAll");
 
             app.UseSession(new SessionOptions() {
                 IdleTimeout = TimeSpan.FromHours(2)

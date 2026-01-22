@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  * 
- * Copyright © Vincent Bengtsson & Contributors 2022
+ * Copyright © Vincent Bengtsson & Contributors 2022-2026
  * https://github.com/Visual-Vincent/GuiStack
  */
 
@@ -219,7 +219,7 @@ namespace GuiStack.Controllers.S3
                 string filename = Uri.EscapeDataString(Path.GetFileName(file.FileName));
 
                 if(file.Length > MaxFileSize)
-                    throw new Exception($"File \"{filename}\" exceeds the maximum allowed size of {MaxFileSize.ToFormattedFileSize()}");
+                    return StatusCode((int)HttpStatusCode.BadRequest, new { error = $"File \"{filename}\" exceeds the maximum allowed size of {MaxFileSize.ToFormattedFileSize()}" });
 
                 using(Stream stream = file.OpenReadStream())
                     await s3Repository.UploadFile(bucketName, filename, stream);

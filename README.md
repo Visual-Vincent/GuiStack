@@ -25,6 +25,10 @@ Contributions and feature requests are welcome!
   - Create, view and delete subscriptions (only SQS subscriptions can be created at the moment)
   - Send messages to topics
 
+- **AWS DynamoDB**
+  - Create, view and delete tables
+  - Create, view, edit and delete items
+
 Also see the [checklist of upcoming features](https://github.com/Visual-Vincent/GuiStack/issues/1).
 
 ## Download
@@ -32,7 +36,7 @@ Also see the [checklist of upcoming features](https://github.com/Visual-Vincent/
 Download precompiled executables from [Releases](https://github.com/Visual-Vincent/GuiStack/releases), or pull the latest [Docker image](https://hub.docker.com/r/visualvincent/guistack).
 
 ## System requirements
-- ASP.NET Core Runtime for .NET 6.0 or newer ([Download](https://dotnet.microsoft.com/en-us/download/dotnet))
+- ASP.NET Core Runtime for .NET 10.0 or newer ([Download](https://dotnet.microsoft.com/en-us/download/dotnet))
 - Any operating system supported by the above runtime
 
 ## Running
@@ -54,15 +58,16 @@ Download the [`default-run-docker.sh`](/scripts/default-run-docker.sh) script fr
 ## Configuration
 GuiStack can be configured by setting various environment variables before starting the application. Most of them are provided in the `run.sh` or `run.bat` file included within the release (or in `default-run-docker.sh`, if using the Docker image).
 
-| Variable name           | Default value (in `run.sh`) |
-| ----------------------- | --------------------------- |
-| AWS_ACCESS_KEY_ID       | localstack                  |
-| AWS_SECRET_ACCESS_KEY   | localstack                  |
-| AWS_REGION              | eu-central-1                |
-| AWS_S3_ENDPOINT_URL     | http://localhost:4566       |
-| AWS_SNS_ENDPOINT_URL    | http://localhost:4566       |
-| AWS_SQS_ENDPOINT_URL    | http://localhost:4566       |
-| AWS_S3_FORCE_PATH_STYLE | true                        |
+| Variable name             | Default value (in `run.sh`) |
+| ------------------------- | --------------------------- |
+| AWS_ACCESS_KEY_ID         | localstack                  |
+| AWS_SECRET_ACCESS_KEY     | localstack                  |
+| AWS_REGION                | eu-central-1                |
+| AWS_S3_ENDPOINT_URL       | http://localhost:4566       |
+| AWS_SNS_ENDPOINT_URL      | http://localhost:4566       |
+| AWS_SQS_ENDPOINT_URL      | http://localhost:4566       |
+| AWS_DYNAMODB_ENDPOINT_URL | http://localhost:4566       |
+| AWS_S3_FORCE_PATH_STYLE   | true                        |
 
 ### Listening ports (standalone release)
 By default, GuiStack can be accessed via https://localhost:5001. To configure which port GuiStack should listen to, edit the accompanying `appsettings.json` file and add a property called `"Urls"`:
@@ -90,10 +95,12 @@ docker run -p 5000:80 \
 
 ## Building
 Requires:
-- .NET 6.0 SDK or newer ([Download](https://dotnet.microsoft.com/en-us/download/dotnet))
+- .NET 10.0 SDK or newer ([Download](https://dotnet.microsoft.com/en-us/download/dotnet))
+- Node.js v24.x or newer ([Download](https://nodejs.org/en/download))
+- pnpm ([Download](https://pnpm.io/installation))
 - Git Bash (if building on Windows) ([Download](https://gitforwindows.org/))
 
 Optional:
-- Visual Studio 2022
+- Visual Studio 2026
 
 To build GuiStack, simply execute one of the `build-*.sh` scripts for the platform you wish to build for, located in the root of this repository.

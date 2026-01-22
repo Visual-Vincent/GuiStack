@@ -13,6 +13,7 @@
 
 @{
     await Html.RenderPartialAsync("~/Pages/Shared/_DeleteModal.cshtml", new DeleteModalModel("delete-dynamodb-row-modal"));
+    await Html.RenderPartialAsync("~/Pages/DynamoDB/_FieldsEditorModal.cshtml", new FieldsEditorModalModel("dynamodb-create-item-modal", "CreateItem", "Create item", "Create"));
     await Html.RenderPartialAsync("~/Pages/DynamoDB/_FieldsEditorModal.cshtml", new FieldsEditorModalModel("dynamodb-update-item-modal", "UpdateItem", "Update item", "Save"));
 }
 
@@ -95,7 +96,7 @@
 <hr/>
 
 <div style="text-align: right; font-size: 1.5em; margin: 10px 8px 8px 8px">
-    <a no-href class="initial-white neon-green" title="Add new item" style="margin-right: 4px">
+    <a no-href onclick="dynamodb_NewItem()" class="initial-white neon-green" title="Add new item" style="margin-right: 4px">
         <i class="fa-solid fa-plus"></i>
     </a>
     <a no-href onclick="dynamodb_UpdateItems()" class="initial-white neon-green" title="Refresh">
@@ -107,6 +108,7 @@
 
 <script type="text/javascript">
     const DYNAMODB_URL_GET_ITEMS = "@Url.Action("GetItems", "Tables", new { tableName = Model.Name })?limit=__LIMIT__&lastEvaluatedKey=__LASTKEY__";
+    const DYNAMODB_URL_PUT_ITEM = "@Url.Action("PutItem", "Tables", new { tableName = Model.Name })";
     const DYNAMODB_URL_UPDATE_ITEM = "@Url.Action("UpdateItem", "Tables", new { tableName = Model.Name })";
 
     const DynamoDB_LoadingTemplate =
@@ -136,7 +138,7 @@
                         <a href="javascript:void(0)" onclick="dynamodb_EditItem(event)" class="neon-green lnk-dynamodb-edit" title="Edit">
                         <i class="fa-regular fa-pen-to-square"></i>
                     </a>
-                    <a href="javascript:void(0)" class="red lnk-dynamodb-delete" title="Delete">
+                    <a href="javascript:void(0)" onclick="dynamodb_DeleteItem(event)" class="red lnk-dynamodb-delete" title="Delete">
                         <i class="fa-solid fa-trash-can"></i>
                     </a>
                 </div>
@@ -152,6 +154,68 @@
         </div>`;
 
     var dynamodb_TableData = null;
+
+    function dynamodb_NewItem()
+    {
+        var partitionKey = dynamodb_TableData.partitionKey;
+        var sortKey = dynamodb_TableData.sortKey;
+
+        var fields = [];
+
+        // Add value to keys
+        partitionKey = {
+            name: partitionKey.name,
+            type: partitionKey.type,
+            value: dynamodb_GetDefaultKeyAttributeValue(partitionKey.type)
+        };
+
+        fields.push(partitionKey);
+
+        if(!isNull(sortKey))
+        {
+            sortKey = {
+                name: sortKey.name,
+                type: sortKey.type,
+                value: dynamodb_GetDefaultKeyAttributeValue(sortKey.type)
+            };
+
+            fields.push(sortKey);
+        }
+
+        showCreateItemModal(fields, partitionKey, sortKey, async function(data) {
+            var newItem = {};
+
+            for(var i in data.fields)
+            {
+                var field = data.fields[i];
+
+                if(isNull(field))
+                    continue;
+
+                newItem[field.name] = {
+                    type: field.type,
+                    value: field.value
+                };
+            }
+
+            var response = await fetch(DYNAMODB_URL_PUT_ITEM, {
+                method: "PUT",
+                headers: new Headers({ "Content-Type": "application/json" }),
+                body: JSON.stringify(newItem)
+            });
+
+            if(!response.ok)
+            {
+                await gsevent_FetchError(response);
+                return;
+            }
+
+            // TODO: If attributes have been added/renamed/removed, then do a full refresh of all data instead
+            // TODO: Sort to ensure it is in the correct order
+            dynamodb_TableData.items.push(newItem);
+            dynamodb_RebuildItemsTable(dynamodb_TableData);
+        });
+    }
 
     function dynamodb_EditItem(event)
     {
@@ -269,6 +333,13 @@
 
             dynamodb_RebuildItemsTable(dynamodb_TableData);
         });
+    }
+
+    function dynamodb_DeleteItem(event)
+    {
+        var row = gs_GetParentTableRow(event.currentTarget, true);
+
+        // TODO
     }
 
     async function dynamodb_UpdateItems()
@@ -433,6 +504,22 @@
             && Array.isArray(data.attributeNames)
             && !isNull(data.items)
             && Array.isArray(data.items);
+    }
+
+    function dynamodb_GetDefaultKeyAttributeValue(type)
+    {
+        type = type?.toString().toLowerCase();
+
+        switch(type)
+        {
+            case "string":
+                return "";
+
+            case "number":
+                return 0;
+        }
+
+        return null;
     }
 
     dynamodb_UpdateItems();

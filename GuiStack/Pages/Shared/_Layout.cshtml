@@ -7,6 +7,9 @@
  * https://github.com/Visual-Vincent/GuiStack
  *@
 
+@using System.Text.Json;
+@using GuiStack.Models;
+
 <!DOCTYPE html>
 <html lang="en">
     <head>
@@ -22,6 +25,9 @@
         <script src="~/js/windows.js"></script>
         <script src="https://unpkg.com/monaco-editor@latest/min/vs/loader.js"></script>
         <script src="https://cdn.rawgit.com/dcodeIO/protobuf.js/6.11.2/dist/protobuf.min.js"></script>
+        <script type="text/javascript">
+            const DYNAMODB_SUPPORTED_TYPES = @Html.Raw(JsonSerializer.Serialize(DynamoDBFieldModel.SupportedTypes));
+        </script>
         <script type="text/javascript">
             require.config({ paths: { "vs": "https://unpkg.com/monaco-editor@latest/min/vs" } });
         </script>

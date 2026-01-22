@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  * 
- * Copyright © Vincent Bengtsson & Contributors 2024
+ * Copyright © Vincent Bengtsson & Contributors 2024-2025
  * https://github.com/Visual-Vincent/GuiStack
  */
 
@@ -15,9 +15,14 @@ namespace GuiStack.Models
 {
     public class DynamoDBFieldModel
     {
+        public static readonly string[] SupportedTypes = ((Func<string[]>)(() => {
+            var names = new List<string>(Enum.GetNames<DynamoDBFieldType>());
+            names.Remove(nameof(DynamoDBFieldType.Unknown));
+            return names.ToArray();
+        })).Invoke();
+
         public DynamoDBFieldType Type { get; set; }
         public object Value { get; set; }
-
         private static DynamoDBFieldModel NumberInternal<T>(T number)
             where T : struct
         {

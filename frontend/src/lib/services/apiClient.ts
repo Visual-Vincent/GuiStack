@@ -54,9 +54,10 @@ export class ApiClient
         throw new ApiError(message, response.status, response.url, responseBody);
     }
 
-    private static async MakeRequestAsync<T>(method: string, endpoint: string, body?: BodyInit | null): Promise<T> {
+    private static async MakeRequestAsync<T>(method: string, endpoint: string, body?: BodyInit | null, headers?: HeadersInit): Promise<T> {
         const response = await fetch(this.GenerateUrl(endpoint), {
             method: method,
+            headers: headers,
             body: body
         });
 
@@ -119,8 +120,8 @@ export class ApiClient
         return this.apiUrl + "/" + endpoint.replace(this.leadingSlashRegex, "");
     }
 
-    public static async DeleteAsync<T>(endpoint: string, body?: BodyInit | null): Promise<T> {
-        return await this.MakeRequestAsync("DELETE", endpoint, body);
+    public static async DeleteAsync<T>(endpoint: string, body?: BodyInit | null, headers?: HeadersInit | null): Promise<T> {
+        return await this.MakeRequestAsync("DELETE", endpoint, body, headers ?? undefined);
     }
 
     public static async GetAsync<T>(endpoint: string): Promise<T> {
@@ -134,16 +135,16 @@ export class ApiClient
         return await response.json();
     }
 
-    public static async PatchAsync<T>(endpoint: string, body?: BodyInit | null): Promise<T> {
-        return await this.MakeRequestAsync("PATCH", endpoint, body);
+    public static async PatchAsync<T>(endpoint: string, body?: BodyInit | null, headers?: HeadersInit | null): Promise<T> {
+        return await this.MakeRequestAsync("PATCH", endpoint, body, headers ?? undefined);
     }
 
-    public static async PostAsync<T>(endpoint: string, body?: BodyInit | null): Promise<T> {
-        return await this.MakeRequestAsync("POST", endpoint, body);
+    public static async PostAsync<T>(endpoint: string, body?: BodyInit | null, headers?: HeadersInit | null): Promise<T> {
+        return await this.MakeRequestAsync("POST", endpoint, body, headers ?? undefined);
     }
 
-    public static async PutAsync<T>(endpoint: string, body?: BodyInit | null): Promise<T> {
-        return await this.MakeRequestAsync("PUT", endpoint, body);
+    public static async PutAsync<T>(endpoint: string, body?: BodyInit | null, headers?: HeadersInit | null): Promise<T> {
+        return await this.MakeRequestAsync("PUT", endpoint, body, headers ?? undefined);
     }
 
     public static async UploadFileAsync(endpoint: string, file: File, fileParameter: string = "file", onprogress?: (uploaded: number, total: number) => void): Promise<void> {

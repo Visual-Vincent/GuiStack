@@ -40,7 +40,7 @@
             buckets = await S3Service.GetBucketsAsync();
         }
         catch(error) {
-            Toasts.exception("Failed to fetch buckets", error as string);
+            Toasts.exception("Failed to fetch buckets", error);
         }
 
         loading = false;
